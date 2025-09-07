@@ -1189,7 +1189,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 
   return (
     <div className="flex flex-col h-full bg-background">
-      <div ref={swipeZoneRef} className="flex-1 overflow-y-auto touch-pan-y select-none">
+        <div ref={swipeZoneRef} className="flex-1 overflow-y-auto touch-pan-y select-none pb-[calc(env(safe-area-inset-bottom)+100px)]">
   {/* Header with View Mode Switch and Calendar */}
   <motion.div className="select-none touch-pan-y">
       <div className="flex items-center justify-between p-4 border-b border-border">
@@ -1560,7 +1560,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   {/* Main Content Area */}
   <motion.div className="flex-1 flex overflow-hidden">
         {/* Task List */}
-        <div className="flex-1 md:w-2/5 overflow-y-auto">
+        <div className="flex-1 md:w-2/5 md:overflow-y-auto overflow-visible min-h-0">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">
@@ -1708,8 +1708,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         </div>
       </motion.div>
 
-      {/* Progress Charts at Bottom with Blur Effect - FIXED UNDEFINED VARIABLES */}
-      <div className="p-4 border-t border-border bg-surface-1">
+  {/* Progress Charts at Bottom with Blur Effect */}
+  <div className="p-4 border-t border-border bg-surface-1 pb-[calc(env(safe-area-inset-bottom)+84px)]">
         <div className="relative">
           <PlannerAnalytics data={metrics} subscriptionPlan={subscriptionPlan} onUpgrade={onUpgrade} />
         </div>
