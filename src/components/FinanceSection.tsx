@@ -178,19 +178,17 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     const [selectedAccount, setSelectedAccount] = useState<string>("all");
     const [balanceVisible, setBalanceVisible] = useState(true);
     const [activeTab, setActiveTab] = useState("dashboard");
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("weekly");
+    const [timePeriod, setTimePeriod] = useState<TimePeriod>("weekly");
     const [currency, setCurrency] = useState<"UZS" | "USD" | "EUR" | "RUB">("UZS");
     const [isInitialized, setIsInitialized] = useState(false);
     const [showFinanceOnboarding, setShowFinanceOnboarding] = useState(false);
-
-    // Dialogs
-    const [showTransactionDialog, setShowTransactionDialog] = useState(false);
-    const [showAccountDialog, setShowAccountDialog] = useState(false);
-  const [showEditAccountDialog, setShowEditAccountDialog] = useState(false);
-    const [showBudgetDialog, setShowBudgetDialog] = useState(false);
-    const [showGoalDialog, setShowGoalDialog] = useState(false);
-    // Mobile detection for chart sizing
     const [isMobile, setIsMobile] = useState(false);
+  // Dialogs
+  const [showTransactionDialog, setShowTransactionDialog] = useState(false);
+  const [showAccountDialog, setShowAccountDialog] = useState(false);
+  const [showEditAccountDialog, setShowEditAccountDialog] = useState(false);
+  const [showBudgetDialog, setShowBudgetDialog] = useState(false);
+  const [showGoalDialog, setShowGoalDialog] = useState(false);
 
     useEffect(() => {
       if (typeof window === 'undefined') return;
@@ -200,7 +198,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       return () => window.removeEventListener('resize', update);
     }, []);
 
-    // Forms
+  // Forms
     const [newTransaction, setNewTransaction] = useState({
       type: 'expense' as 'income' | 'expense',
       amount: '',
@@ -1176,23 +1174,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       return (
         <FinanceOnboardingWizard
           onComplete={handleFinanceOnboardingComplete}
-          onSkip={() => {
-            setShowFinanceOnboarding(false);
-            // Create a default account if user skips
-            const defaultAccount: Account = {
-              id: `account_${Date.now()}`,
-              name: 'Main Account',
-              type: 'cash',
-              currency: currency,
-              balance: 0,
-              color: '#10B981',
-              isDefault: true,
-              createdAt: new Date()
-            };
-            setAccounts([defaultAccount]);
-            dataManager.markSetupComplete();
-            FinanceStore.markSetupComplete();
-          }}
         />
       );
     }

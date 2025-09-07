@@ -32,7 +32,6 @@ interface OnboardingData {
 
 interface FinanceOnboardingWizardProps {
   onComplete: (accountData: Account) => void;
-  onSkip?: () => void;
 }
 
 interface Currency {
@@ -97,8 +96,7 @@ const STEPS = [
 ];
 
 export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = ({
-  onComplete,
-  onSkip
+  onComplete
 }) => {
   const { t } = useTranslation('app');
   const [currentStep, setCurrentStep] = useState(0);
@@ -125,9 +123,6 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         handleNext();
-      }
-      if (e.key === 'Escape' && onSkip) {
-        onSkip();
       }
     };
 
@@ -562,7 +557,7 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
 
   return (
     <div
-      className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[1000] flex items-center justify-center px-4"
       style={{
         // Keep content clear of top bar and bottom nav (approx 84px) with safe-area support
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
@@ -583,16 +578,7 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
             ))}
           </div>
           
-          {onSkip && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onSkip}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          )}
+          {/* Skip removed to enforce gating */}
         </div>
 
         {/* Progress */}

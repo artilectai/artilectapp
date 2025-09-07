@@ -28,7 +28,6 @@ import { Progress } from '@/components/ui/progress';
 
 interface WorkoutSportOnboardingWizardProps {
   onComplete: (preferences: WorkoutPreferences) => void;
-  onSkip?: () => void;
 }
 
 interface WorkoutPreferences {
@@ -96,8 +95,7 @@ const EXPERIENCE_LEVELS = [
 ];
 
 export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizardProps> = ({
-  onComplete,
-  onSkip
+  onComplete
 }) => {
   const { t } = useTranslation('app');
   const [currentStep, setCurrentStep] = useState(0);
@@ -469,7 +467,7 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
 
   return (
     <div
-      className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[1000] flex items-center justify-center px-4"
       style={{
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
         paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)'
@@ -488,16 +486,7 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
               />
             ))}
           </div>
-          {onSkip && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onSkip}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          )}
+          {/* Skip removed to enforce gating */}
         </div>
 
         {/* Progress */}
