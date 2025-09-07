@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { categories } from '@/db/schema';
 import { eq, like, and, or, desc, asc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
@@ -46,7 +46,8 @@ export async function GET(request: NextRequest) {
         }, { status: 400 });
       }
       
-      const category = await db.select()
+  const db = getDb();
+  const category = await db.select()
         .from(categories)
         .where(eq(categories.id, parseInt(id)))
         .limit(1);
@@ -70,6 +71,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get('sort') || 'createdAt';
     const order = searchParams.get('order') || 'desc';
     
+  const db = getDb();
   const baseQuery = db.select().from(categories);
   const conditions: any[] = [];
     
@@ -131,7 +133,8 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    const requestBody = await request.json();
+  const db = getDb();
+  const requestBody = await request.json();
     const { userId, name, type, color } = requestBody;
     
     // Validate required fields
@@ -173,7 +176,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString()
     };
     
-    const newCategory = await db.insert(categories)
+  const newCategory = await db.insert(categories)
       .values(sanitizedData)
       .returning();
     
@@ -198,7 +201,8 @@ export async function PUT(request: NextRequest) {
       }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
+  const db = getDb();
+  const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
     if (!id || isNaN(parseInt(id))) {
@@ -209,7 +213,7 @@ export async function PUT(request: NextRequest) {
     }
     
     // Check if record exists
-    const existingCategory = await db.select()
+  const existingCategory = await db.select()
       .from(categories)
       .where(eq(categories.id, parseInt(id)))
       .limit(1);
@@ -257,7 +261,7 @@ export async function PUT(request: NextRequest) {
       updates.color = color ? color.toString().trim() : null;
     }
     
-    const updatedCategory = await db.update(categories)
+  const updatedCategory = await db.update(categories)
       .set(updates)
       .where(eq(categories.id, parseInt(id)))
       .returning();
@@ -283,7 +287,8 @@ export async function DELETE(request: NextRequest) {
       }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
+  const db = getDb();
+  const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
     if (!id || isNaN(parseInt(id))) {
@@ -294,7 +299,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Check if record exists before deleting
-    const existingCategory = await db.select()
+  const existingCategory = await db.select()
       .from(categories)
       .where(eq(categories.id, parseInt(id)))
       .limit(1);
@@ -306,7 +311,7 @@ export async function DELETE(request: NextRequest) {
       }, { status: 404 });
     }
     
-    const deletedCategory = await db.delete(categories)
+  const deletedCategory = await db.delete(categories)
       .where(eq(categories.id, parseInt(id)))
       .returning();
     

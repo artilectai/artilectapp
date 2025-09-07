@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { transactions } from '@/db/schema';
 import { eq, like, and, or, desc, asc, gte, lte } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
@@ -93,7 +93,8 @@ export async function GET(
     }
 
     // Build the main query
-    const baseQuery = db.select().from(transactions);
+  const db = getDb();
+  const baseQuery = db.select().from(transactions);
 
     // Apply all conditions without changing the type of baseQuery
     const filteredQuery = conditions.length > 0
@@ -116,7 +117,7 @@ export async function GET(
     const results = await orderedQuery.limit(limit).offset(offset);
 
     // Get total count for pagination metadata
-    const baseCountQuery = db.select({ count: transactions.id }).from(transactions);
+  const baseCountQuery = db.select({ count: transactions.id }).from(transactions);
     const finalCountQuery = conditions.length > 0
       ? baseCountQuery.where(and(...conditions))
       : baseCountQuery;

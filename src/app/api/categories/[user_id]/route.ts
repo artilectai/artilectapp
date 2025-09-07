@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { categories, userProfiles } from '@/db/schema';
 import { eq, like, and, or, desc } from 'drizzle-orm';
 import { authClient } from '@/lib/auth-client';
@@ -51,7 +51,8 @@ export async function GET(
     }
 
     // Verify the user exists in our user profiles
-    const userExists = await db.select()
+  const db = getDb();
+  const userExists = await db.select()
       .from(userProfiles)
       .where(eq(userProfiles.userId, user_id))
       .limit(1);
@@ -88,7 +89,7 @@ export async function GET(
       conditions.push(like(categories.name, `%${search}%`));
     }
     
-    const results = await db.select()
+  const results = await db.select()
       .from(categories)
       .where(and(...conditions))
       .orderBy(desc(categories.createdAt))
