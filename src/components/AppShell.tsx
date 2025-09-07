@@ -469,8 +469,8 @@ export default function AppShell({
           onClick={handleContextualAdd}
           className="fixed right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center ring-1 ring-black/10"
           style={{ 
-            // Keep the FAB clearly above the bottom nav and safe areas
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 116px)',
+            // Position just a bit above the taller bottom bar
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
             background: `linear-gradient(135deg, ${fabProps.color}, ${fabProps.color}dd)`,
             // Softer, tighter shadow so it doesn't bleed outside blocks
             boxShadow: `0 8px 24px ${fabProps.color}26`
