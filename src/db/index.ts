@@ -11,7 +11,13 @@ export function getDb() {
   const authToken = process.env.TURSO_AUTH_TOKEN;
 
   if (!url) {
-    throw new Error('TURSO_CONNECTION_URL is not set');
+    // During builds or local dev without Turso, use a safe fallback to avoid crashes.
+    const fallbackUrl = process.env.NODE_ENV === 'production'
+      ? 'file::memory:'
+      : 'file:dev.db';
+    const client = createClient({ url: fallbackUrl });
+    _db = drizzle(client, { schema });
+    return _db;
   }
 
   // authToken can be optional for local setups; pass when present
