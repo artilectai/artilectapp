@@ -20,6 +20,8 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover" as const,
+  // Keep layout stable when the on-screen keyboard appears
+  interactiveWidget: 'overlays-content' as const,
 };
 
 export default function RootLayout({

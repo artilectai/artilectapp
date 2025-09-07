@@ -227,7 +227,7 @@ export const PaywallSheet = ({
 
   return (
     <SlideUpModal isOpen={isOpen} onClose={onClose}>
-      <div className="relative bg-card rounded-t-3xl min-h-[85vh] max-h-[90vh] overflow-hidden">
+  <div className="relative bg-card rounded-t-3xl min-h-[85lvh] max-h-[90lvh] overflow-hidden">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b border-border/50">
           <div className="flex items-center justify-between p-6 pb-4">
