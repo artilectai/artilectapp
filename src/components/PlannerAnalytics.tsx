@@ -86,7 +86,7 @@ const StatCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
-      className="glass-card p-4 rounded-xl"
+  className="glass-card p-4 rounded-xl border border-money-green/20"
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -294,7 +294,7 @@ export const PlannerAnalytics = ({
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="glass-card p-6 rounded-xl"
+              className="glass-card p-6 rounded-xl border border-money-green/20"
           >
             <div className="flex items-center gap-2 mb-4">
               <CheckCircle className="h-5 w-5 text-[#10B981]" />
@@ -337,7 +337,7 @@ export const PlannerAnalytics = ({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="glass-card p-6 rounded-xl"
+              className="glass-card p-6 rounded-xl border border-money-green/20"
           >
             <div className="flex items-center gap-2 mb-4">
               <Target className="h-5 w-5 text-[#10B981]" />
@@ -365,7 +365,7 @@ export const PlannerAnalytics = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="glass-card p-6 rounded-xl"
+          className="glass-card p-6 rounded-xl border border-money-green/20"
         >
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="h-5 w-5 text-[#10B981]" />

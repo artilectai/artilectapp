@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHan
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { 
-  Calendar, 
+  Calendar as CalendarIcon, 
   CalendarDays, 
   ListTodo, 
   ListChecks, 
@@ -38,7 +38,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar as DateCalendar } from "@/components/ui/calendar";
 import { DateStepper } from "@/components/ui/date-stepper";
 import { PlannerAnalytics } from "@/components/PlannerAnalytics";
 import { supabase } from "@/lib/supabase/client";
@@ -1320,7 +1320,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             className="shrink-0 h-9 w-9 md:h-10 md:w-auto md:px-3 flex items-center justify-center gap-2 rounded-xl
                        hover:bg-surface-1/50 text-emerald-400"
           >
-            <Calendar className="w-4 h-4 md:w-5 md:h-5" />
+            <CalendarIcon className="w-4 h-4 md:w-5 md:h-5" />
             {/* hide date on phones */}
             <span className="hidden md:inline text-sm font-medium">
               {fmt.md.format(selectedDate)}
@@ -1337,7 +1337,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         <Tabs value={viewMode} onValueChange={(v) => handleViewModeChange(v as ViewMode)}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="daily" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+              <CalendarIcon className="h-4 w-4" />
               <span className="hidden sm:inline">{t('planner.views.daily')}</span>
             </TabsTrigger>
             
@@ -1539,7 +1539,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               {t('planner.calendar.selectDateDesc')}
             </p>
             <div className="flex justify-center">
-              <Calendar
+              <DateCalendar
                 mode="single"
                 showOutsideDays
                 defaultMonth={selectedDate}
@@ -2018,7 +2018,7 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
                 className="w-full justify-start text-left font-normal h-11"
                 id="startDate"
               >
-                <Calendar className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 h-4 w-4" />
                 {formData.startDate ? formData.startDate.toLocaleDateString() : t('planner.editor.pickDate')}
               </Button>
             </PopoverTrigger>
@@ -2044,7 +2044,7 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
                 className="w-full justify-start text-left font-normal h-11"
                 id="dueDate"
               >
-                <Calendar className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 h-4 w-4" />
                 {formData.dueDate ? formData.dueDate.toLocaleDateString() : t('planner.editor.pickDate')}
               </Button>
             </PopoverTrigger>
@@ -2265,7 +2265,7 @@ function GoalEditor({ goal, onSave, onCancel, isLoading }: {
                 className="w-full justify-start text-left font-normal h-11"
                 id="targetDate"
               >
-                <Calendar className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 h-4 w-4" />
                 {formData.targetDate ? formData.targetDate.toLocaleDateString() : t('planner.editor.pickDate')}
               </Button>
             </PopoverTrigger>
