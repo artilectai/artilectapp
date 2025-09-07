@@ -1,0 +1,1713 @@
+{
+  "common": {
+    "success": "Muvaffaqiyat",
+    "warning": "Ogohlantirish",
+    "add": "Qo‘shish",
+    "more": "Ko‘proq",
+    "edit": "Tahrirlash",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "next": "Keyingi",
+    "undo": "Qaytarish",
+    "back": "Ortga",
+    "validation": {
+      "required": "Bu maydon majburiy",
+      "minLength": "Kamida {{min}} ta belgidan iborat bo‘lishi kerak"
+    }
+  },
+  "nav": {
+    "planner": "Rejalar",
+    "finance": "Moliya",
+    "workout": "Trening",
+    "settings": "Sozlamalar",
+    "upgrade": "Yangilash",
+    "signOut": "Chiqish",
+    "profile": "Profil"
+  },
+  "profile": {
+    "language": "Til",
+    "support": "Yordam",
+    "name": "Ism",
+    "user": "Foydalanuvchi",
+    "personalInfo": "O‘zingiz haqingizda qisqacha ayting",
+    "preferences": "Afzalliklaringiz",
+    "emailPlaceholder": "your@email.com",
+    "namePlaceholder": "Ismingiz",
+    "bioPlaceholder": "O‘zingiz haqida yozing...",
+    "bio": "Bio",
+    "location": "Joylashuv",
+    "locationPlaceholder": "Joylashuvingiz",
+    "photoUploadSoon": "Foto yuklash tez orada",
+    "helpCenterSoon": "Yordam markazi tez orada"
+  },
+  "finance": {
+    "categoryNames": {
+      "food": "Ovqat",
+      "food_drinks": "Ovqat va ichimliklar",
+      "transport": "Transport",
+      "shopping": "Xaridlar",
+      "housing": "Uy-joy",
+      "healthcare": "Sog‘liqni saqlash",
+      "entertainment": "Ko‘ngilochar",
+      "bills": "Hisob-kitoblar",
+      "health": "Sog‘liq",
+      "education": "Ta’lim",
+      "salary": "Maosh",
+      "business": "Biznes",
+      "investment": "Investitsiya",
+      "freelance": "Frilans",
+      "other": "Boshqa"
+    },
+    "accounts": {
+      "currency": "Valyuta"
+    },
+    "onboarding": {
+      "steps": {
+        "welcome": {
+          "title": "Moliyaga xush kelibsiz",
+          "subtitle": "Aqlli kuzatuv, tahlillar va maqsadlar bilan moliyaviy kelajagingizni boshqaring.",
+          "cards": {
+            "trackEverything": {
+              "title": "Hammasini kuzating",
+              "desc": "Daromad, xarajat va jamg‘armalarni nazorat qiling"
+            },
+            "staySecure": {
+              "title": "Xavfsizlik",
+              "desc": "Ma’lumotlaringiz shifrlangan va maxfiy"
+            },
+            "getInsights": {
+              "title": "Tahlillar",
+              "desc": "AI yordamida xarajatlar tahlili"
+            }
+          }
+        },
+        "currency": {
+          "title": "Valyutani tanlang",
+          "subtitle": "Barcha hisob-kitoblar uchun afzal valyutani tanlang.",
+          "label": "Valyuta",
+          "preview": "Ko‘rib chiqish"
+        },
+        "account": {
+          "title": "Birinchi hisobingizni yarating",
+          "subtitle": "Moliyani kuzatishni boshlash uchun hisob qo‘shing.",
+          "typeLabel": "Hisob turi",
+          "nameLabel": "Hisob nomi",
+          "namePlaceholder": "Hisob nomini kiriting",
+          "initialBalanceOptional": "Boshlang‘ich qoldiq (ixtiyoriy)",
+          "balanceHelp": "Ushbu hisobning joriy qoldig‘ini kiriting (agar yangidan boshlasangiz 0 qoldiring)",
+          "types": {
+            "cash": {
+              "desc": "Naqd pul va mayda xarajatlar"
+            },
+            "card": {
+              "desc": "Debet va kredit kartalar"
+            },
+            "bank": {
+              "desc": "Bank omonat va joriy hisoblar"
+            },
+            "crypto": {
+              "desc": "Kripto hamyonlar"
+            }
+          },
+          "suggestions": {
+            "cash": [
+              "Hamyon",
+              "Mayda xarajatlar",
+              "Favqulodda jamg‘arma"
+            ],
+            "card": [
+              "Asosiy karta",
+              "Debet karta",
+              "Kredit karta"
+            ],
+            "bank": [
+              "Asosiy hisob",
+              "Jamg‘arma hisobi",
+              "Joriy hisob"
+            ],
+            "crypto": [
+              "Kripto hamyon",
+              "Bitcoin hamyon",
+              "Savdo hisobi"
+            ]
+          }
+        },
+        "categories": {
+          "title": "Aqlli toifalar",
+          "subtitle": "Xarajat odatlaringizni kuzatish uchun tayyor toifalar qo‘shdik.",
+          "names": {
+            "foodDining": "Ovqat va restoranlar",
+            "transportation": "Transport",
+            "shopping": "Xaridlar",
+            "entertainment": "Ko‘ngilochar",
+            "billsUtilities": "Hisob va kommunal",
+            "healthcare": "Sog‘liqni saqlash"
+          },
+          "tipLabel": "Maslahat:",
+          "tip": "Tranzaksiya tavsifiga ko‘ra toifalar avtomatik taklif etiladi."
+        },
+        "ready": {
+          "title": "Hammasi tayyor! 🎉",
+          "subtitle": "Moliyani kuzatish sozlandi. Siz kiritdingiz:",
+          "summary": {
+            "currency": "Valyuta",
+            "firstAccount": "Birinchi hisob",
+            "accountType": "Hisob turi",
+            "startingBalance": "Boshlang‘ich qoldiq"
+          }
+        },
+        "errors": {
+          "selectCurrency": "Iltimos, valyutani tanlang",
+          "accountNameRequired": "Hisob nomi majburiy",
+          "accountNameMaxLen": "Hisob nomi 50 belgidan qisqa bo‘lishi kerak",
+          "selectAccountType": "Hisob turini tanlang",
+          "balanceNonNegative": "Qoldiq manfiy bo‘lishi mumkin emas"
+        }
+      }
+    },
+    "analyst": {
+      "header": {
+        "title": "Moliyaviy tahlil",
+        "subtitle": "Moliyangiz uchun AI tahlillari"
+      },
+      "periods": {
+        "1month": "1 oy",
+        "3months": "3 oy",
+        "6months": "6 oy",
+        "1year": "1 yil"
+      },
+      "health": {
+        "title": "Moliyaviy salomatlik indeksi",
+        "ratings": {
+          "excellent": "A’lo",
+          "good": "Yaxshi",
+          "fair": "Qoniqarli",
+          "needsImprovement": "Yaxshilash kerak"
+        },
+        "factors": {
+          "savingsRate": "Jamg‘arma ulushi",
+          "budgetAdherence": "Byudjetga rioya",
+          "emergencyFund": "Favqulodda jamg‘arma",
+          "goalProgress": "Maqsadlar holati"
+        }
+      },
+      "metrics": {
+        "totalBalance": "Umumiy qoldiq",
+        "savingsRate": "Jamg‘arma ulushi",
+        "netCashFlow": "Sof pul oqimi",
+        "activeGoals": "Faol maqsadlar"
+      },
+      "insights": {
+        "title": "AI tahlillari",
+        "items": {
+          "lowSavingsRate": {
+            "title": "Past jamg‘arma ulushi",
+            "description": "Jamg‘arma ulushingiz {{rate}}%. Daromadning kamida 20% ini yig‘ishga harakat qiling.",
+            "action": "Xarajatlarni ko‘rib chiqish"
+          },
+          "budgetExceeded": {
+            "title": "Byudjet oshib ketdi",
+            "description": "{{category}} bo‘yicha byudjet {{amount}} ga oshdi.",
+            "action": "Xarajatlarni qisqartirish"
+          },
+          "lowEmergencyFund": {
+            "title": "Jamg‘arma yetarli emas",
+            "description": "3–6 oylik xarajatlarni qoplaydigan zaxira jamg‘arma yarating.",
+            "action": "Jamg‘arishni boshlash"
+          },
+          "topSpendingCategory": {
+            "title": "Eng katta xarajat toifasi",
+            "description": "Asosiy xarajat toifangiz: {{category}} — {{amount}}.",
+            "action": "Toifani tahlil qilish"
+          }
+        },
+        "badges": {
+          "priority": {
+            "high": "Yuqori",
+            "medium": "O‘rtacha",
+            "low": "Past"
+          }
+        }
+      },
+      "tabs": {
+        "overview": "Umumiy ko‘rinish",
+        "spending": "Xarajatlar",
+        "budgets": "Byudjetlar",
+        "goals": "Maqsadlar"
+      },
+      "charts": {
+        "cashFlow": {
+          "title": "Pul oqimi dinamikasi"
+        },
+        "category": {
+          "title": "Toifalar bo‘yicha xarajatlar"
+        }
+      },
+      "budgets": {
+        "status": {
+          "over": "Byudjet oshgan",
+          "warning": "Chegaraga yaqin",
+          "good": "Reja bo‘yicha"
+        },
+        "summary": {
+          "of": "{{spent}} / {{budgeted}}",
+          "remaining": "Qoldi: {{amount}}",
+          "overBudget": "Chegaradan oshdi: {{amount}}"
+        }
+      },
+      "goals": {
+        "time": {
+          "daysLeft": "Qoldi: {{days}} kun",
+          "overdue": "Muddati o‘tgan"
+        },
+        "summary": {
+          "of": "{{current}} / {{target}}",
+          "remaining": "Qoldi: {{amount}}"
+        }
+      }
+    },
+    "setup": {
+      "title": "Moliyani sozlash",
+      "stepCounter": "{{current}} / {{total}}",
+      "currencies": {
+        "UZS": "O‘zbekiston so‘mi",
+        "USD": "AQSh dollari",
+        "EUR": "Yevro",
+        "RUB": "Rossiya rubli"
+      },
+      "accounts": {
+        "types": {
+          "cash": "Naqd",
+          "card": "Karta",
+          "bank": "Bank",
+          "crypto": "Kripto"
+        }
+      },
+      "steps": {
+        "currency": {
+          "title": "Valyutani tanlang",
+          "subtitle": "Moliyaviy kuzatuv uchun asosiy valyuta"
+        },
+        "accounts": {
+          "title": "Hisoblarni qo‘shing",
+          "subtitle": "Pul harakatlarini kuzatish uchun hisoblarni sozlang",
+          "form": {
+            "nameLabel": "Hisob nomi",
+            "namePlaceholder": "masalan, Asosiy hamyon, Kredit karta",
+            "typeLabel": "Hisob turi",
+            "openingBalance": "Boshlang‘ich qoldiq",
+            "colorLabel": "Rang",
+            "addAccount": "Hisob qo‘shish"
+          },
+          "added": "Qo‘shilgan hisoblar",
+          "defaultSuffix": " • Standart"
+        },
+        "balances": {
+          "title": "Boshlang‘ich qoldiqlar",
+          "subtitle": "Zarur bo‘lsa qoldiqlarni yangilang",
+          "currentBalance": "Joriy qoldiq",
+          "totalBalance": "Umumiy qoldiq"
+        },
+        "categories": {
+          "title": "Toifalarni sozlash",
+          "subtitle": "Ommabop toifalarni qo‘shdik. Xohlasangiz o‘zingiznikini qo‘shing.",
+          "incomeTitle": "Daromad toifalari",
+          "expenseTitle": "Xarajat toifalari",
+          "addCustomTitle": "Maxsus toifa qo‘shish",
+          "customTitle": "Maxsus toifalar",
+          "form": {
+            "nameLabel": "Toifa nomi",
+            "namePlaceholder": "masalan, Uy hayvonlari, Ta’lim",
+            "typeLabel": "Turi",
+            "colorLabel": "Rang",
+            "addButton": "Maxsus toifa qo‘shish"
+          }
+        }
+      },
+      "categoryTypes": {
+        "income": "Daromad",
+        "expense": "Xarajat"
+      },
+      "defaults": {
+        "income": {
+          "salary": "Maosh",
+          "freelance": "Frilans",
+          "investment": "Investitsiya",
+          "gift": "Sovg‘a"
+        },
+        "expense": {
+          "food_drinks": "Ovqat va ichimliklar",
+          "transport": "Transport",
+          "shopping": "Xaridlar",
+          "housing": "Uy-joy",
+          "healthcare": "Sog‘liqni saqlash",
+          "entertainment": "Ko‘ngilochar"
+        }
+      },
+      "errors": {
+        "selectCurrency": "Iltimos, valyutani tanlang",
+        "addOneAccount": "Kamida bitta hisob qo‘shing",
+        "accountNameRequired": "Hisob nomi majburiy",
+        "balancePositive": "Qoldiq musbat bo‘lishi kerak",
+        "categoryNameRequired": "Toifa nomini kiriting"
+      },
+      "actions": {
+        "completeSetup": "Sozlashni yakunlash"
+      }
+    },
+    "transactions": {
+      "newTransaction": "Yangi tranzaksiya",
+      "details": {
+        "title": "Tranzaksiya tafsilotlari",
+        "typeSuffix": "Tranzaksiya",
+        "amount": "Summa",
+        "category": "Toifa",
+        "date": "Sana",
+        "account": "Hisob",
+        "description": "Tavsif",
+        "currency": "Valyuta",
+        "tags": "Teglar"
+      },
+      "form": {
+        "steps": {
+          "amountAndType": "Summa va turi",
+          "details": "Tafsilotlar",
+          "accountAndConfirm": "Hisob va tasdiqlash"
+        },
+        "stepCounter": "{{step}} / {{total}}",
+        "amount": {
+          "howMuch": "Qancha?"
+        },
+        "type": {
+          "label": "Turi",
+          "income": "Daromad",
+          "expense": "Xarajat",
+          "transfer": "O‘tkazma"
+        },
+        "description": {
+          "label": "Tavsif",
+          "optional": "(ixtiyoriy)",
+          "placeholder": "masalan, Kafe tushligi, Maosh to‘lovi..."
+        },
+        "category": {
+          "label": "Toifa",
+          "custom": "Maxsus",
+          "create": "Maxsus toifa yaratish",
+          "namePlaceholder": "Toifa nomini kiriting..."
+        },
+        "date": {
+          "label": "Sana"
+        },
+        "account": {
+          "label": "Hisob",
+          "selectPlaceholder": "Hisobni tanlang"
+        },
+        "summary": {
+          "title": "Tranzaksiya yakuni",
+          "amount": "Summa:",
+          "type": "Turi:",
+          "description": "Tavsif:",
+          "category": "Toifa:",
+          "account": "Hisob:"
+        },
+        "actions": {
+          "save": "Tranzaksiyani saqlash",
+          "saving": "Saqlanmoqda..."
+        },
+        "errors": {
+          "amountRequired": "Summa kiriting",
+          "typeRequired": "Tranzaksiya turini tanlang",
+          "categoryRequired": "Toifani tanlang",
+          "accountRequired": "Hisobni tanlang"
+        }
+      }
+    },
+    "section": {
+      "title": "Moliya",
+      "tabs": {
+        "dashboard": "Bosh sahifa",
+        "transactions": "Tarix",
+        "budgets": "Byudjetlar",
+        "goals": "Maqsadlar"
+      },
+      "periods": {
+        "daily": "Kunlik",
+        "weekly": "Haftalik",
+        "monthly": "Oylik",
+        "quarterly": "Choraklik",
+        "yearly": "Yillik"
+      },
+      "accounts": {
+        "all": "Barchasi",
+        "allAccounts": "Barcha hisoblar",
+        "viewAllBalances": "Barcha qoldiqlarni ko‘rish",
+        "edit": "Hisobni tahrirlash",
+        "add": "Hisob qo‘shish",
+        "form": {
+          "nameLabel": "Hisob nomi",
+          "namePlaceholder": "masalan, Asosiy hamyon, Bank kartasi",
+          "typeLabel": "Hisob turi",
+          "custom": "Maxsus",
+          "customTypeNameLabel": "Maxsus tur nomi",
+          "customTypeNamePlaceholder": "masalan, Jamg‘arma, Safar, Bolalar",
+          "initialBalance": "Boshlang‘ich qoldiq",
+          "currentBalance": "Joriy qoldiq"
+        }
+      },
+      "cards": {
+        "totalBalance": "Umumiy qoldiq",
+        "balance": "Qoldiq",
+        "savings": "Jamg‘arma",
+        "income": "Daromad",
+        "expenses": "Xarajatlar"
+      },
+      "freePlan": {
+        "usage": "Bepul reja: bu oy {{used}}/{{limit}} tranzaksiya"
+      },
+      "quickActions": {
+        "add": "Qo‘shish",
+        "account": "Hisob",
+        "budget": "Byudjet",
+        "goal": "Maqsad"
+      },
+      "charts": {
+        "cashFlow": {
+          "title": "Pul oqimi dinamikasi",
+          "overviewSuffix": "Umumiy",
+          "legend": {
+            "income": "Daromad",
+            "expenses": "Xarajatlar",
+            "netFlow": "Sof oqim"
+          },
+          "avg": {
+            "income": "O‘rtacha daromad",
+            "expenses": "O‘rtacha xarajat",
+            "netFlow": "O‘rtacha sof oqim"
+          },
+          "tooltip": {
+            "period": "Davr: {{label}}",
+            "income": "💰 Daromad",
+            "expenses": "💸 Xarajatlar",
+            "netFlow": "📊 Sof oqim"
+          }
+        },
+        "category": {
+          "title": "Toifalar bo‘yicha xarajatlar"
+        },
+        "overlay": {
+          "financialAnalytics": "Moliyaviy analitika",
+          "categoryAnalytics": "Toifalar analitikasi",
+          "unlockPro": "Pro obunasi bilan ochiladi",
+          "unlockLite": "Lite obunasi bilan ochiladi",
+          "upgradeTo": "{{plan}} rejasiga yangilang"
+        }
+      },
+      "filters": {
+        "searchPlaceholder": "Tranzaksiyalarni qidiring...",
+        "toggle": "Filtrlar",
+        "advanced": "Kengaytirilgan filtrlar",
+        "resetAll": "Hammasini tozalash",
+        "type": "Turi",
+        "account": "Hisob",
+        "category": "Toifa",
+        "amountRange": "Summalar diapazoni",
+        "allTypes": "Barcha turlar",
+        "allCategories": "Barcha toifalar",
+        "types": {
+          "income": "Daromad",
+          "expense": "Xarajat"
+        },
+        "amounts": {
+          "all": "Har qanday summa",
+          "under100": "100 ming UZS dan kam",
+          "100_500": "100K — 500K UZS",
+          "500_1000": "500K — 1M UZS",
+          "over1000": "1M UZS dan ortiq"
+        },
+        "date": {
+          "from": "Boshlanish sanasi",
+          "to": "Tugash sanasi",
+          "selectFrom": "Boshlanish sanasini tanlang",
+          "selectTo": "Tugash sanasini tanlang"
+        },
+        "summary": {
+          "showing": "{{total}} dan {{count}} ta tranzaksiya ko‘rsatildi",
+          "search": "Qidiruv:",
+          "type": "Tur:",
+          "category": "Toifa:"
+        },
+        "chips": {
+          "search": "Qidiruv",
+          "type": "Tur",
+          "category": "Toifa"
+        },
+        "clear": "Filtrlarni tozalash"
+      },
+      "transactions": {
+        "emptyFilteredTitle": "Filtrlarga mos tranzaksiyalar topilmadi",
+        "emptyFilteredSubtitle": "Filtr shartlarini o‘zgartirib ko‘ring",
+        "emptyTitle": "Bu davrda tranzaksiyalar yo‘q",
+        "emptySubtitle": "Avval birinchi tranzaksiyani qo‘shing",
+        "add": "Tranzaksiya qo‘shish",
+        "showingLimited": "{{count}} tadan 20 tasi ko‘rsatilmoqda",
+        "showingTotal": "{{count}} tadan 20 tasi ko‘rsatilmoqda (jami {{total}})",
+        "unknownAccount": "Noma’lum"
+      },
+      "budgets": {
+        "empty": "Hozircha byudjet yaratilmagan",
+        "create": "Byudjet yaratish",
+        "autoTracked": "Avto-kuzatuv",
+        "remaining": "Qoldi: {{amount}}",
+        "overBudget": "Byudjetdan oshdi: {{amount}}",
+        "info": "Byudjetlar xarajat toifalari asosida avtomatik kuzatiladi. Limit qo‘ying — biz progressni ko‘rsatamiz!",
+        "periodLabel": "Davr",
+        "limitLabel": "Byudjet limiti",
+        "categoryLabel": "Toifa",
+        "categoryPlaceholder": "masalan, Ovqat, Transport, Ko‘ngilochar"
+      },
+      "goals": {
+        "active": "Faol maqsadlar",
+        "empty": "Maqsadlar hali belgilanmagan",
+        "create": "Maqsad yaratish",
+        "achieved": "Maqsad bajarildi! 🎉",
+        "form": {
+          "nameLabel": "Maqsad nomi",
+          "namePlaceholder": "masalan, Favqulodda jamg‘arma, Ta’til",
+          "targetLabel": "Maqsad summa",
+          "deadlineLabel": "Muddat",
+          "categoryLabel": "Toifa",
+          "categoryPlaceholder": "masalan, Jamg‘arma, Investitsiya"
+        },
+        "progress": {
+          "title": "Maqsad progressini yangilash",
+          "addSavings": "Jamg‘arma miqdorini qo‘shing",
+          "amountPlaceholder": "Jamg‘arilgan summani kiriting",
+          "note": "Bu joriy progressga qo‘shiladi: {{amount}}",
+          "update": "Progresni yangilash"
+        }
+      }
+    },
+    "analytics": {
+      "title": "Moliyaviy analitika",
+      "subtitle": "Progres va tahlillarni kuzating",
+      "periods": {
+        "7d": "7K",
+        "30d": "30K",
+        "90d": "90K",
+        "1y": "1Y"
+      },
+      "tabs": {
+        "overview": "Umumiy",
+        "insights": "Tahlillar",
+        "summary": "Hisobot"
+      },
+      "empty": {
+        "title": "Hali moliyaviy ma’lumotlar yo‘q",
+        "description": "Analitikani ko‘rish uchun tranzaksiyalar va hisoblar qo‘shing.",
+        "accounts": "Hisoblar",
+        "transactions": "Tranzaksiyalar"
+      },
+      "stats": {
+        "totalBalance": "Umumiy qoldiq",
+        "income": "Daromad",
+        "expenses": "Xarajatlar",
+        "savings": "Jamg‘arma"
+      },
+      "overview": {
+        "title": "Moliyaviy ko‘rinish",
+        "desc": "Joriy moliyaviy holat",
+        "totalIncome": "Jami daromad",
+        "totalExpenses": "Jami xarajat",
+        "netSavings": "Sof jamg‘arma",
+        "savingsRate": "Jamg‘arma ulushi",
+        "savingsRateMessages": {
+          "excellent": "A’lo jamg‘arma ulushi!",
+          "good": "Yaxshi jamg‘arma ulushi",
+          "consider": "Jamg‘armani oshirishni ko‘rib chiqing"
+        }
+      },
+      "accountSummary": {
+        "title": "Hisoblar hisobotı",
+        "desc": "Moliyaviy hisoblaringiz ko‘rinishi",
+        "activeAccounts": "Faol hisoblar",
+        "totalTransactions": "Jami tranzaksiyalar"
+      },
+      "insights": {
+        "excellentSaver": {
+          "title": "Zo‘r jamg‘aruvchi!",
+          "message": "Daromadingizning {{percent}}% ini jamg‘arayapsiz. Ajoyib!"
+        },
+        "budgetAlert": {
+          "title": "Byudjet ogohlantirishi",
+          "message": "Xarajatlar daromaddan oshdi. Odatlaringizni ko‘rib chiqing."
+        },
+        "activeTracker": {
+          "title": "Faol kuzatuv",
+          "message": "Siz {{count}} ta tranzaksiyani yozdingiz. Barakalla!"
+        },
+        "multiAccount": {
+          "title": "Bir nechta hisob",
+          "message": "{{count}} ta hisobni samarali boshqaryapsiz. Zarur bo‘lsa birlashtirishni o‘ylab ko‘ring."
+        },
+        "keepGrowing": {
+          "title": "O‘sishda davom eting",
+          "message": "To‘g‘ri yo‘ldasiz! Jamg‘arma ulushini 20% gacha oshirishga harakat qiling."
+        }
+      },
+      "summary": {
+        "title": "Moliyaviy salomatlik indeksi",
+        "desc": "Joriy ma’lumotlaringiz asosida",
+        "overallScore": "Umumiy ball",
+        "savingsRate": "Jamg‘arma ulushi",
+        "activityLevel": "Faollik darajasi",
+        "activity": {
+          "high": "Yuqori",
+          "medium": "O‘rtacha",
+          "low": "Past"
+        }
+      },
+      "actions": {
+        "title": "Tavsiya etilgan harakatlar",
+        "desc": "Moliyaviy salomatlikni yaxshilash qadamlar",
+        "increaseSavingsRate": "Jamg‘arma ulushini kamida 10% gacha oshiring",
+        "keepTracking": "Yaxshiroq tahlil uchun tranzaksiyalarni yozishda davom eting",
+        "addSavingsAccount": "Jamg‘arma hisobi qo‘shishni ko‘rib chiqing"
+      }
+    }
+  },
+  "planner": {
+    "task": {
+      "newTask": "Yangi vazifa"
+    },
+    "selectedDate": "Tanlandi: {{date}}",
+    "views": {
+      "daily": "Kunlik",
+      "weekly": "Haftalik",
+      "monthly": "Oylik",
+      "yearly": "Yillik"
+    },
+    "filters": {
+      "searchPlaceholder": "Vazifalarni qidiring... (Fokus uchun / bosing)",
+      "button": "Filtrlar",
+      "status": {
+        "all": "Barcha holat",
+        "todo": "Bajarish kerak",
+        "doing": "Jarayonda",
+        "done": "Bajarildi",
+        "skipped": "O‘tkazib yuborildi"
+      },
+      "priority": {
+        "all": "Barcha ustuvorlik",
+        "high": "Yuqori",
+        "medium": "O‘rtacha",
+        "low": "Past"
+      },
+      "timeRange": {
+        "placeholder": "Vaqt oralig‘i",
+        "all": "Butun vaqt",
+        "today": "Bugun",
+        "yesterday": "Kecha",
+        "thisWeek": "Shu hafta",
+        "lastWeek": "O‘tgan hafta",
+        "thisMonth": "Shu oy",
+        "lastMonth": "O‘tgan oy",
+        "thisYear": "Joriy yil",
+        "lastYear": "O‘tgan yil",
+        "custom": "Ixtiyoriy oraliq"
+      },
+      "completion": {
+        "placeholder": "Holati",
+        "all": "Barcha elementlar",
+        "completed": "Tugallangan",
+        "incomplete": "Tugallanmagan",
+        "overdue": "Muddati o‘tgan"
+      },
+      "showCompleted": "Tugallanganlarni ko‘rsatish",
+      "resetAll": "Hammasini tiklash",
+      "labels": {
+        "from": "Dan:",
+        "to": "Gacha:",
+        "showing": "Ko‘rsatilmoqda",
+        "with": "bilan",
+        "tasks": "vazifalar",
+        "goals": "maqsadlar",
+        "activeFilter_one": "{{count}} ta faol filtr",
+        "activeFilter_other": "{{count}} ta faol filtr"
+      }
+    },
+    "calendar": {
+      "selectDateTitle": "Sanani tanlash",
+      "selectDateDesc": "Vazifalarni ko‘rish yoki qo‘shish uchun sana tanlang",
+      "weekdayShort": {
+        "su": "Ya",
+        "mo": "Du",
+        "tu": "Se",
+        "we": "Ch",
+        "th": "Pa",
+        "fr": "Ju",
+        "sa": "Sha"
+      },
+      "selectedToast": "Tanlandi: {{date}}"
+    },
+    "list": {
+      "tasks": "Vazifalar",
+      "weeklyGoals": "Haftalik maqsadlar",
+      "monthlyGoals": "Oylik maqsadlar",
+      "yearlyGoals": "Yillik maqsadlar",
+      "empty": "{{date}} uchun {{itemType}} yo‘q",
+      "createFirst": "Birinchi {{itemTypeSingle}} ni yarating"
+    },
+    "detail": {
+      "selectPrompt": "{{itemTypeSingle}} ni tanlab tafsilotlarni ko‘ring",
+      "description": "Tavsif",
+      "startDate": "Boshlanish sanasi",
+      "dueDate": "Muddat",
+      "targetDate": "Maqsad sanasi",
+      "estimate": "Baholash",
+      "hours": "soat",
+      "progress": "Progres",
+      "tags": "Teglar",
+      "checklist": "Ro‘yxat",
+      "notSet": "Belgilanmagan",
+      "prioritySuffix": "ustuvorlik"
+    },
+    "editor": {
+      "task": {
+        "editTitle": "Vazifani tahrirlash",
+        "newTitle": "Yangi vazifa",
+        "save": "Vazifani saqlash",
+        "titleLabel": "Sarlavha *",
+        "titlePlaceholder": "Vazifa sarlavhasini kiriting..."
+      },
+      "goal": {
+        "editTitle": "Maqsadni tahrirlash",
+        "newTitle": "Yangi maqsad",
+        "save": "Maqsadni saqlash",
+        "titleLabel": "Sarlavha *",
+        "titlePlaceholder": "Maqsad sarlavhasini kiriting..."
+      },
+      "descriptionLabel": "Tavsif",
+      "descriptionPlaceholder": "Tavsif qo‘shing...",
+      "priorityLabel": "Ustuvorlik",
+      "priorityPlaceholder": "Ustuvorlikni tanlang",
+      "statusLabel": "Holat",
+      "statusPlaceholder": "Holatni tanlang",
+      "startDate": "Boshlanish sanasi",
+      "dueDate": "Muddat",
+      "targetDate": "Maqsad sanasi",
+      "pickDate": "Sanani tanlang",
+      "estimateLabel": "Baholash (soat)",
+      "estimatePlaceholder": "0.5",
+      "tagsLabel": "Teglar (vergul bilan)",
+      "tagsPlaceholder": "ish, shoshilinch, uchrashuv",
+      "checklistLabel": "Ro‘yxat",
+      "addItem": "Band qo‘shish",
+      "checklistItemPlaceholder": "Ro‘yxat bandi...",
+      "milestonesLabel": "Bosqichlar",
+      "addMilestone": "Bosqich qo‘shish",
+      "milestoneTitlePlaceholder": "Bosqich nomi...",
+      "saving": "Saqlanmoqda..."
+    },
+    "priority": {
+      "high": "Yuqori",
+      "medium": "O‘rtacha",
+      "low": "Past"
+    },
+    "status": {
+      "todo": "Bajarish kerak",
+      "doing": "Jarayonda",
+      "done": "Bajarildi",
+      "skipped": "O‘tkazib yuborildi",
+      "planning": "Rejalashtirish",
+      "in_progress": "Jarayonda",
+      "completed": "Tugallandi",
+      "paused": "Pauza"
+    },
+    "labels": {
+      "today": "Bugun",
+      "tomorrow": "Ertaga",
+      "yesterday": "Kecha",
+      "year": "Yil"
+    },
+    "default": {
+      "untitledTask": "Nomsiz vazifa",
+      "untitledGoal": "Nomsiz maqsad"
+    },
+    "nouns": {
+      "task": "vazifa",
+      "goal": "maqsad"
+    },
+    "analytics": {
+      "header": "Samaradorlik ko‘rinishi",
+      "subheader": "Vazifalar bajarilishini va tendensiyalarni kuzating",
+      "cards": {
+        "completionRate": {
+          "title": "Tugallanish darajasi",
+          "subtitle": "{{total}} ta vazifadan {{completed}} tasi",
+          "noTasks": "Hozircha vazifalar yo‘q"
+        },
+        "streak": {
+          "title": "Joriy seriya",
+          "start": "Vazifalarni bajarishni boshlang!",
+          "inARow": "ketma-ket"
+        },
+        "totalCompleted": {
+          "title": "Jami bajarilgan",
+          "subtitle": "Butun davr yutuqlari"
+        }
+      },
+      "sections": {
+        "taskStatus": {
+          "title": "Vazifa holatlari",
+          "emptyTitle": "Hali vazifalar yaratilmagan",
+          "emptySubtitle": "Birinchi vazifani yarating!"
+        },
+        "priorityDistribution": {
+          "title": "Ustuvorliklar taqsimoti",
+          "emptyTitle": "Ustuvorlik belgilanmagan",
+          "emptySubtitle": "Bu yerda taqsimot ko‘rinadi"
+        },
+        "trends": {
+          "title": "Samaradorlik tendensiyasi",
+          "emptyTitle": "Ushbu davrda tugallangan vazifalar yo‘q",
+          "emptySubtitle": "Bu yerda tendensiyalar ko‘rinadi"
+        }
+      },
+      "time": {
+        "day": "kun",
+        "days": "kun",
+        "last7days": "Oxirgi 7 kun"
+      },
+      "overlay": {
+        "title": "Samaradorlik ko‘rinishi",
+        "subtitle": "Batafsil analitika {{plan}} obunasi bilan",
+        "upgradeCta": "{{plan}} ga yangilang"
+      }
+    }
+  },
+  "workout": {
+    "activities": {
+      "newWorkout": "Yangi trening"
+    },
+    "types": {
+      "cardio": "Kardio",
+      "strength": "Kuch",
+      "flexibility": "Moslashuvchanlik",
+      "sports": "Sport"
+    },
+    "common": {
+      "workout": "Trening"
+    },
+    "onboarding": {
+      "step": "Qadam {{current}} / {{total}}",
+      "steps": {
+        "welcome": {
+          "title": "Xush kelibsiz",
+          "subtitle": "Fitnes sayohatingizni boshlang",
+          "heroTitle": "Fitnes sayohatingizni kuzating",
+          "heroSubtitle": "Maqsadlaringiz uchun shaxsiy kuzatuv va tahlil olishingiz uchun trening afzalliklarini sozlang.",
+          "cards": {
+            "setGoals": "Maqsad qo‘yish",
+            "trackProgress": "Progresni kuzatish"
+          }
+        },
+        "sports": {
+          "title": "Sport turlari",
+          "subtitle": "Faoliyatlarni tanlang",
+          "chooseTitle": "Sportlaringizni tanlang",
+          "chooseSubtitle": "Yoqqan yoki kuzatmoqchi bo‘lgan faoliyatlarni belgilang",
+          "selectedCount_one": "{{count}} ta sport tanlandi",
+          "selectedCount_other": "{{count}} ta sport tanlandi"
+        },
+        "goals": {
+          "title": "Maqsadlar",
+          "subtitle": "Nishonlarni belgilang",
+          "whatAchieve": "Nimani xohlaysiz?",
+          "fitnessGoals": "Fitnes maqsadlari",
+          "experience": {
+            "title": "Tajriba darajasi",
+            "levels": {
+              "beginner": {
+                "label": "Yangi",
+                "desc": "Endi boshlayapman"
+              },
+              "intermediate": {
+                "label": "O‘rta",
+                "desc": "6+ oy tajriba"
+              },
+              "advanced": {
+                "label": "Yuqori",
+                "desc": "2+ yil tajriba"
+              }
+            }
+          },
+          "weekly": {
+            "title": "Haftalik chastota",
+            "timesPerWeek": "Haftasiga marta:",
+            "freqSuffix": "marta/hafta"
+          }
+        },
+        "confirm": {
+          "title": "Tasdiqlash",
+          "subtitle": "Rejangizni ko‘rib chiqing",
+          "allSet": "Hammasi tayyor!",
+          "review": "Trening sozlamalarini ko‘rib chiqish",
+          "selectedSports": "Tanlangan sportlar",
+          "fitnessGoals": "Fitnes maqsadlari",
+          "experience": "Tajriba",
+          "frequency": "Chastota"
+        }
+      },
+      "cta": {
+        "back": "Ortga",
+        "continue": "Davom etish",
+        "completeSetup": "Sozlashni yakunlash"
+      },
+      "goalsList": {
+        "lose_weight": "Vazn kamaytirish",
+        "build_muscle": "Mushak o‘stirish",
+        "improve_endurance": "Chidamlilikni oshirish",
+        "flexibility": "Moslashuvchanlik",
+        "general_health": "Umumiy sog‘liq",
+        "performance": "Natijadorlik"
+      }
+    },
+    "analytics": {
+      "header": "Trening analitikasi",
+      "subheader": "Sessiyalar, progres va seriyalarni kuzating",
+      "overlay": {
+        "subtitle": "Batafsil tahlillar Pro tarifida mavjud",
+        "upgradeCta": "Pro ga yangilang"
+      },
+      "labels": {
+        "completed": "Tugallangan",
+        "missed": "O‘tkazilgan",
+        "complete": "Tugallandi",
+        "week": "Hafta"
+      },
+      "units": {
+        "workoutsLabel": "Treninglar",
+        "caloriesLabel": "Yoqilgan kaloriya",
+        "days": "kun",
+        "min": "daq",
+        "kg": "kg",
+        "s": "s",
+        "lbs": "funt",
+        "mi": "mil",
+        "bpm": "ur/min"
+      },
+      "time": {
+        "weekN": "{{num}}-hafta"
+      },
+      "cards": {
+        "completionRate": {
+          "title": "Tugallanish darajasi",
+          "subtitle": "{{total}} ta treningdan {{completed}} tasi"
+        },
+        "calories": {
+          "title": "Yoqilgan kaloriya",
+          "subtitle": "Jami kaloriya"
+        },
+        "streak": {
+          "title": "Joriy seriya",
+          "best": "Eng yaxshi: {{days}} kun"
+        },
+        "avgDuration": {
+          "title": "O‘rtacha davomiylik",
+          "subtitle": "Har bir trening uchun"
+        }
+      },
+      "sections": {
+        "completion": {
+          "title": "Trening tugallanishi"
+        },
+        "types": {
+          "title": "Trening turlari"
+        },
+        "weeklyFrequency": {
+          "title": "Haftalik chastota"
+        },
+        "caloriesTrend": {
+          "title": "Kaloriya dinamikasi"
+        }
+      },
+      "progress": {
+        "weightLifted": {
+          "title": "Ko‘tarilgan vazn",
+          "subtitle": "Umumiy hajm"
+        },
+        "distanceRun": {
+          "title": "Yugurilgan masofa",
+          "subtitle": "Umumiy masofa"
+        },
+        "avgHeartRate": {
+          "title": "O‘rtacha yurak urishi",
+          "subtitle": "Trening vaqtida"
+        }
+      },
+      "selectedDay": {
+        "title": "{{date}} dagi treninglar",
+        "empty": "Bu kuni trening yo‘q"
+      },
+      "streakProgress": {
+        "title": "Seriya progresi",
+        "current": "Joriy seriya",
+        "zeroDays": "0 kun",
+        "best": "Eng yaxshi: {{days}} kun"
+      }
+    },
+    "section": {
+      "header": "Trening va fitnes",
+      "overview": {
+        "stats": "Sizda {{programs}} ta dastur va {{exercises}} ta mashq bor"
+      },
+      "programs": {
+        "title": "Dasturlaringiz",
+        "totalSuffix": "Jami: {{count}}",
+        "meta": "Haftasiga {{freq}} marta • {{count}} ta mashq",
+        "emptyTitle": "Hozircha dastur yo‘q",
+        "emptySubtitle": "Birinchi trening dasturingizni yarating",
+        "badges": {
+          "freqPerWeek": "Haftasiga {{freq}} marta",
+          "exercisesCount": "{{count}} ta mashq"
+        }
+      },
+      "limits": {
+        "programs": {
+          "label": "Dasturlar ({{current}}/{{max}})",
+          "freeHint": "Lite tarifida 5 ta dasturgacha",
+          "liteHint": "Pro tarifida cheksiz",
+          "proHint": "Cheksiz dasturlar mavjud",
+          "upgrade": "Yangilash"
+        }
+      },
+      "cta": {
+        "createProgram": "Dastur yaratish",
+        "addProgram": "Dastur qo‘shish",
+        "addNewProgram": "Yangi dastur qo‘shish",
+        "start": "Boshlash",
+        "endSession": "Sessiyani yakunlash",
+        "addExercise": "Mashq qo‘shish",
+        "updateExercise": "Mashqni yangilash"
+      },
+      "week": {
+        "title": "Ushbu hafta",
+        "workouts": "Treninglar",
+        "caloriesEst": "{{cal}} kaloriya (taxminan)",
+        "activeLabel": "Faol: {{label}}"
+      },
+      "recent": {
+        "title": "Yaqinda o‘tilganlar",
+        "empty": "Hali trening yo‘q. Birinchisini boshlang!"
+      },
+      "session": {
+        "startTitle": "Treningni boshlash",
+        "createPrompt": "Treningni boshlash uchun avval dastur yarating.",
+        "activeTitle": "Faol trening",
+        "noExercises": "Ushbu dasturda hozircha mashqlar yo‘q.",
+        "markComplete": "{{name}} ni bajarildi deb belgilash"
+      },
+      "history": {
+        "title": "Trening tarixi",
+        "empty": "Hali tugallangan treninglar yo‘q"
+      },
+      "trackers": {
+        "overlay": {
+          "title": "Lite funksiyasi",
+          "subtitle": "Sog‘liq trakerlari Lite rejasida mavjud",
+          "upgradeToLite": "Lite ga yangilang"
+        },
+        "todayTitle": "Bugungi ko‘rsatkichlar",
+        "steps": "Qadamlar",
+        "water": "Suv (stakan)",
+        "weight": "Vazn (kg)",
+        "activeMinutes": "Faol (daq)"
+      },
+      "labels": {
+        "sets": "Yondashuvlar",
+        "reps": "Takrorlar",
+        "weight": "Vazn",
+        "duration": "Davomiylik",
+        "rest": "Dam olish",
+        "notes": "Izohlar"
+      },
+      "dialogs": {
+        "newProgram": {
+          "title": "Yangi dastur yaratish",
+          "nameLabel": "Dastur nomi",
+          "namePlaceholder": "Mening trening dasturim",
+          "sportTypeLabel": "Sport turi",
+          "sportTypePlaceholder": "Turini tanlang",
+          "freqLabel": "Haftalik chastota",
+          "freqPlaceholder": "masalan, 3",
+          "freqHelper": "Haftasiga marta (musbat son)"
+        },
+        "programDetails": {
+          "exercises": "Mashqlar"
+        },
+        "addExercise": {
+          "title": "Mashq qo‘shish",
+          "emptyTitle": "Hozircha mashqlar yo‘q",
+          "emptySubtitle": "Boshlash uchun birinchi mashqni qo‘shing",
+          "nameLabel": "Mashq nomi *",
+          "namePlaceholder": "O‘tishlar, O‘tirib turish va h.k.",
+          "sets": "Yondashuvlar",
+          "reps": "Takrorlar",
+          "weight": "Vazn (kg)",
+          "duration": "Davomiylik (daq)",
+          "restTime": "Dam olish (soniya)",
+          "notes": "Izohlar (ixtiyoriy)",
+          "notesPlaceholder": "Qo‘shimcha izohlar..."
+        },
+        "editExercise": {
+          "title": "Mashqni tahrirlash"
+        }
+      }
+    }
+  },
+  "dialogs": {
+    "workout": {
+      "confirmDeleteProgram": "\"{{name}}\" dasturini o‘chirasizmi?",
+      "confirmDeleteExercise": "\"{{name}}\" mashqini o‘chirasizmi?"
+    }
+  },
+  "onboarding": {
+    "title": "Boshlang‘ich sozlash",
+    "stepCounter": "{{current}} / {{total}}",
+    "step1": {
+      "title": "Tilingizni tanlang",
+      "description": "Qulay tilni belgilang",
+      "continue": "Davom etish"
+    },
+    "step2": {
+      "title": "Vaqt mintaqasi",
+      "description": "Sizga mos vaqt mintaqasini tanlang",
+      "timezone": "Vaqt mintaqasi",
+      "continue": "Davom etish"
+    },
+    "step3": {
+      "title": "Hafta qaysi kunda boshlanadi",
+      "description": "Haftangiz qaysi kundan boshlanishini tanlang",
+      "continue": "Davom etish",
+      "weekStart": "Hafta boshi"
+    },
+    "step4": {
+      "finish": "Tugatish"
+    }
+  },
+  "weekdays": {
+    "monday": "Dushanba",
+    "sunday": "Yakshanba"
+  },
+  "dates": {
+    "monthsShort": {
+      "jan": "Yan",
+      "feb": "Fev",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Iyn",
+      "jul": "Iyl",
+      "aug": "Avg",
+      "sep": "Sen",
+      "oct": "Okt",
+      "nov": "Noy",
+      "dec": "Dek"
+    },
+    "monthsLong": {
+      "january": "Yanvar",
+      "february": "Fevral",
+      "march": "Mart",
+      "april": "Aprel",
+      "may": "May",
+      "june": "Iyun",
+      "july": "Iyul",
+      "august": "Avgust",
+      "september": "Sentyabr",
+      "october": "Oktyabr",
+      "november": "Noyabr",
+      "december": "Dekabr"
+    },
+    "weekdaysShort": {
+      "su": "Ya",
+      "mo": "Du",
+      "tu": "Se",
+      "we": "Ch",
+      "th": "Pa",
+      "fr": "Ju",
+      "sa": "Sha"
+    },
+    "weekdaysLong": {
+      "sunday": "Yakshanba",
+      "monday": "Dushanba",
+      "tuesday": "Seshanba",
+      "wednesday": "Chorshanba",
+      "thursday": "Payshanba",
+      "friday": "Juma",
+      "saturday": "Shanba"
+    }
+  },
+  "appShell": {
+    "appearance": "Ko‘rinish",
+    "localization": "Lokalizatsiya",
+    "experience": "Tajriba",
+    "privacyData": "Maxfiylik va ma’lumotlar",
+    "darkThemeLabel": "Qorong‘i mavzu",
+    "darkThemeDescription": "Yorug‘/qorong‘i mavzuni almashtirish",
+    "accentColorLabel": "Aksent rangi",
+    "accentColorDescription": "Ilova ranglarini moslashtirish",
+    "customize": "Moslashtirish",
+    "timezoneLabel": "Vaqt mintaqasi",
+    "timezoneOptions": {
+      "UTC": "UTC (Uyg‘unlashtirilgan umumjahon vaqt)",
+      "EST": "EST (Sharqiy standart vaqt)",
+      "PST": "PST (Tinch okeani vaqti)",
+      "CET": "CET (Markaziy Yevropa vaqti)",
+      "JST": "JST (Yaponiya standarti vaqti)"
+    },
+    "soundEffectsLabel": "Tovush effektlari",
+    "soundEffectsDescription": "Amallar uchun tovushlarni ijro etish",
+    "hapticFeedbackLabel": "Haptik aloqa",
+    "hapticFeedbackDescription": "Amallarda sezilarli turtki",
+    "pushNotificationsLabel": "Push bildirishnomalar",
+    "pushNotificationsDescription": "Yangilanishlar haqida ogohlantirish",
+    "analyticsLabel": "Analitika",
+    "analyticsDescription": "Ilovani yaxshilashga yordam bering",
+    "autoBackupLabel": "Avto-zaxira",
+    "autoBackupDescription": "Ma’lumotlarni avtomatik zaxiralash",
+    "exportData": "Ma’lumotlarimni eksport qilish",
+    "deleteAllData": "Barcha ma’lumotlarni o‘chirish",
+    "version": "ArtiLect v{{version}}",
+    "tagline": "Hosildorlik uchun ❤️ bilan yaratilgan",
+    "nav": {
+      "switchTo": "{{section}} bo‘limiga o‘tish"
+    },
+    "currencyOptions": {
+      "USD": "USD ($) — AQSh dollari",
+      "EUR": "EUR (€) — Yevro",
+      "GBP": "GBP (£) — Funt sterling",
+      "JPY": "JPY (¥) — Yaponiya iyenasi",
+      "UZS": "UZS — O‘zbekiston so‘mi",
+      "RUB": "RUB (₽) — Rossiya rubli",
+      "CNY": "CNY (¥) — Xitoy yuani"
+    }
+  },
+  "app": {
+    "name": "Artilect Assistant"
+  },
+  "languages": {
+    "en": "Inglizcha",
+    "ru": "Ruscha",
+    "uz": "O‘zbekcha",
+    "enLong": "AQSh ingliz tili"
+  },
+  "dateStepper": {
+    "step": "Qadam {{current}} / {{total}}: {{phase}}",
+    "phases": {
+      "day": "Kun",
+      "month": "Oy",
+      "year": "Yil"
+    },
+    "reset": "Tiklash",
+    "next": "Keyingi",
+    "back": "Ortga",
+    "save": "Saqlash"
+  },
+  "errorReporter": {
+    "title": "Nimadir noto‘g‘ri ketdi!",
+    "description": "Kutilmagan xatolik yuz berdi. Iltimos, qayta urinib ko‘ring yoki Orchids orqali tuzating.",
+    "details": "Xatolik tafsilotlari",
+    "digest": "Xulosa: {{digest}}",
+    "tryAgain": "Yana urinib ko‘rish"
+  },
+  "plans": {
+    "free": "Free",
+    "lite": "Lite",
+    "pro": "Pro"
+  },
+  "pricing": {
+    "banner": "Premium-ga yangilang",
+    "billing": {
+      "monthly": "Oylik",
+      "annual": "Yillik",
+      "periodSuffix": {
+        "month": "oy",
+        "year": "yil"
+      },
+      "fixedMonthsFree": "~2 oy bepul",
+      "monthsFree": "~{{count}} oy bepul"
+    },
+    "social": {
+      "users": "10 000+ faol foydalanuvchi",
+      "rating": "4.9/5 reyting",
+      "moneyBack": "30 kunlik pulni qaytarish"
+    },
+    "context": {
+      "financeSecondAccount": {
+        "title": "Bir nechta hisob kerakmi?",
+        "subtitle": "Lite rejasiga o‘ting va 5 tagacha moliya hisobi yuriting",
+        "highlightPlan": "lite"
+      },
+      "exportAttempt": {
+        "title": "Ma’lumotlarni eksport qilish",
+        "subtitle": "CSV — Lite rejada, PDF hisobotlar — Pro rejada",
+        "highlightPlan": "lite"
+      },
+      "pdfAttempt": {
+        "title": "PDF hisobotlar",
+        "subtitle": "Pro: oylik PDF hisobotlar va trening rejalar",
+        "highlightPlan": "pro"
+      },
+      "streakNudge": {
+        "title": "🔥 7 kunlik seriya!",
+        "subtitle": "Pro funksiyalari bilan chuqur tahlillarni oching",
+        "highlightPlan": "pro"
+      },
+      "default": {
+        "title": "Mos reja tanlang",
+        "subtitle": "Qudratli vositalar bilan hosildorlikni oshiring"
+      }
+    },
+    "upgradePrompt": {
+      "title": "🚀 Keyingi bosqichga tayyormisiz?",
+      "usedFeatures_one": "Siz {{count}} ta funksiyadan foydalandingiz!",
+      "usedFeatures_other": "Siz {{count}} ta funksiyadan foydalandingiz!",
+      "subtitle": "Cheksiz kirish, ilg‘or tahlillar va premium funksiyalar bilan unumdorlik sayohatingizni tezlang.",
+      "features": {
+        "analytics": "Ilg‘or analitika va insaytlar",
+        "planning": "Haftalik, oylik va yillik rejalashtirish",
+        "unlimited": "Cheksiz hisoblar va dasturlar"
+      },
+      "viewPlans": "Premium rejalari",
+      "maybeLater": "Keyinroq",
+      "footerLine": "30 kunlik pulni qaytarish kafolati • Istalgan vaqtda bekor qilish"
+    },
+    "trial": {
+      "endsInHours": "Pro sinovi {{hours}} soatda tugaydi",
+      "upgradePrompt": "Pro funksiyalarni saqlab qolish uchun hozir yangilang"
+    },
+    "badges": {
+      "mostPopular": "Eng mashhur",
+      "bestValue": "Eng maqbul",
+      "current": "Joriy"
+    },
+    "entitlements": {
+      "planner": "Rejalar",
+      "finance": "Moliya",
+      "workout": "Trening",
+      "extras": "Qo‘shimcha"
+    },
+    "limitations": {
+      "title": "Cheklovlar:"
+    },
+    "cta": {
+      "processing": "Qayta ishlanmoqda...",
+      "current": "Joriy reja",
+      "getStartedFree": "Bepul boshlash",
+      "startTrial": "{{days}} kunlik sinovni boshlash",
+      "upgradeNow": "Hozir yangilash"
+    },
+    "trust": {
+      "secure": "Xavfsiz",
+      "instant": "Zudlik bilan",
+      "guaranteed": "Kafolatlangan"
+    },
+    "footer": {
+      "moneyBackGuarantee": "30 kunlik pulni qaytarish kafolati",
+      "securePayments": "Xavfsiz to‘lovlar",
+      "instantActivation": "Darhol faollashtirish",
+      "securePaymentsLabel": "Xavfsiz to‘lovlar:",
+      "brands": {
+        "uzcard": "Uzcard",
+        "humo": "Humo",
+        "visa": "Visa",
+        "mastercard": "Mastercard"
+      },
+      "disclaimer": "Istalgan vaqtda bekor qilishingiz mumkin. Yashirin to‘lovlar yo‘q. Barcha narxlar UZS (so‘m) da."
+    },
+    "plans": {
+      "free": {
+        "description": "Boshlash uchun a’lo",
+        "features": [
+          "Cheksiz vazifalar",
+          "1 ta moliyaviy hisob",
+          "Oyiga 50 tranzaksiya",
+          "1 ta trening dasturi",
+          "Faqat kunlik rejalar",
+          "Bazaviy funksiyalar"
+        ],
+        "limitations": [
+          "Grafiklar va analitika yo‘q",
+          "AI yordamchisi yo‘q",
+          "Eksport va PDF yo‘q",
+          "Ilg‘or funksiyalar yo‘q"
+        ],
+        "entitlements": {
+          "planner": "Cheksiz vazifalar; grafiklar va AI yo‘q",
+          "finance": "1 hisob, oyiga 50 trx, faqat kunlik rejalar",
+          "workout": "1 dastur, ilg‘or grafiklar yo‘q"
+        }
+      },
+      "lite": {
+        "description": "Zarur produktivlik funksiyalari",
+        "badge": "Eng mashhur",
+        "features": [
+          "Haftalik va oylik ko‘rinishlar",
+          "Bazaviy grafiklar va analitika",
+          "5 tagacha moliya hisobi",
+          "Byudjetni kuzatish",
+          "CSV eksport",
+          "Toifa bo‘yicha pirog diagrammalar",
+          "Cheksiz trening dasturlari",
+          "Trening taymerlari",
+          "Bazaviy trening grafiklari"
+        ],
+        "limitations": [
+          "PDF yo‘q",
+          "Ilg‘or analitika yo‘q",
+          "AI funksiyalari cheklangan"
+        ],
+        "entitlements": {
+          "planner": "Hafta/oy + bazaviy grafiklar",
+          "finance": "5 tagacha hisob, byudjet, CSV, pirog diagrammalar",
+          "workout": "Cheksiz dasturlar, taymerlar, bazaviy grafiklar",
+          "extras": [
+            "PDF yo‘q",
+            "Ilg‘or analitika yo‘q",
+            "Cheklangan AI"
+          ]
+        }
+      },
+      "pro": {
+        "description": "Maksimal produktivlik quvvati",
+        "badge": "Eng maqbul",
+        "features": [
+          "AI bilan haftalik reja va sharhlar",
+          "Ilg‘or grafiklar va analitika",
+          "Cheksiz moliya hisobi",
+          "Oylik PDF hisobotlar",
+          "Ilg‘or grafiklar (oqim/balanslar)",
+          "Google Sheets auto-sinxronlash",
+          "Makro toifalar pirogi",
+          "Hajm tendensiyalarini kuzatish",
+          "PDF trening rejalar",
+          "Premium shablonlar kutubxonasi",
+          "Ustuvor qo‘llab-quvvatlash"
+        ],
+        "entitlements": {
+          "planner": "AI haftalik reja va sharhlar, ilg‘or grafiklar",
+          "finance": "Cheksiz hisob, PDF hisobot, ilg‘or grafiklar, Sheets sinx",
+          "workout": "Makrolar, hajm tendensiyalari, PDF rejalar",
+          "extras": [
+            "Shablonlar kutubxonasi",
+            "Ustuvor yordam"
+          ]
+        }
+      }
+    }
+  },
+  "ios": {
+    "dragToAction": {
+      "slideToConfirm": "Tasdiqlash uchun suring"
+    }
+  },
+  "buttons": {
+    "continue": "Davom etish",
+    "finish": "Tugatish",
+    "next": "Keyingi",
+    "back": "Ortga",
+    "getStarted": "Boshlash",
+    "customize": "Moslashtirish",
+    "export": "Eksport",
+    "delete": "O‘chirish",
+    "upgrade": "Yangilash",
+    "skip": "O‘tkazib yuborish",
+    "update": "Yangilash",
+    "saveChanges": "O‘zgarishlarni saqlash"
+  },
+  "toasts": {
+    "app": {
+      "welcomeNamed": "Xush kelibsiz, {{name}}! Hosildorlik yo‘lingiz hozir boshlanadi.",
+      "subscriptionActivated": "🎉 {{plan}} ga xush kelibsiz! Yangi funksiyalar ochildi.",
+      "activateFailed": "Obunani faollashtirib bo‘lmadi",
+      "createTaskFailed": "Vazifa yaratilmadi",
+      "createTransactionFailed": "Tranzaksiya yaratilmadi",
+      "createWorkoutFailed": "Trening yaratilmadi",
+      "preferencesSaveFailed": "Afzalliklarni saqlab bo‘lmadi"
+    },
+    "auth": {
+      "registerSuccess": "Hisob muvaffaqiyatli yaratildi! Xush kelibsiz!",
+      "registerGenericError": "Nimadir xato ketdi. Qayta urinib ko‘ring.",
+      "loginPrefillSuccess": "Hisob yaratildi! Davom etish uchun tizimga kiring.",
+      "loginInvalid": "Email yoki parol noto‘g‘ri. Avval ro‘yxatdan o‘tganingizga ishonch hosil qiling va qayta urinib ko‘ring.",
+      "loginWelcomeBack": "Qaytganingiz bilan! Bosh sahifaga yo‘naltirilmoqda...",
+      "loginUnexpected": "Kutilmagan xatolik yuz berdi. Qayta urinib ko‘ring."
+    },
+    "onboarding": {
+      "preferencesSaved": "Afzalliklar muvaffaqiyatli saqlandi!",
+      "preferencesFailed": "Afzalliklarni saqlab bo‘lmadi. Qayta urinib ko‘ring."
+    },
+    "planner": {
+      "taskSaved": "Vazifa saqlandi",
+      "taskSaveFailed": "Vazifani saqlab bo‘lmadi",
+      "taskDeleted": "Vazifa o‘chirildi",
+      "goalSaved": "Maqsad saqlandi",
+      "goalSaveFailed": "Maqsadni saqlab bo‘lmadi",
+      "goalDeleted": "Maqsad o‘chirildi",
+      "filtersReset": "Filtrlar tiklandi",
+      "subscriptionRequired": "{{mode}} rejalashtirish uchun {{tier}} obunasi kerak"
+    },
+    "finance": {
+      "setupCompleted": "Moliyani sozlash yakunlandi!",
+      "freePlanLimit": "Bepul reja oyiga {{max}} tranzaksiya bilan cheklangan. Cheksiz uchun Lite ga o‘ting.",
+      "transactionLimit": "Bepul reja: oyiga {{limit}} tranzaksiya. Cheksiz uchun Lite ga o‘ting.",
+      "accountLimit": {
+        "free": "Bepul rejada 1 ta hisob. 5 tagacha uchun Lite ga o‘ting.",
+        "lite": "Lite — 5 tagacha hisob. Cheksiz uchun Pro ga o‘ting."
+      },
+      "requiredFields": "Iltimos, barcha majburiy maydonlarni to‘ldiring",
+      "transactionAdded": "Tranzaksiya muvaffaqiyatli qo‘shildi",
+      "accountNameRequired": "Hisob nomini kiriting",
+      "accountAdded": "Hisob qo‘shildi",
+      "accountUpdated": "Hisob yangilandi",
+      "budgetsRequirePro": "Byudjetlar Pro obunasida mavjud. O‘tkazish orqali oching.",
+      "goalsRequirePro": "Moliyaviy maqsadlar Pro obunasida. O‘tkazish orqali oching.",
+      "amountRequired": "Summa kiriting",
+      "amountInvalid": "Yaroqli summani kiriting",
+      "budgetCreated": "Byudjet yaratildi",
+      "goalCreated": "Maqsad yaratildi",
+      "budgetProgressUpdated": "Byudjet progresi yangilandi",
+      "goalProgressUpdated": "Maqsad progresi yangilandi"
+    },
+    "workout": {
+      "setupCompleted": "Trening sozlamalari yakunlandi!",
+      "starterCreated": "Boshlang‘ich dastur yaratildi: {{name}}",
+      "programNameRequired": "Dastur nomini kiriting",
+      "programCreated": "Dastur yaratildi",
+      "programDeleted": "Dastur o‘chirildi",
+      "programNotFound": "Dastur topilmadi",
+      "started": "Trening boshlandi: {{name}}",
+      "completed": "Trening tugallandi{{suffix}}",
+      "exerciseNameRequired": "Mashq nomini kiriting",
+      "exerciseAdded": "Mashq qo‘shildi",
+      "exerciseUpdated": "Mashq yangilandi",
+      "exerciseDeleted": "Mashq o‘chirildi",
+      "invalidNumber": "Yaroqli raqam kiriting",
+      "saved": "Saqlandi",
+      "programLimit": "Bepul rejada 1 ta dastur bilan cheklangan. Cheksiz dasturlar uchun Lite ga o‘ting."
+    },
+    "profile": {
+      "signedOut": "Muvaffaqiyatli chiqdingiz",
+      "signOutFailed": "Chiqish amalga oshmadi",
+      "profileUpdated": "Profil yangilandi",
+      "supportOpening": "Yordam oynasi ochilmoqda..."
+    },
+    "currency": {
+      "changed": "Valyuta {{currency}} ga o‘zgartirildi"
+    }
+  },
+  "checkout": {
+    "title": {
+      "upgrade": "Hozir yangilang"
+    },
+    "subtitle": {
+      "upgrade": "Yangilashni xavfsiz yakunlash uchun kartangiz ma’lumotlarini kiriting.",
+      "trial": "{{days}} kunlik bepul sinovni boshlash uchun kartangizni ulang. Bugun hech narsa yechib olinmaydi."
+    },
+    "form": {
+      "paymentDetails": "To‘lov ma’lumotlari",
+      "email": "Email",
+      "cardholderName": "Karta egasining ismi",
+      "cardholderNamePlaceholder": "To‘liq ism",
+      "cardNumber": "Karta raqami",
+      "expiry": "Amal qilish muddati",
+      "cvc": "CVC",
+      "country": "Mamlakat",
+      "selectCountry": "Mamlakatni tanlang",
+      "agree": "Men Shartlarga roziman va takroriy to‘lovlarni tasdiqlayman."
+    },
+    "countries": {
+      "UZ": "O‘zbekiston",
+      "RU": "Rossiya",
+      "US": "AQSh",
+      "GB": "Birlashgan Qirollik"
+    },
+    "summary": {
+      "title": "Xulosa",
+      "plan": "Reja",
+      "billing": "Hisob-kitob",
+      "amount": "Miqdor",
+      "chargeToday": "Bugun {{amount}} yechib olinadi.",
+      "chargeAfterTrial": "Keyin sinovdan so‘ng {{amount}} / {{period}}"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Yana xush kelibsiz",
+      "subtitle": "Davom etish uchun akkauntingizga kiring",
+      "emailLabel": "Email manzil",
+      "emailPlaceholder": "Emailingizni kiriting",
+      "passwordLabel": "Parol",
+      "passwordPlaceholder": "Parolingizni kiriting",
+      "showPassword": "Parolni ko‘rsatish",
+      "hidePassword": "Parolni yashirish",
+      "rememberMe": "Meni 30 kunga eslab qol",
+      "submit": "Kirish",
+      "signingIn": "Kirilmoqda...",
+      "noAccountPrefix": "Akkauntingiz yo‘qmi?",
+      "createNow": "Hozir yarating",
+      "disclaimer": "Kirish orqali Siz xizmat ko‘rsatish shartlari va maxfiylik siyosatiga rozilik bildirasiz",
+      "validation": {
+        "emailRequired": "Email majburiy",
+        "emailInvalid": "To‘g‘ri email kiriting",
+        "passwordRequired": "Parol majburiy"
+      }
+    },
+    "register": {
+      "backToSignIn": "Kirish sahifasiga qaytish",
+      "title": "Akkaunt yaratish",
+      "subtitle": "Bizga qo‘shiling va hayotingizni professional kabi boshqaring",
+      "nameLabel": "To‘liq ism",
+      "namePlaceholder": "To‘liq ismingizni kiriting",
+      "emailLabel": "Email manzil",
+      "emailPlaceholder": "Emailingizni kiriting",
+      "phoneLabel": "Telefon raqam",
+      "passwordLabel": "Parol",
+      "passwordPlaceholder": "Kuchli parol yarating",
+      "confirmPasswordLabel": "Parolni tasdiqlash",
+      "confirmPasswordPlaceholder": "Parolingizni tasdiqlang",
+      "showPassword": "Parolni ko‘rsatish",
+      "hidePassword": "Parolni yashirish",
+      "strength": {
+        "weak": "Kuchsiz",
+        "good": "Yaxshi",
+        "strong": "Kuchli",
+        "missingPrefix": "Yetishmaydi:"
+      },
+      "passwordsMatch": "Parollar mos",
+      "submit": "Akkaunt yaratish",
+      "creating": "Akkaunt yaratilmoqda...",
+      "alreadyPrefix": "Allaqachon akkauntingiz bormi?",
+      "signIn": "Kirish",
+      "validation": {
+        "nameRequired": "To‘liq ism majburiy",
+        "nameTooShort": "Ism kamida 2 ta belgidan iborat bo‘lishi kerak",
+        "emailRequired": "Email majburiy",
+        "emailInvalid": "To‘g‘ri email kiriting",
+        "phoneRequired": "Telefon raqam majburiy",
+        "phoneInvalid": "To‘g‘ri xalqaro telefon raqamini kiriting (masalan, +44 20 7123 4567)",
+        "passwordRequired": "Parol majburiy",
+        "passwordTooShort": "Parol kamida 8 ta belgidan iborat bo‘lishi kerak",
+        "confirmRequired": "Parolni tasdiqlang",
+        "passwordsMismatch": "Parollar mos emas"
+      },
+      "errors": {
+        "USER_ALREADY_EXISTS": "Bu email bilan akkaunt allaqachon mavjud. Iltimos, kiring.",
+        "INVALID_EMAIL": "To‘g‘ri email kiriting",
+        "WEAK_PASSWORD": "Parol juda kuchsiz. Kuchliroq parol tanlang.",
+        "INVALID_INPUT": "Ma’lumotlarni tekshirib, yana urinib ko‘ring",
+        "GENERIC": "Ro‘yxatdan o‘tish amalga oshmadi. Yana urinib ko‘ring."
+      }
+    }
+  }
+}

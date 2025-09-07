@@ -1,0 +1,1713 @@
+{
+  "common": {
+    "success": "Success",
+    "warning": "Warning",
+    "add": "Add",
+    "more": "More",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "next": "Next",
+    "undo": "Undo",
+    "back": "Back",
+    "validation": {
+      "required": "This field is required",
+      "minLength": "Must be at least {{min}} characters"
+    }
+  },
+  "nav": {
+    "planner": "Planner",
+    "finance": "Finance",
+    "workout": "Workout",
+    "settings": "Settings",
+    "upgrade": "Upgrade",
+    "signOut": "Sign out",
+    "profile": "Profile"
+  },
+  "profile": {
+    "language": "Language",
+    "support": "Support",
+    "name": "Name",
+    "user": "User",
+    "personalInfo": "Tell us a bit about you",
+    "preferences": "Your preferences",
+    "emailPlaceholder": "your@email.com",
+    "namePlaceholder": "Your name",
+    "bioPlaceholder": "Tell us about yourself...",
+    "bio": "Bio",
+    "location": "Location",
+    "locationPlaceholder": "Your location",
+    "photoUploadSoon": "Photo upload coming soon",
+    "helpCenterSoon": "Help center coming soon"
+  },
+  "finance": {
+    "categoryNames": {
+      "food": "Food",
+      "food_drinks": "Food & Drinks",
+      "transport": "Transport",
+      "shopping": "Shopping",
+      "housing": "Housing",
+      "healthcare": "Healthcare",
+      "entertainment": "Entertainment",
+      "bills": "Bills",
+      "health": "Health",
+      "education": "Education",
+      "salary": "Salary",
+      "business": "Business",
+      "investment": "Investment",
+      "freelance": "Freelance",
+      "other": "Other"
+    },
+    "accounts": {
+      "currency": "Currency"
+    },
+    "onboarding": {
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Finance",
+          "subtitle": "Take control of your financial future with smart tracking, insights, and goals.",
+          "cards": {
+            "trackEverything": {
+              "title": "Track Everything",
+              "desc": "Monitor income, expenses, and savings"
+            },
+            "staySecure": {
+              "title": "Stay Secure",
+              "desc": "Your data is encrypted and private"
+            },
+            "getInsights": {
+              "title": "Get Insights",
+              "desc": "AI-powered spending analysis"
+            }
+          }
+        },
+        "currency": {
+          "title": "Choose Your Currency",
+          "subtitle": "Select your preferred currency for all financial calculations.",
+          "label": "Currency",
+          "preview": "Preview"
+        },
+        "account": {
+          "title": "Create Your First Account",
+          "subtitle": "Set up an account to start tracking your finances.",
+          "typeLabel": "Account Type",
+          "nameLabel": "Account Name",
+          "namePlaceholder": "Enter account name",
+          "initialBalanceOptional": "Initial Balance (Optional)",
+          "balanceHelp": "Enter the current balance of this account (leave as 0 if starting fresh)",
+          "types": {
+            "cash": {
+              "desc": "Physical money and petty cash"
+            },
+            "card": {
+              "desc": "Debit and credit cards"
+            },
+            "bank": {
+              "desc": "Bank savings and checking accounts"
+            },
+            "crypto": {
+              "desc": "Cryptocurrency wallets"
+            }
+          },
+          "suggestions": {
+            "cash": [
+              "Cash Wallet",
+              "Petty Cash",
+              "Emergency Fund"
+            ],
+            "card": [
+              "Main Card",
+              "Debit Card",
+              "Credit Card"
+            ],
+            "bank": [
+              "Main Account",
+              "Savings Account",
+              "Checking Account"
+            ],
+            "crypto": [
+              "Crypto Wallet",
+              "Bitcoin Wallet",
+              "Trading Account"
+            ]
+          }
+        },
+        "categories": {
+          "title": "Smart Categories",
+          "subtitle": "We've prepared expense categories to help you track your spending patterns.",
+          "names": {
+            "foodDining": "Food & Dining",
+            "transportation": "Transportation",
+            "shopping": "Shopping",
+            "entertainment": "Entertainment",
+            "billsUtilities": "Bills & Utilities",
+            "healthcare": "Healthcare"
+          },
+          "tipLabel": "Tip:",
+          "tip": "Categories are automatically suggested based on transaction descriptions, making expense tracking effortless."
+        },
+        "ready": {
+          "title": "You're All Set! 🎉",
+          "subtitle": "Your finance tracking is ready. Here's what you've configured:",
+          "summary": {
+            "currency": "Currency",
+            "firstAccount": "First Account",
+            "accountType": "Account Type",
+            "startingBalance": "Starting Balance"
+          }
+        },
+        "errors": {
+          "selectCurrency": "Please select a currency",
+          "accountNameRequired": "Account name is required",
+          "accountNameMaxLen": "Account name must be less than 50 characters",
+          "selectAccountType": "Please select an account type",
+          "balanceNonNegative": "Balance cannot be negative"
+        }
+      }
+    },
+    "analyst": {
+      "header": {
+        "title": "Financial Analysis",
+        "subtitle": "AI-powered insights for your finances"
+      },
+      "periods": {
+        "1month": "1 Month",
+        "3months": "3 Months",
+        "6months": "6 Months",
+        "1year": "1 Year"
+      },
+      "health": {
+        "title": "Financial Health Score",
+        "ratings": {
+          "excellent": "Excellent",
+          "good": "Good",
+          "fair": "Fair",
+          "needsImprovement": "Needs Improvement"
+        },
+        "factors": {
+          "savingsRate": "Savings Rate",
+          "budgetAdherence": "Budget Adherence",
+          "emergencyFund": "Emergency Fund",
+          "goalProgress": "Goal Progress"
+        }
+      },
+      "metrics": {
+        "totalBalance": "Total Balance",
+        "savingsRate": "Savings Rate",
+        "netCashFlow": "Net Cash Flow",
+        "activeGoals": "Active Goals"
+      },
+      "insights": {
+        "title": "AI Insights",
+        "items": {
+          "lowSavingsRate": {
+            "title": "Low Savings Rate",
+            "description": "Your savings rate is {{rate}}%. Try to save at least 20% of your income.",
+            "action": "Review expenses"
+          },
+          "budgetExceeded": {
+            "title": "Budget Exceeded",
+            "description": "You've exceeded your {{category}} budget by {{amount}}.",
+            "action": "Adjust spending"
+          },
+          "lowEmergencyFund": {
+            "title": "Low Emergency Fund",
+            "description": "Consider building an emergency fund covering 3-6 months of expenses.",
+            "action": "Start saving"
+          },
+          "topSpendingCategory": {
+            "title": "Top Spending Category",
+            "description": "Your highest spending is in {{category}}: {{amount}}.",
+            "action": "Analyze category"
+          }
+        },
+        "badges": {
+          "priority": {
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low"
+          }
+        }
+      },
+      "tabs": {
+        "overview": "Overview",
+        "spending": "Spending",
+        "budgets": "Budgets",
+        "goals": "Goals"
+      },
+      "charts": {
+        "cashFlow": {
+          "title": "Cash Flow Trend"
+        },
+        "category": {
+          "title": "Spending by Category"
+        }
+      },
+      "budgets": {
+        "status": {
+          "over": "Over Budget",
+          "warning": "Near Limit",
+          "good": "On Track"
+        },
+        "summary": {
+          "of": "{{spent}} of {{budgeted}}",
+          "remaining": "{{amount}} remaining",
+          "overBudget": "{{amount}} over budget"
+        }
+      },
+      "goals": {
+        "time": {
+          "daysLeft": "{{days}} days left",
+          "overdue": "Overdue"
+        },
+        "summary": {
+          "of": "{{current}} of {{target}}",
+          "remaining": "{{amount}} remaining"
+        }
+      }
+    },
+    "setup": {
+      "title": "Finance Setup",
+      "stepCounter": "{{current}} of {{total}}",
+      "currencies": {
+        "UZS": "Uzbekistan Som",
+        "USD": "US Dollar",
+        "EUR": "Euro",
+        "RUB": "Russian Ruble"
+      },
+      "accounts": {
+        "types": {
+          "cash": "Cash",
+          "card": "Card",
+          "bank": "Bank",
+          "crypto": "Crypto"
+        }
+      },
+      "steps": {
+        "currency": {
+          "title": "Choose Your Currency",
+          "subtitle": "Select your primary currency for financial tracking"
+        },
+        "accounts": {
+          "title": "Add Your Accounts",
+          "subtitle": "Set up your financial accounts to track money",
+          "form": {
+            "nameLabel": "Account Name",
+            "namePlaceholder": "e.g., Main Wallet, Credit Card",
+            "typeLabel": "Account Type",
+            "openingBalance": "Opening Balance",
+            "colorLabel": "Color",
+            "addAccount": "Add Account"
+          },
+          "added": "Added Accounts",
+          "defaultSuffix": " • Default"
+        },
+        "balances": {
+          "title": "Set Opening Balances",
+          "subtitle": "Update your account balances if needed",
+          "currentBalance": "Current Balance",
+          "totalBalance": "Total Balance"
+        },
+        "categories": {
+          "title": "Set Up Categories",
+          "subtitle": "We've added common categories. Add custom ones if needed.",
+          "incomeTitle": "Income Categories",
+          "expenseTitle": "Expense Categories",
+          "addCustomTitle": "Add Custom Category",
+          "customTitle": "Custom Categories",
+          "form": {
+            "nameLabel": "Category Name",
+            "namePlaceholder": "e.g., Pet Care, Education",
+            "typeLabel": "Type",
+            "colorLabel": "Color",
+            "addButton": "Add Custom Category"
+          }
+        }
+      },
+      "categoryTypes": {
+        "income": "Income",
+        "expense": "Expense"
+      },
+      "defaults": {
+        "income": {
+          "salary": "Salary",
+          "freelance": "Freelance",
+          "investment": "Investment",
+          "gift": "Gift"
+        },
+        "expense": {
+          "food_drinks": "Food & Drinks",
+          "transport": "Transport",
+          "shopping": "Shopping",
+          "housing": "Housing",
+          "healthcare": "Healthcare",
+          "entertainment": "Entertainment"
+        }
+      },
+      "errors": {
+        "selectCurrency": "Please select a currency",
+        "addOneAccount": "Please add at least one account",
+        "accountNameRequired": "Account name is required",
+        "balancePositive": "Balance must be positive",
+        "categoryNameRequired": "Category name is required"
+      },
+      "actions": {
+        "completeSetup": "Complete Setup"
+      }
+    },
+    "transactions": {
+      "newTransaction": "New Transaction",
+      "details": {
+        "title": "Transaction Details",
+        "typeSuffix": "Transaction",
+        "amount": "Amount",
+        "category": "Category",
+        "date": "Date",
+        "account": "Account",
+        "description": "Description",
+        "currency": "Currency",
+        "tags": "Tags"
+      },
+      "form": {
+        "steps": {
+          "amountAndType": "Amount & Type",
+          "details": "Details",
+          "accountAndConfirm": "Account & Confirm"
+        },
+        "stepCounter": "{{step}} of {{total}}",
+        "amount": {
+          "howMuch": "How much?"
+        },
+        "type": {
+          "label": "Type",
+          "income": "Income",
+          "expense": "Expense",
+          "transfer": "Transfer"
+        },
+        "description": {
+          "label": "Description",
+          "optional": "(Optional)",
+          "placeholder": "e.g., Lunch at cafe, Salary payment..."
+        },
+        "category": {
+          "label": "Category",
+          "custom": "Custom",
+          "create": "Create Custom Category",
+          "namePlaceholder": "Enter category name..."
+        },
+        "date": {
+          "label": "Date"
+        },
+        "account": {
+          "label": "Account",
+          "selectPlaceholder": "Select account"
+        },
+        "summary": {
+          "title": "Transaction Summary",
+          "amount": "Amount:",
+          "type": "Type:",
+          "description": "Description:",
+          "category": "Category:",
+          "account": "Account:"
+        },
+        "actions": {
+          "save": "Save Transaction",
+          "saving": "Saving..."
+        },
+        "errors": {
+          "amountRequired": "Please enter an amount",
+          "typeRequired": "Please select transaction type",
+          "categoryRequired": "Please select a category",
+          "accountRequired": "Please select an account"
+        }
+      }
+    },
+    "section": {
+      "title": "Finance",
+      "tabs": {
+        "dashboard": "Dashboard",
+        "transactions": "History",
+        "budgets": "Budgets",
+        "goals": "Goals"
+      },
+      "periods": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly"
+      },
+      "accounts": {
+        "all": "All",
+        "allAccounts": "All Accounts",
+        "viewAllBalances": "View all balances",
+        "edit": "Edit account",
+        "add": "Add Account",
+        "form": {
+          "nameLabel": "Account Name",
+          "namePlaceholder": "e.g., Main Wallet, Bank Card",
+          "typeLabel": "Account Type",
+          "custom": "Custom",
+          "customTypeNameLabel": "Custom type name",
+          "customTypeNamePlaceholder": "e.g., Savings Jar, Travel, Kids",
+          "initialBalance": "Initial Balance",
+          "currentBalance": "Current Balance"
+        }
+      },
+      "cards": {
+        "totalBalance": "Total Balance",
+        "balance": "Balance",
+        "savings": "Savings",
+        "income": "Income",
+        "expenses": "Expenses"
+      },
+      "freePlan": {
+        "usage": "Free Plan: {{used}}/{{limit}} transactions this month"
+      },
+      "quickActions": {
+        "add": "Add",
+        "account": "Account",
+        "budget": "Budget",
+        "goal": "Goal"
+      },
+      "charts": {
+        "cashFlow": {
+          "title": "Cash Flow Trend",
+          "overviewSuffix": "Overview",
+          "legend": {
+            "income": "Income",
+            "expenses": "Expenses",
+            "netFlow": "Net Flow"
+          },
+          "avg": {
+            "income": "Avg Income",
+            "expenses": "Avg Expenses",
+            "netFlow": "Avg Net Flow"
+          },
+          "tooltip": {
+            "period": "Period: {{label}}",
+            "income": "💰 Income",
+            "expenses": "💸 Expenses",
+            "netFlow": "📊 Net Flow"
+          }
+        },
+        "category": {
+          "title": "Spending by Category"
+        },
+        "overlay": {
+          "financialAnalytics": "Financial Analytics",
+          "categoryAnalytics": "Category Analytics",
+          "unlockPro": "Unlock with Pro subscription",
+          "unlockLite": "Unlock with Lite subscription",
+          "upgradeTo": "Upgrade to {{plan}}"
+        }
+      },
+      "filters": {
+        "searchPlaceholder": "Search transactions...",
+        "toggle": "Filters",
+        "advanced": "Advanced Filters",
+        "resetAll": "Reset All",
+        "type": "Type",
+        "account": "Account",
+        "category": "Category",
+        "amountRange": "Amount Range",
+        "allTypes": "All Types",
+        "allCategories": "All Categories",
+        "types": {
+          "income": "Income",
+          "expense": "Expense"
+        },
+        "amounts": {
+          "all": "All Amounts",
+          "under100": "Under 100K UZS",
+          "100_500": "100K - 500K UZS",
+          "500_1000": "500K - 1M UZS",
+          "over1000": "Over 1M UZS"
+        },
+        "date": {
+          "from": "From Date",
+          "to": "To Date",
+          "selectFrom": "Select from date",
+          "selectTo": "Select to date"
+        },
+        "summary": {
+          "showing": "Showing {{count}} of {{total}} transactions",
+          "search": "Search:",
+          "type": "Type:",
+          "category": "Category:"
+        },
+        "chips": {
+          "search": "Search",
+          "type": "Type",
+          "category": "Category"
+        },
+        "clear": "Clear Filters"
+      },
+      "transactions": {
+        "emptyFilteredTitle": "No transactions match your filters",
+        "emptyFilteredSubtitle": "Try adjusting your filter criteria",
+        "emptyTitle": "No transactions for this period",
+        "emptySubtitle": "Start by adding your first transaction",
+        "add": "Add Transaction",
+        "showingLimited": "Showing 20 of {{count}} transactions",
+        "showingTotal": "Showing 20 of {{count}} transactions ({{total}} total)",
+        "unknownAccount": "Unknown"
+      },
+      "budgets": {
+        "empty": "No budgets created yet",
+        "create": "Create Budget",
+        "autoTracked": "Auto-tracked",
+        "remaining": "{{amount}} remaining",
+        "overBudget": "{{amount}} over budget",
+        "info": "Budgets are automatically tracked based on your spending categories. Just set a limit and we'll track your progress!",
+        "periodLabel": "Period",
+        "limitLabel": "Budget Limit",
+        "categoryLabel": "Category",
+        "categoryPlaceholder": "e.g., Food, Transport, Entertainment"
+      },
+      "goals": {
+        "active": "Active Goals",
+        "empty": "No goals set yet",
+        "create": "Create Goal",
+        "achieved": "Goal achieved! 🎉",
+        "form": {
+          "nameLabel": "Goal Name",
+          "namePlaceholder": "e.g., Emergency Fund, Vacation",
+          "targetLabel": "Target Amount",
+          "deadlineLabel": "Deadline",
+          "categoryLabel": "Category",
+          "categoryPlaceholder": "e.g., Savings, Investment"
+        },
+        "progress": {
+          "title": "Update Goal Progress",
+          "addSavings": "Add Savings Amount",
+          "amountPlaceholder": "Enter amount saved",
+          "note": "This will be added to your current progress of {{amount}}",
+          "update": "Update Progress"
+        }
+      }
+    },
+    "analytics": {
+      "title": "Financial Analytics",
+      "subtitle": "Track your progress and insights",
+      "periods": {
+        "7d": "7D",
+        "30d": "30D",
+        "90d": "90D",
+        "1y": "1Y"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "insights": "Insights",
+        "summary": "Summary"
+      },
+      "empty": {
+        "title": "No Financial Data Yet",
+        "description": "Start adding transactions and accounts to see your financial analytics and insights.",
+        "accounts": "Accounts",
+        "transactions": "Transactions"
+      },
+      "stats": {
+        "totalBalance": "Total Balance",
+        "income": "Income",
+        "expenses": "Expenses",
+        "savings": "Savings"
+      },
+      "overview": {
+        "title": "Financial Overview",
+        "desc": "Your current financial snapshot",
+        "totalIncome": "Total Income",
+        "totalExpenses": "Total Expenses",
+        "netSavings": "Net Savings",
+        "savingsRate": "Savings Rate",
+        "savingsRateMessages": {
+          "excellent": "Excellent savings rate!",
+          "good": "Good savings rate",
+          "consider": "Consider increasing your savings"
+        }
+      },
+      "accountSummary": {
+        "title": "Account Summary",
+        "desc": "Your financial accounts overview",
+        "activeAccounts": "Active Accounts",
+        "totalTransactions": "Total Transactions"
+      },
+      "insights": {
+        "excellentSaver": {
+          "title": "Excellent Saver!",
+          "message": "You're saving {{percent}}% of your income. Keep up the great work!"
+        },
+        "budgetAlert": {
+          "title": "Budget Alert",
+          "message": "Your expenses exceed your income. Consider reviewing your spending habits."
+        },
+        "activeTracker": {
+          "title": "Active Tracker",
+          "message": "You've recorded {{count}} transactions. Great job tracking your finances!"
+        },
+        "multiAccount": {
+          "title": "Multi-Account User",
+          "message": "You're managing {{count}} accounts effectively. Consider consolidating if needed."
+        },
+        "keepGrowing": {
+          "title": "Keep Growing",
+          "message": "You're on the right track! Try to increase your savings rate to 20% for optimal financial health."
+        }
+      },
+      "summary": {
+        "title": "Financial Health Score",
+        "desc": "Based on your current financial data",
+        "overallScore": "Overall Score",
+        "savingsRate": "Savings Rate",
+        "activityLevel": "Activity Level",
+        "activity": {
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
+        }
+      },
+      "actions": {
+        "title": "Recommended Actions",
+        "desc": "Steps to improve your financial health",
+        "increaseSavingsRate": "Increase your savings rate to at least 10%",
+        "keepTracking": "Keep tracking transactions for better insights",
+        "addSavingsAccount": "Consider adding a savings account"
+      }
+    }
+  },
+  "planner": {
+    "task": {
+      "newTask": "New Task"
+    },
+    "selectedDate": "Selected {{date}}",
+    "views": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
+    "filters": {
+      "searchPlaceholder": "Search tasks... (Press / to focus)",
+      "button": "Filters",
+      "status": {
+        "all": "All Status",
+        "todo": "To Do",
+        "doing": "Doing",
+        "done": "Done",
+        "skipped": "Skipped"
+      },
+      "priority": {
+        "all": "All Priority",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "timeRange": {
+        "placeholder": "Time Range",
+        "all": "All Time",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "thisWeek": "This Week",
+        "lastWeek": "Last Week",
+        "thisMonth": "This Month",
+        "lastMonth": "Last Month",
+        "thisYear": "This Year",
+        "lastYear": "Last Year",
+        "custom": "Custom Range"
+      },
+      "completion": {
+        "placeholder": "Completion",
+        "all": "All Items",
+        "completed": "Completed",
+        "incomplete": "Incomplete",
+        "overdue": "Overdue"
+      },
+      "showCompleted": "Show completed",
+      "resetAll": "Reset All",
+      "labels": {
+        "from": "From:",
+        "to": "To:",
+        "showing": "Showing",
+        "with": "with",
+        "tasks": "tasks",
+        "goals": "goals",
+        "activeFilter_one": "{{count}} active filter",
+        "activeFilter_other": "{{count}} active filters"
+      }
+    },
+    "calendar": {
+      "selectDateTitle": "Select Date",
+      "selectDateDesc": "Choose a date to view or add tasks",
+      "weekdayShort": {
+        "su": "Su",
+        "mo": "Mo",
+        "tu": "Tu",
+        "we": "We",
+        "th": "Th",
+        "fr": "Fr",
+        "sa": "Sa"
+      },
+      "selectedToast": "Selected {{date}}"
+    },
+    "list": {
+      "tasks": "Tasks",
+      "weeklyGoals": "Weekly Goals",
+      "monthlyGoals": "Monthly Goals",
+      "yearlyGoals": "Yearly Goals",
+      "empty": "No {{itemType}} for {{date}}",
+      "createFirst": "Create your first {{itemTypeSingle}}"
+    },
+    "detail": {
+      "selectPrompt": "Select a {{itemTypeSingle}} to view details",
+      "description": "Description",
+      "startDate": "Start Date",
+      "dueDate": "Due Date",
+      "targetDate": "Target Date",
+      "estimate": "Estimate",
+      "hours": "hours",
+      "progress": "Progress",
+      "tags": "Tags",
+      "checklist": "Checklist",
+      "notSet": "Not set",
+      "prioritySuffix": "priority"
+    },
+    "editor": {
+      "task": {
+        "editTitle": "Edit Task",
+        "newTitle": "New Task",
+        "save": "Save Task",
+        "titleLabel": "Title *",
+        "titlePlaceholder": "Enter task title..."
+      },
+      "goal": {
+        "editTitle": "Edit Goal",
+        "newTitle": "New Goal",
+        "save": "Save Goal",
+        "titleLabel": "Title *",
+        "titlePlaceholder": "Enter goal title..."
+      },
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Add a description...",
+      "priorityLabel": "Priority",
+      "priorityPlaceholder": "Select priority",
+      "statusLabel": "Status",
+      "statusPlaceholder": "Select status",
+      "startDate": "Start Date",
+      "dueDate": "Due Date",
+      "targetDate": "Target Date",
+      "pickDate": "Pick a date",
+      "estimateLabel": "Estimate (hours)",
+      "estimatePlaceholder": "0.5",
+      "tagsLabel": "Tags (comma separated)",
+      "tagsPlaceholder": "work, urgent, meeting",
+      "checklistLabel": "Checklist",
+      "addItem": "Add Item",
+      "checklistItemPlaceholder": "Checklist item...",
+      "milestonesLabel": "Milestones",
+      "addMilestone": "Add Milestone",
+      "milestoneTitlePlaceholder": "Milestone title...",
+      "saving": "Saving..."
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "status": {
+      "todo": "To Do",
+      "doing": "Doing",
+      "done": "Done",
+      "skipped": "Skipped",
+      "planning": "Planning",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "paused": "Paused"
+    },
+    "labels": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "yesterday": "Yesterday",
+      "year": "Year"
+    },
+    "default": {
+      "untitledTask": "Untitled Task",
+      "untitledGoal": "Untitled Goal"
+    },
+    "nouns": {
+      "task": "task",
+      "goal": "goal"
+    },
+    "analytics": {
+      "header": "Productivity Overview",
+      "subheader": "Track your task completion and productivity trends",
+      "cards": {
+        "completionRate": {
+          "title": "Completion Rate",
+          "subtitle": "{{completed}} of {{total}} tasks",
+          "noTasks": "No tasks yet"
+        },
+        "streak": {
+          "title": "Current Streak",
+          "start": "Start completing tasks!",
+          "inARow": "in a row"
+        },
+        "totalCompleted": {
+          "title": "Total Completed",
+          "subtitle": "All time achievements"
+        }
+      },
+      "sections": {
+        "taskStatus": {
+          "title": "Task Status",
+          "emptyTitle": "No tasks created yet",
+          "emptySubtitle": "Start by creating your first task!"
+        },
+        "priorityDistribution": {
+          "title": "Priority Distribution",
+          "emptyTitle": "No task priorities set",
+          "emptySubtitle": "Priority distribution will appear here"
+        },
+        "trends": {
+          "title": "Productivity Trend",
+          "emptyTitle": "No completed tasks in this period",
+          "emptySubtitle": "Your productivity trends will appear here"
+        }
+      },
+      "time": {
+        "day": "day",
+        "days": "days",
+        "last7days": "Last 7 days"
+      },
+      "overlay": {
+        "title": "Productivity Overview",
+        "subtitle": "Unlock detailed analytics with {{plan}} subscription",
+        "upgradeCta": "Upgrade to {{plan}}"
+      }
+    }
+  },
+  "workout": {
+    "activities": {
+      "newWorkout": "New Workout"
+    },
+    "types": {
+      "cardio": "Cardio",
+      "strength": "Strength",
+      "flexibility": "Flexibility",
+      "sports": "Sports"
+    },
+    "common": {
+      "workout": "Workout"
+    },
+    "onboarding": {
+      "step": "Step {{current}} of {{total}}",
+      "steps": {
+        "welcome": {
+          "title": "Welcome",
+          "subtitle": "Start your fitness journey",
+          "heroTitle": "Track Your Fitness Journey",
+          "heroSubtitle": "Set up your workout preferences to get personalized tracking and insights for your fitness goals.",
+          "cards": {
+            "setGoals": "Set Goals",
+            "trackProgress": "Track Progress"
+          }
+        },
+        "sports": {
+          "title": "Sports",
+          "subtitle": "Choose your activities",
+          "chooseTitle": "Choose Your Sports",
+          "chooseSubtitle": "Select the activities you enjoy or want to track",
+          "selectedCount_one": "{{count}} sport selected",
+          "selectedCount_other": "{{count}} sports selected"
+        },
+        "goals": {
+          "title": "Goals",
+          "subtitle": "Set your targets",
+          "whatAchieve": "What do you want to achieve?",
+          "fitnessGoals": "Fitness Goals",
+          "experience": {
+            "title": "Experience Level",
+            "levels": {
+              "beginner": {
+                "label": "Beginner",
+                "desc": "Just starting out"
+              },
+              "intermediate": {
+                "label": "Intermediate",
+                "desc": "6+ months experience"
+              },
+              "advanced": {
+                "label": "Advanced",
+                "desc": "2+ years experience"
+              }
+            }
+          },
+          "weekly": {
+            "title": "Weekly Frequency",
+            "timesPerWeek": "Times per week:",
+            "freqSuffix": "x/week"
+          }
+        },
+        "confirm": {
+          "title": "Confirm",
+          "subtitle": "Review your plan",
+          "allSet": "You're All Set!",
+          "review": "Review your workout preferences",
+          "selectedSports": "Selected Sports",
+          "fitnessGoals": "Fitness Goals",
+          "experience": "Experience",
+          "frequency": "Frequency"
+        }
+      },
+      "cta": {
+        "back": "Back",
+        "continue": "Continue",
+        "completeSetup": "Complete Setup"
+      },
+      "goalsList": {
+        "lose_weight": "Lose Weight",
+        "build_muscle": "Build Muscle",
+        "improve_endurance": "Improve Endurance",
+        "flexibility": "Increase Flexibility",
+        "general_health": "General Health",
+        "performance": "Athletic Performance"
+      }
+    },
+    "analytics": {
+      "header": "Workout Analytics",
+      "subheader": "Track your sessions, progress, and streaks",
+      "overlay": {
+        "subtitle": "Unlock detailed analytics with Pro subscription",
+        "upgradeCta": "Upgrade to Pro"
+      },
+      "labels": {
+        "completed": "Completed",
+        "missed": "Missed",
+        "complete": "Complete",
+        "week": "Week"
+      },
+      "units": {
+        "workoutsLabel": "Workouts",
+        "caloriesLabel": "Calories Burned",
+        "days": "days",
+        "min": "min",
+        "kg": "kg",
+        "s": "s",
+        "lbs": "lbs",
+        "mi": "mi",
+        "bpm": "bpm"
+      },
+      "time": {
+        "weekN": "Week {{num}}"
+      },
+      "cards": {
+        "completionRate": {
+          "title": "Completion Rate",
+          "subtitle": "{{completed}} of {{total}} workouts"
+        },
+        "calories": {
+          "title": "Calories Burned",
+          "subtitle": "Total calories"
+        },
+        "streak": {
+          "title": "Current Streak",
+          "best": "Best: {{days}} days"
+        },
+        "avgDuration": {
+          "title": "Avg Duration",
+          "subtitle": "Per workout"
+        }
+      },
+      "sections": {
+        "completion": {
+          "title": "Workout Completion"
+        },
+        "types": {
+          "title": "Workout Types"
+        },
+        "weeklyFrequency": {
+          "title": "Weekly Frequency"
+        },
+        "caloriesTrend": {
+          "title": "Calories Burned Trend"
+        }
+      },
+      "progress": {
+        "weightLifted": {
+          "title": "Weight Lifted",
+          "subtitle": "Total volume"
+        },
+        "distanceRun": {
+          "title": "Distance Run",
+          "subtitle": "Total distance"
+        },
+        "avgHeartRate": {
+          "title": "Avg Heart Rate",
+          "subtitle": "During workouts"
+        }
+      },
+      "selectedDay": {
+        "title": "Workouts on {{date}}",
+        "empty": "No workouts on this day"
+      },
+      "streakProgress": {
+        "title": "Workout Streak Progress",
+        "current": "Current Streak",
+        "zeroDays": "0 days",
+        "best": "Best: {{days}} days"
+      }
+    },
+    "section": {
+      "header": "Workout & Fitness",
+      "overview": {
+        "stats": "You have {{programs}} workout programs with {{exercises}} exercises"
+      },
+      "programs": {
+        "title": "Your Programs",
+        "totalSuffix": "{{count}} total",
+        "meta": "{{freq}}x/week • {{count}} exercises",
+        "emptyTitle": "No Programs Yet",
+        "emptySubtitle": "Create your first workout program to get started",
+        "badges": {
+          "freqPerWeek": "{{freq}}x per week",
+          "exercisesCount": "{{count}} exercises"
+        }
+      },
+      "cta": {
+        "createProgram": "Create Program",
+        "addProgram": "Add Program",
+        "addNewProgram": "Add New Program",
+        "start": "Start",
+        "endSession": "End Session",
+        "addExercise": "Add Exercise",
+        "updateExercise": "Update Exercise"
+      },
+      "week": {
+        "title": "This Week",
+        "workouts": "Workouts",
+        "caloriesEst": "{{cal}} calories burned (est.)",
+        "activeLabel": "{{label}} active"
+      },
+      "recent": {
+        "title": "Recent Workouts",
+        "empty": "No workouts yet. Start your first workout!"
+      },
+      "limits": {
+        "programs": {
+          "label": "Programs ({{current}}/{{max}})",
+          "freeHint": "Upgrade to Lite for 5 programs",
+          "liteHint": "Upgrade to Pro for unlimited",
+          "proHint": "Unlimited programs available",
+          "upgrade": "Upgrade"
+        }
+      },
+      "session": {
+        "startTitle": "Start a Workout",
+        "createPrompt": "Create a program first to start a workout.",
+        "activeTitle": "Active Workout",
+        "noExercises": "No exercises in this program yet.",
+        "markComplete": "Mark {{name}} complete"
+      },
+      "history": {
+        "title": "Workout History",
+        "empty": "No completed workouts yet"
+      },
+      "trackers": {
+        "overlay": {
+          "title": "Lite Feature",
+          "subtitle": "Health trackers are available with Lite plan",
+          "upgradeToLite": "Upgrade to Lite"
+        },
+        "todayTitle": "Today's Metrics",
+        "steps": "Steps",
+        "water": "Water (cups)",
+        "weight": "Weight (kg)",
+        "activeMinutes": "Active (min)"
+      },
+      "labels": {
+        "sets": "Sets",
+        "reps": "Reps",
+        "weight": "Weight",
+        "duration": "Duration",
+        "rest": "Rest",
+        "notes": "Notes"
+      },
+      "dialogs": {
+        "newProgram": {
+          "title": "Create New Program",
+          "nameLabel": "Program Name",
+          "namePlaceholder": "My Workout Program",
+          "sportTypeLabel": "Sport Type",
+          "sportTypePlaceholder": "Choose type",
+          "freqLabel": "Weekly Frequency",
+          "freqPlaceholder": "e.g., 3",
+          "freqHelper": "Times per week (any positive number)"
+        },
+        "programDetails": {
+          "exercises": "Exercises"
+        },
+        "addExercise": {
+          "title": "Add Exercise",
+          "emptyTitle": "No exercises yet",
+          "emptySubtitle": "Add your first exercise to get started",
+          "nameLabel": "Exercise Name *",
+          "namePlaceholder": "Push-ups, Squats, etc.",
+          "sets": "Sets",
+          "reps": "Reps",
+          "weight": "Weight (kg)",
+          "duration": "Duration (min)",
+          "restTime": "Rest Time (seconds)",
+          "notes": "Notes (optional)",
+          "notesPlaceholder": "Any additional notes..."
+        },
+        "editExercise": {
+          "title": "Edit Exercise"
+        }
+      }
+    }
+  },
+  "onboarding": {
+    "title": "Onboarding",
+    "stepCounter": "{{current}} of {{total}}",
+    "step1": {
+      "title": "Choose your language",
+      "description": "Select the language you prefer",
+      "continue": "Continue"
+    },
+    "step2": {
+      "title": "Choose your timezone",
+      "description": "Pick the timezone that fits you",
+      "timezone": "Timezone",
+      "continue": "Continue"
+    },
+    "step3": {
+      "title": "Week start day",
+      "description": "Select when your week starts",
+      "continue": "Continue",
+      "weekStart": "Week start"
+    },
+    "step4": {
+      "finish": "Finish"
+    }
+  },
+  "weekdays": {
+    "monday": "Monday",
+    "sunday": "Sunday"
+  },
+  "dates": {
+    "monthsShort": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    },
+    "monthsLong": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "weekdaysShort": {
+      "su": "Sun",
+      "mo": "Mon",
+      "tu": "Tue",
+      "we": "Wed",
+      "th": "Thu",
+      "fr": "Fri",
+      "sa": "Sat"
+    },
+    "weekdaysLong": {
+      "sunday": "Sunday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday"
+    }
+  },
+  "appShell": {
+    "appearance": "Appearance",
+    "localization": "Localization",
+    "experience": "Experience",
+    "privacyData": "Privacy & Data",
+    "darkThemeLabel": "Dark Theme",
+    "darkThemeDescription": "Toggle dark/light mode",
+    "accentColorLabel": "Accent Color",
+    "accentColorDescription": "Customize app colors",
+    "customize": "Customize",
+    "timezoneLabel": "Timezone",
+    "timezoneOptions": {
+      "UTC": "UTC (Coordinated Universal Time)",
+      "EST": "EST (Eastern Standard Time)",
+      "PST": "PST (Pacific Standard Time)",
+      "CET": "CET (Central European Time)",
+      "JST": "JST (Japan Standard Time)"
+    },
+    "soundEffectsLabel": "Sound Effects",
+    "soundEffectsDescription": "Play sounds for actions",
+    "hapticFeedbackLabel": "Haptic Feedback",
+    "hapticFeedbackDescription": "Tactile response on actions",
+    "pushNotificationsLabel": "Push Notifications",
+    "pushNotificationsDescription": "Get notified about updates",
+    "analyticsLabel": "Analytics",
+    "analyticsDescription": "Help improve the app",
+    "autoBackupLabel": "Auto Backup",
+    "autoBackupDescription": "Backup data automatically",
+    "exportData": "Export My Data",
+    "deleteAllData": "Delete All Data",
+    "version": "ArtiLect v{{version}}",
+    "tagline": "Made with ❤️ for productivity",
+    "nav": {
+      "switchTo": "Switch to {{section}}"
+    },
+    "currencyOptions": {
+      "USD": "USD ($) - US Dollar",
+      "EUR": "EUR (€) - Euro",
+      "GBP": "GBP (£) - British Pound",
+      "JPY": "JPY (¥) - Japanese Yen",
+      "UZS": "UZS - Uzbek Som",
+      "RUB": "RUB (₽) - Russian Ruble",
+      "CNY": "CNY (¥) - Chinese Yuan"
+    }
+  },
+  "app": {
+    "name": "Artilect Assistant"
+  },
+  "languages": {
+    "en": "English",
+    "ru": "Русский",
+    "uz": "O'zbekcha",
+    "enLong": "US English"
+  },
+  "dateStepper": {
+    "step": "Step {{current}} of {{total}}: {{phase}}",
+    "phases": {
+      "day": "Day",
+      "month": "Month",
+      "year": "Year"
+    },
+    "reset": "Reset",
+    "next": "Next",
+    "back": "Back",
+    "save": "Save"
+  },
+  "errorReporter": {
+    "title": "Something went wrong!",
+    "description": "An unexpected error occurred. Please try again or use Orchids to fix it.",
+    "details": "Error details",
+    "digest": "Digest: {{digest}}",
+    "tryAgain": "Try again"
+  },
+  "plans": {
+    "free": "Free",
+    "lite": "Lite",
+    "pro": "Pro"
+  },
+  "pricing": {
+    "banner": "Upgrade to Premium",
+    "billing": {
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "periodSuffix": {
+        "month": "month",
+        "year": "year"
+      },
+      "fixedMonthsFree": "~2 months free",
+      "monthsFree": "~{{count}} months free"
+    },
+    "social": {
+      "users": "10,000+ active users",
+      "rating": "4.9/5 rating",
+      "moneyBack": "30-day money back"
+    },
+    "context": {
+      "financeSecondAccount": {
+        "title": "Need Multiple Accounts?",
+        "subtitle": "Upgrade to Lite to manage up to 5 finance accounts",
+        "highlightPlan": "lite"
+      },
+      "exportAttempt": {
+        "title": "Export Your Data",
+        "subtitle": "Upgrade to Lite for CSV exports or Pro for PDF reports",
+        "highlightPlan": "lite"
+      },
+      "pdfAttempt": {
+        "title": "Generate PDF Reports",
+        "subtitle": "Upgrade to Pro for PDF monthly reports and workout plans",
+        "highlightPlan": "pro"
+      },
+      "streakNudge": {
+        "title": "🔥 7-Day Streak Achieved!",
+        "subtitle": "Unlock advanced insights with Pro features",
+        "highlightPlan": "pro"
+      },
+      "default": {
+        "title": "Choose Your Perfect Plan",
+        "subtitle": "Transform your productivity with powerful features designed for serious achievers"
+      }
+    },
+    "upgradePrompt": {
+      "title": "🚀 Ready to Level Up?",
+      "usedFeatures_one": "You've used {{count}} feature!",
+      "usedFeatures_other": "You've used {{count}} features!",
+      "subtitle": "Unlock unlimited access, advanced analytics, and premium features to supercharge your productivity journey.",
+      "features": {
+        "analytics": "Advanced analytics & insights",
+        "planning": "Weekly, monthly & yearly planning",
+        "unlimited": "Unlimited accounts & programs"
+      },
+      "viewPlans": "View Premium Plans",
+      "maybeLater": "Maybe Later",
+      "footerLine": "30-day money-back guarantee • Cancel anytime"
+    },
+    "trial": {
+      "endsInHours": "Pro Trial Ends in {{hours}} hours",
+      "upgradePrompt": "Upgrade now to keep your Pro features active"
+    },
+    "badges": {
+      "mostPopular": "Most Popular",
+      "bestValue": "Best Value",
+      "current": "Current"
+    },
+    "entitlements": {
+      "planner": "Planner",
+      "finance": "Finance",
+      "workout": "Workout",
+      "extras": "Extras"
+    },
+    "limitations": {
+      "title": "Limitations:"
+    },
+    "cta": {
+      "processing": "Processing...",
+      "current": "Current Plan",
+      "getStartedFree": "Get Started Free",
+      "startTrial": "Start {{days}}-Day Trial",
+      "upgradeNow": "Upgrade Now"
+    },
+    "trust": {
+      "secure": "Secure",
+      "instant": "Instant",
+      "guaranteed": "Guaranteed"
+    },
+    "footer": {
+      "moneyBackGuarantee": "30-day money-back guarantee",
+      "securePayments": "Secure payments",
+      "instantActivation": "Instant activation",
+      "securePaymentsLabel": "Secure payments:",
+      "brands": {
+        "uzcard": "Uzcard",
+        "humo": "Humo",
+        "visa": "Visa",
+        "mastercard": "Mastercard"
+      },
+      "disclaimer": "Cancel anytime. No hidden fees. All prices in Uzbek Som (UZS)."
+    },
+    "plans": {
+      "free": {
+        "description": "Perfect for getting started",
+        "features": [
+          "Unlimited tasks",
+          "1 finance account",
+          "50 transactions/month",
+          "1 workout program",
+          "Daily plans only",
+          "Basic features"
+        ],
+        "limitations": [
+          "No charts or analytics",
+          "No AI assistance",
+          "No exports or PDFs",
+          "No advanced features"
+        ],
+        "entitlements": {
+          "planner": "Unlimited tasks; no charts, no AI",
+          "finance": "1 account, 50 tx/mo, only daily plans",
+          "workout": "1 program, no advanced charts"
+        }
+      },
+      "lite": {
+        "description": "Essential productivity features",
+        "badge": "Most Popular",
+        "features": [
+          "Weekly & monthly views",
+          "Basic charts & analytics",
+          "Up to 5 finance accounts",
+          "Budget tracking",
+          "CSV export",
+          "Category pie charts",
+          "Unlimited workout programs",
+          "Workout timers",
+          "Basic workout charts"
+        ],
+        "limitations": [
+          "No PDFs",
+          "No advanced analytics",
+          "Limited AI features"
+        ],
+        "entitlements": {
+          "planner": "Weekly/monthly views + basic charts",
+          "finance": "Up to 5 accounts, budgets, CSV export, category pie",
+          "workout": "Unlimited programs, timers, basic charts",
+          "extras": [
+            "No PDFs",
+            "No advanced analytics",
+            "Limited AI"
+          ]
+        }
+      },
+      "pro": {
+        "description": "Ultimate productivity powerhouse",
+        "badge": "Best Value",
+        "features": [
+          "AI weekly plan & review summaries",
+          "Advanced charts & analytics",
+          "Unlimited finance accounts",
+          "PDF monthly reports",
+          "Advanced charts (cashflow/balances)",
+          "Google Sheets auto-sync",
+          "Macros pie charts",
+          "Volume trends tracking",
+          "PDF workout plans",
+          "Premium templates library",
+          "Priority support"
+        ],
+        "entitlements": {
+          "planner": "AI weekly plan & review summaries, advanced charts",
+          "finance": "Unlimited accounts, PDF monthly report, advanced charts (cashflow/balances), Sheets auto-sync",
+          "workout": "Macros pie, volume trends, PDF plans",
+          "extras": [
+            "Templates library",
+            "Priority support"
+          ]
+        }
+      }
+    }
+  },
+  "ios": {
+    "dragToAction": {
+      "slideToConfirm": "Slide to confirm"
+    }
+  },
+  "buttons": {
+    "continue": "Continue",
+    "finish": "Finish",
+    "next": "Next",
+    "back": "Back",
+    "getStarted": "Get Started",
+    "customize": "Customize",
+    "export": "Export",
+    "delete": "Delete",
+    "upgrade": "Upgrade",
+    "skip": "Skip",
+    "update": "Update",
+    "saveChanges": "Save Changes"
+  },
+  "dialogs": {
+    "workout": {
+      "confirmDeleteProgram": "Delete program \"{{name}}\"?",
+      "confirmDeleteExercise": "Delete exercise \"{{name}}\"?"
+    }
+  },
+  "toasts": {
+    "app": {
+      "welcomeNamed": "Welcome {{name}}! Your productivity journey starts now.",
+      "subscriptionActivated": "🎉 Welcome to {{plan}}! New features unlocked.",
+      "activateFailed": "Failed to activate subscription",
+      "createTaskFailed": "Failed to create task",
+      "createTransactionFailed": "Failed to create transaction",
+      "createWorkoutFailed": "Failed to create workout",
+      "preferencesSaveFailed": "Failed to save preferences"
+    },
+    "auth": {
+      "registerSuccess": "Account created successfully! Welcome aboard!",
+      "registerGenericError": "Something went wrong. Please try again.",
+      "loginPrefillSuccess": "Account created successfully! Please sign in to continue.",
+      "loginInvalid": "Invalid email or password. Please make sure you have already registered an account and try again.",
+      "loginWelcomeBack": "Welcome back! Redirecting to your dashboard...",
+      "loginUnexpected": "An unexpected error occurred. Please try again."
+    },
+    "onboarding": {
+      "preferencesSaved": "Preferences saved successfully!",
+      "preferencesFailed": "Failed to save preferences. Please try again."
+    },
+    "planner": {
+      "taskSaved": "Task saved successfully",
+      "taskSaveFailed": "Failed to save task",
+      "taskDeleted": "Task deleted",
+      "goalSaved": "Goal saved successfully",
+      "goalSaveFailed": "Failed to save goal",
+      "goalDeleted": "Goal deleted",
+      "filtersReset": "Filters reset",
+      "subscriptionRequired": "{{mode}} planning requires {{tier}} subscription"
+    },
+    "finance": {
+      "setupCompleted": "Finance setup completed!",
+      "freePlanLimit": "Free plan limited to {{max}} transactions per month. Upgrade to Lite for unlimited transactions.",
+      "transactionLimit": "Free plan limited to {{limit}} transactions per month. Upgrade to Lite for unlimited transactions.",
+      "accountLimit": {
+        "free": "Free plan limited to 1 account. Upgrade to Lite for up to 5 accounts.",
+        "lite": "Lite plan limited to 5 accounts. Upgrade to Pro for unlimited accounts."
+      },
+      "requiredFields": "Please fill in all required fields",
+      "transactionAdded": "Transaction added successfully",
+      "accountNameRequired": "Please enter account name",
+      "accountAdded": "Account added successfully",
+      "accountUpdated": "Account updated successfully",
+      "budgetsRequirePro": "Budgets require Pro subscription. Upgrade to unlock budget tracking.",
+      "goalsRequirePro": "Goals require Pro subscription. Upgrade to unlock financial goals.",
+      "amountRequired": "Please enter an amount",
+      "amountInvalid": "Please enter a valid amount",
+      "budgetCreated": "Budget created successfully",
+      "goalCreated": "Goal created successfully",
+      "budgetProgressUpdated": "Budget progress updated",
+      "goalProgressUpdated": "Goal progress updated"
+    },
+    "profile": {
+      "signedOut": "Signed out successfully",
+      "signOutFailed": "Failed to sign out",
+      "profileUpdated": "Profile updated successfully",
+      "supportOpening": "Opening support..."
+    },
+    "currency": {
+      "changed": "Currency changed to {{currency}}"
+    },
+    "workout": {
+      "setupCompleted": "Workout setup completed!",
+      "starterCreated": "Starter program created: {{name}}",
+      "programNameRequired": "Please enter program name",
+      "programCreated": "Program created",
+      "programDeleted": "Program deleted",
+      "programNotFound": "Program not found",
+      "started": "Workout started: {{name}}",
+      "completed": "Workout completed{{suffix}}",
+      "exerciseNameRequired": "Please enter exercise name",
+      "exerciseAdded": "Exercise added",
+      "exerciseUpdated": "Exercise updated",
+      "exerciseDeleted": "Exercise deleted",
+      "invalidNumber": "Please enter a valid number",
+      "saved": "Saved",
+      "programLimit": "Free plan limited to 1 program. Upgrade to Lite for unlimited programs."
+    }
+  },
+  "checkout": {
+    "title": {
+      "upgrade": "Upgrade now"
+    },
+    "subtitle": {
+      "upgrade": "Enter your card details to complete your upgrade securely.",
+      "trial": "Connect your card to start your {{days}}-day free trial. You won't be charged today."
+    },
+    "form": {
+      "paymentDetails": "Payment details",
+      "email": "Email",
+      "cardholderName": "Cardholder name",
+      "cardholderNamePlaceholder": "Full name",
+      "cardNumber": "Card number",
+      "expiry": "Expiry",
+      "cvc": "CVC",
+      "country": "Country",
+      "selectCountry": "Select a country",
+      "agree": "I agree to the Terms and acknowledge the recurring billing."
+    },
+    "countries": {
+      "UZ": "Uzbekistan",
+      "RU": "Russia",
+      "US": "United States",
+      "GB": "United Kingdom"
+    },
+    "summary": {
+      "title": "Summary",
+      "plan": "Plan",
+      "billing": "Billing",
+      "amount": "Amount",
+      "chargeToday": "You will be charged {{amount}} today.",
+      "chargeAfterTrial": "Then {{amount}} / {{period}} after the trial"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to your account to continue",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "rememberMe": "Remember me for 30 days",
+      "submit": "Sign In",
+      "signingIn": "Signing in...",
+      "noAccountPrefix": "Don't have an account?",
+      "createNow": "Create one now",
+      "disclaimer": "By signing in, you agree to our Terms of Service and Privacy Policy",
+      "validation": {
+        "emailRequired": "Email is required",
+        "emailInvalid": "Please enter a valid email address",
+        "passwordRequired": "Password is required"
+      }
+    },
+    "register": {
+      "backToSignIn": "Back to Sign In",
+      "title": "Create Account",
+      "subtitle": "Join us and start managing your life like a pro",
+      "nameLabel": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "phoneLabel": "Phone Number",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Create a strong password",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "strength": {
+        "weak": "Weak",
+        "good": "Good",
+        "strong": "Strong",
+        "missingPrefix": "Missing:"
+      },
+      "passwordsMatch": "Passwords match",
+      "submit": "Create Account",
+      "creating": "Creating Account...",
+      "alreadyPrefix": "Already have an account?",
+      "signIn": "Sign in",
+      "validation": {
+        "nameRequired": "Full name is required",
+        "nameTooShort": "Name must be at least 2 characters",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Please enter a valid email address",
+        "phoneRequired": "Phone number is required",
+        "phoneInvalid": "Please enter a valid international phone number (e.g., +44 20 7123 4567)",
+        "passwordRequired": "Password is required",
+        "passwordTooShort": "Password must be at least 8 characters",
+        "confirmRequired": "Please confirm your password",
+        "passwordsMismatch": "Passwords do not match"
+      },
+      "errors": {
+        "USER_ALREADY_EXISTS": "An account with this email already exists. Please sign in instead.",
+        "INVALID_EMAIL": "Please enter a valid email address",
+        "WEAK_PASSWORD": "Password is too weak. Please choose a stronger password.",
+        "INVALID_INPUT": "Please check your information and try again",
+        "GENERIC": "Registration failed. Please try again."
+      }
+    }
+  }
+}

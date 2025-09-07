@@ -1,0 +1,119 @@
+-- Supabase schema for ArtiLect Dashboard
+-- Create tables matching the app usage (public schema)
+
+-- Users come from Supabase Auth, but we’ll store per-user rows by user_id (UUID)
+
+-- UUID generation for primary keys
+create extension if not exists pgcrypto;
+
+create table if not exists public.tasks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  title text not null,
+  description text,
+  status text default 'todo' not null,
+  priority text default 'medium' not null,
+  start_date timestamptz,
+  due_date timestamptz,
+  estimate_hours int,
+  tags text[],
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.finance_accounts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  name text not null,
+  type text not null,
+  currency text not null default 'UZS',
+  balance numeric not null default 0,
+  color text not null default '#10B981',
+  is_default boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.finance_categories (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  name text not null,
+  type text not null,
+  color text
+);
+
+create table if not exists public.finance_transactions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  account_id uuid not null references public.finance_accounts(id) on delete cascade,
+  category_id uuid references public.finance_categories(id),
+  type text not null check (type in ('income','expense','transfer')),
+  amount numeric not null,
+  currency text not null default 'UZS',
+  description text,
+  tags text[],
+  occurred_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.workout_programs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  name text not null,
+  sport_type text not null,
+  frequency int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.workout_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  program_id uuid references public.workout_programs(id) on delete set null,
+  started_at timestamptz not null,
+  ended_at timestamptz,
+  duration_min int,
+  calories int,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+-- RLS
+alter table public.tasks enable row level security;
+alter table public.finance_accounts enable row level security;
+alter table public.finance_categories enable row level security;
+alter table public.finance_transactions enable row level security;
+alter table public.workout_programs enable row level security;
+alter table public.workout_sessions enable row level security;
+
+-- Policies: users can CRUD own rows
+create policy tasks_select on public.tasks for select using (auth.uid() = user_id);
+create policy tasks_insert on public.tasks for insert with check (auth.uid() = user_id);
+create policy tasks_update on public.tasks for update using (auth.uid() = user_id);
+create policy tasks_delete on public.tasks for delete using (auth.uid() = user_id);
+
+create policy fa_select on public.finance_accounts for select using (auth.uid() = user_id);
+create policy fa_insert on public.finance_accounts for insert with check (auth.uid() = user_id);
+create policy fa_update on public.finance_accounts for update using (auth.uid() = user_id);
+create policy fa_delete on public.finance_accounts for delete using (auth.uid() = user_id);
+
+create policy fc_select on public.finance_categories for select using (auth.uid() = user_id);
+create policy fc_insert on public.finance_categories for insert with check (auth.uid() = user_id);
+create policy fc_update on public.finance_categories for update using (auth.uid() = user_id);
+create policy fc_delete on public.finance_categories for delete using (auth.uid() = user_id);
+
+create policy ft_select on public.finance_transactions for select using (auth.uid() = user_id);
+create policy ft_insert on public.finance_transactions for insert with check (auth.uid() = user_id);
+create policy ft_update on public.finance_transactions for update using (auth.uid() = user_id);
+create policy ft_delete on public.finance_transactions for delete using (auth.uid() = user_id);
+
+create policy wp_select on public.workout_programs for select using (auth.uid() = user_id);
+create policy wp_insert on public.workout_programs for insert with check (auth.uid() = user_id);
+create policy wp_update on public.workout_programs for update using (auth.uid() = user_id);
+create policy wp_delete on public.workout_programs for delete using (auth.uid() = user_id);
+
+create policy ws_select on public.workout_sessions for select using (auth.uid() = user_id);
+create policy ws_insert on public.workout_sessions for insert with check (auth.uid() = user_id);
+create policy ws_update on public.workout_sessions for update using (auth.uid() = user_id);
+create policy ws_delete on public.workout_sessions for delete using (auth.uid() = user_id);
+
+-- Realtime
+-- In Supabase Dashboard -> Database -> Replication, enable "postgres_changes" for these tables under the public schema.

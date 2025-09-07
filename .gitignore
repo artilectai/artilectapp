@@ -1,0 +1,14 @@
+# dependencies & builds
+node_modules/
+.next/
+.next/cache/
+out/
+dist/
+coverage/
+
+# env & local configs
+.env*
+!.env.example
+.vercel/
+.DS_Store
+*.log
