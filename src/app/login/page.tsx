@@ -30,6 +30,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const { t } = useTranslation('app'); // ADDED
   const { data } = useSession();
+  const TELEGRAM_START_URL = (process.env.NEXT_PUBLIC_TELEGRAM_START_URL || 'https://t.me/ArtiLectAIbot/?startapp&addToHomeScreen');
   // Hydration-safe gate: render placeholders on SSR/first paint, real strings after mount
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -99,7 +100,7 @@ export default function LoginPage() {
         if (msg.includes('confirm') && msg.includes('email')) {
           try {
             // Resend the confirmation email so the user can complete sign up
-            await supabase.auth.resend({ type: 'signup', email: formData.email });
+            await supabase.auth.resend({ type: 'signup', email: formData.email, options: { emailRedirectTo: TELEGRAM_START_URL } as any });
             toast.message('Email not confirmed. We sent a new confirmation link to your inbox.');
           } catch {}
         } else {
@@ -126,7 +127,7 @@ export default function LoginPage() {
     }
     setResendLoading(true);
     try {
-      await supabase.auth.resend({ type: 'signup', email: formData.email });
+  await supabase.auth.resend({ type: 'signup', email: formData.email, options: { emailRedirectTo: TELEGRAM_START_URL } as any });
       toast.message('Confirmation link sent. Check your inbox.');
     } catch {
       toast.error('Could not resend confirmation right now.');

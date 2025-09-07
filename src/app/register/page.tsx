@@ -39,6 +39,7 @@ interface PasswordStrength {
 export default function RegisterPage() {
   const router = useRouter();
   const { t } = useTranslation('app'); // ADDED
+  const TELEGRAM_START_URL = (process.env.NEXT_PUBLIC_TELEGRAM_START_URL || 'https://t.me/ArtiLectAIbot/?startapp&addToHomeScreen');
   // Hydration-safe gate
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -166,12 +167,13 @@ export default function RegisterPage() {
     if (!validateForm()) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: { name: formData.name.trim(), phone: formData.phone },
-          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined,
+      // After email confirmation, send users back into Telegram app
+      emailRedirectTo: TELEGRAM_START_URL,
         }
       });
       if (error) {
@@ -188,7 +190,7 @@ export default function RegisterPage() {
       if (!data?.session) {
         toast.message('Check your inbox to confirm your email, then sign in.');
         // offer immediate resend in case the email didn't arrive
-        try { await supabase.auth.resend({ type: 'signup', email: formData.email }); } catch {}
+  try { await supabase.auth.resend({ type: 'signup', email: formData.email, options: { emailRedirectTo: TELEGRAM_START_URL } as any }); } catch {}
         return;
       }
       // If we have an active session immediately (email confirmation disabled), mirror profile now
