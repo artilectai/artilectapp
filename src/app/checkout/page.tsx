@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import '@/i18n/config';
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,6 +125,7 @@ export default function CheckoutPage() {
   }
 
   return (
+    <Suspense fallback={null}>
     <div className="max-w-5xl mx-auto p-6">
       {/* Header */}
       <motion.div
@@ -258,5 +259,6 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+    </Suspense>
   );
 }
