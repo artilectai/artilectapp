@@ -21,6 +21,8 @@ export default function TelegramBridge() {
     try {
       tg.ready?.();
       tg.expand?.();
+  // Disallow swipe-down to close, so only the Close button can close the app
+  tg.disableVerticalSwipes?.();
       // Require explicit confirmation to close the web app (prevents accidental swipe-to-close)
       tg.enableClosingConfirmation?.();
     } catch {}

@@ -109,8 +109,8 @@ export default function LoginPage() {
 
   return (
     <>
-  <div className="min-h-dvh bg-background flex items-center justify-center px-safe pt-safe-top pb-safe-bottom overflow-hidden">
-        <div className="w-full max-w-md ios-slide-up">
+  <div className="min-h-dvh bg-background flex items-center justify-center px-safe pt-safe-top pb-safe-bottom">
+        <div className="w-full max-w-md ios-slide-up overflow-y-auto max-h-[100dvh]">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-heading font-bold mb-2" suppressHydrationWarning>

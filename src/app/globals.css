@@ -167,6 +167,8 @@ color: var(--color-foreground);
 /* Reduce iOS rubber-banding and accidental close gestures inside Telegram */
 overscroll-behavior: none;
 touch-action: manipulation;
+height: 100dvh;
+overflow: hidden; /* prevent outer scroll that triggers pull-to-dismiss */
 }
 h1, h2, h3, h4 {
 font-family: var(--font-heading);

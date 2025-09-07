@@ -188,8 +188,8 @@ export default function RegisterPage() {
 
   return (
     <>
-  <div className="min-h-dvh bg-background flex items-center justify-center px-safe pt-safe-top pb-safe-bottom ios-slide-up overflow-hidden">
-        <div className="w-full max-w-md space-y-6">
+  <div className="min-h-dvh bg-background flex items-center justify-center px-safe pt-safe-top pb-safe-bottom ios-slide-up">
+        <div className="w-full max-w-md space-y-6 overflow-y-auto max-h-[100dvh]">
           {/* Back button */}
           <Link 
             href="/login" 

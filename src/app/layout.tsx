@@ -8,6 +8,7 @@ import Script from "next/script";
 import I18nClientInit from "@/i18n-client";
 import I18nProvider from "@/i18n/I18nProvider";
 import TelegramBridge from "@/components/TelegramBridge";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "ArtiLect - Your AI-Powered Life Assistant",
@@ -60,6 +61,7 @@ export default function RootLayout({
             }}
           />
           <VisualEditsMessenger />
+          <Analytics />
       </body>
     </html>
   );
