@@ -6,10 +6,18 @@ import { Toaster } from "@/components/ui/sonner";
 import Script from "next/script";
 import I18nClientInit from "@/i18n-client";
 import I18nProvider from "@/i18n/I18nProvider";
+import TelegramBridge from "@/components/TelegramBridge";
 
 export const metadata: Metadata = {
   title: "ArtiLect - Your AI-Powered Life Assistant",
   description: "Manage your tasks, finances, and workouts with AI assistance in English, Russian, and Uzbek",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover" as const,
 };
 
 export default function RootLayout({
@@ -21,6 +29,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
           <I18nClientInit />
+          <TelegramBridge />
           <ErrorReporter />
           <Script
             src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"

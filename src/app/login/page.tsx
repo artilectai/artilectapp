@@ -109,7 +109,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-dvh bg-background flex items-center justify-center px-safe pt-safe-top pb-safe-bottom">
         <div className="w-full max-w-md ios-slide-up">
           {/* Header */}
           <div className="text-center mb-8">
