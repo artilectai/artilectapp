@@ -81,7 +81,9 @@ export default function HomePage() {
             }
 
             setShowOnboarding(false);
-            setSubscriptionPlan(savedPlan || 'free');
+            // Initialize with a conservative plan; never trust local 'pro'
+            const initialPlan: SubscriptionPlan = savedPlan === 'pro' ? 'free' : (savedPlan || 'free');
+            setSubscriptionPlan(initialPlan);
             setUsageCount(parseInt(savedUsageCount || '0', 10));
 
             // Sync subscription plan with Supabase profile (is_pro / pro_expires_at)
@@ -98,22 +100,34 @@ export default function HomePage() {
               if (error) {
                 const alt = await supabase
                   .from('user_profiles')
-                  .select('*')
+                  .select('is_pro, pro_expires_at')
                   .eq('user_id', userId)
                   .single();
                 profile = alt.data as any;
               }
 
-              if (profile && typeof profile.is_pro === 'boolean') {
-                const expiresAt = profile.pro_expires_at ? new Date(profile.pro_expires_at as string) : null;
-                const proActive = profile.is_pro && (!expiresAt || expiresAt > now);
-                const nextPlan: SubscriptionPlan = proActive ? 'pro' : (savedPlan || 'free');
+              // Decide plan strictly from server truth
+              if (profile && typeof (profile as any).is_pro === 'boolean') {
+                const expiresAt = (profile as any).pro_expires_at ? new Date((profile as any).pro_expires_at as string) : null;
+                const proActive = (profile as any).is_pro && (!expiresAt || expiresAt > now);
+                const nextPlan: SubscriptionPlan = proActive ? 'pro' : (savedPlan === 'lite' ? 'lite' : 'free');
                 setSubscriptionPlan(nextPlan);
                 localStorage.setItem('subscription_plan', nextPlan);
+              } else {
+                // If server didn’t return profile, never elevate to pro from local storage
+                const safePlan: SubscriptionPlan = savedPlan === 'lite' ? 'lite' : 'free';
+                setSubscriptionPlan(safePlan);
+                localStorage.setItem('subscription_plan', safePlan);
               }
             } catch (e) {
               // Non-fatal: keep local plan
               console.warn('Failed to sync subscription from profile:', e);
+              // Ensure we never stay on local 'pro' if server check failed
+              const savedPlan = localStorage.getItem('subscription_plan') as SubscriptionPlan;
+              if (savedPlan === 'pro') {
+                localStorage.setItem('subscription_plan', 'free');
+                setSubscriptionPlan('free');
+              }
             }
           }
         }
@@ -219,12 +233,17 @@ export default function HomePage() {
 
   const handleSubscriptionSelect = async (planId: string) => {
     try {
-      setSubscriptionPlan(planId as SubscriptionPlan);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('subscription_plan', planId);
+      // Never set Pro locally here; route to checkout instead
+      if (planId === 'pro') {
+        setShowSubscriptionPlans(false);
+        router.push('/checkout');
+      } else {
+        setSubscriptionPlan(planId as SubscriptionPlan);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('subscription_plan', planId);
+        }
+        setShowSubscriptionPlans(false);
       }
-      
-      setShowSubscriptionPlans(false);
       
       // Analytics event
       if (typeof window !== 'undefined' && 'gtag' in window) {
@@ -247,7 +266,11 @@ export default function HomePage() {
         });
       }
 
-      toast.success(`🎉 Welcome to ${planId.charAt(0).toUpperCase() + planId.slice(1)}! New features unlocked.`);
+      if (planId !== 'pro') {
+        toast.success(`🎉 Welcome to ${planId.charAt(0).toUpperCase() + planId.slice(1)}! New features unlocked.`);
+      } else {
+        toast.success('Proceed to checkout to activate Pro.');
+      }
     } catch (error) {
       console.error('Failed to update subscription:', error);
       toast.error('Failed to activate subscription');
