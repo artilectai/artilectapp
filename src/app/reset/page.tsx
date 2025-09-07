@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/supabase/useSession";
 import { Button } from "@/components/ui/button";
 
 // Utility: keys we want to wipe to restart onboarding and premium flows

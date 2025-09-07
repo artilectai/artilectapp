@@ -1,31 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/db';
-import { tasks } from '@/db/schema';
-import { eq, like, and, or, desc, asc } from 'drizzle-orm';
-import { getAuth } from "@/lib/auth";
-
-// Better-auth session authentication
-async function authenticateRequest(request: NextRequest) {
-  try {
-  const session = await getAuth().api.getSession({
-      headers: request.headers
-    });
-    
-    if (!session || !session.user) {
-      return null;
-    }
-    
-    return session.user;
-  } catch (error) {
-    return null;
-  }
-}
+import { supabaseServer } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
-  const db = getDb();
-    // Authentication check with better-auth
-    const user = await authenticateRequest(request);
+    const sb = await supabaseServer();
+    const { data: { user } } = await sb.auth.getUser();
     if (!user) {
       return NextResponse.json({ 
         error: 'Authentication required',
@@ -38,86 +17,33 @@ export async function GET(request: NextRequest) {
 
     // Single record fetch
     if (id) {
-      if (!id || isNaN(parseInt(id))) {
-        return NextResponse.json({ 
-          error: "Valid ID is required",
-          code: "INVALID_ID" 
-        }, { status: 400 });
-      }
-
-      const task = await db.select()
-        .from(tasks)
-        .where(eq(tasks.id, parseInt(id)))
-        .limit(1);
-
-      if (task.length === 0) {
+      const { data, error } = await sb.from('tasks').select('*').eq('id', id).eq('user_id', user.id).limit(1).maybeSingle();
+      if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+      if (!data) {
         return NextResponse.json({ 
           error: 'Task not found',
           code: 'TASK_NOT_FOUND' 
         }, { status: 404 });
       }
-
-      return NextResponse.json(task[0], { status: 200 });
+      return NextResponse.json(data, { status: 200 });
     }
 
     // List with filtering, search, and pagination
     const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 100);
     const offset = parseInt(searchParams.get('offset') || '0');
     const search = searchParams.get('search');
-    const userId = searchParams.get('user_id');
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
-    const category = searchParams.get('category');
-    const sort = searchParams.get('sort') || 'createdAt';
-    const order = searchParams.get('order') || 'desc';
+    const sort = searchParams.get('sort') || 'created_at';
+    const order = (searchParams.get('order') || 'desc').toLowerCase() === 'asc' ? { ascending: true } : { ascending: false };
 
-    // Build where conditions
-    const conditions = [];
-
-    if (userId) {
-      conditions.push(eq(tasks.userId, userId));
-    }
-
-    if (status) {
-      conditions.push(eq(tasks.status, status));
-    }
-
-    if (priority) {
-      conditions.push(eq(tasks.priority, priority));
-    }
-
-    if (category) {
-      conditions.push(eq(tasks.category, category));
-    }
-
-    if (search) {
-      conditions.push(
-        or(
-          like(tasks.title, `%${search}%`),
-          like(tasks.description, `%${search}%`)
-        )
-      );
-    }
-
-    let queryBuilder = db.select().from(tasks).$dynamic();
-
-    if (conditions.length > 0) {
-      queryBuilder = queryBuilder.where(and(...conditions));
-    }
-
-    // Add sorting
-    const sortColumn = sort === 'title' ? tasks.title :
-                      sort === 'status' ? tasks.status :
-                      sort === 'priority' ? tasks.priority :
-                      sort === 'dueDate' ? tasks.dueDate :
-                      sort === 'updatedAt' ? tasks.updatedAt :
-                      tasks.createdAt;
-
-    queryBuilder = order === 'asc' ? queryBuilder.orderBy(asc(sortColumn)) : queryBuilder.orderBy(desc(sortColumn));
-
-    const results = await queryBuilder.limit(limit).offset(offset);
-
-    return NextResponse.json(results, { status: 200 });
+    let q = sb.from('tasks').select('*').eq('user_id', user.id);
+    if (status) q = q.eq('status', status);
+    if (priority) q = q.eq('priority', priority);
+    if (search) q = q.ilike('title', `%${search}%`);
+    const { data, error } = await q.order(sort as any, order as any).range(offset, offset + limit - 1);
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json(data ?? [], { status: 200 });
 
   } catch (error) {
     console.error('GET error:', error);
@@ -129,9 +55,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-  const db = getDb();
-    // Authentication check with better-auth
-    const user = await authenticateRequest(request);
+    const sb = await supabaseServer();
+    const { data: { user } } = await sb.auth.getUser();
     if (!user) {
       return NextResponse.json({ 
         error: 'Authentication required',
@@ -141,9 +66,6 @@ export async function POST(request: NextRequest) {
 
     const requestBody = await request.json();
 
-    // Use authenticated user ID if not provided
-    const userId = requestBody.userId || user.id;
-
     if (!requestBody.title || requestBody.title.trim() === '') {
       return NextResponse.json({ 
         error: "Title is required",
@@ -151,26 +73,20 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Prepare data with defaults and validation
     const now = new Date().toISOString();
-    const taskData = {
-      userId: userId,
-      title: requestBody.title.toString().trim(),
-      description: requestBody.description ? requestBody.description.toString().trim() : null,
-      status: requestBody.status || 'pending',
+    const insert = {
+      user_id: user.id,
+      title: String(requestBody.title).trim(),
+      description: requestBody.description ? String(requestBody.description).trim() : null,
+      status: requestBody.status || 'todo',
       priority: requestBody.priority || 'medium',
-      category: requestBody.category ? requestBody.category.toString().trim() : null,
-      dueDate: requestBody.dueDate || null,
-      completedAt: requestBody.completedAt || null,
-      createdAt: now,
-      updatedAt: now
+      due_date: requestBody.dueDate || null,
+      created_at: now,
+      updated_at: now,
     };
-
-    const newTask = await db.insert(tasks)
-      .values(taskData)
-      .returning();
-
-    return NextResponse.json(newTask[0], { status: 201 });
+    const { data, error } = await sb.from('tasks').insert(insert).select('*').single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json(data, { status: 201 });
 
   } catch (error) {
     console.error('POST error:', error);
@@ -182,9 +98,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-  const db = getDb();
-    // Authentication check with better-auth
-    const user = await authenticateRequest(request);
+    const sb = await supabaseServer();
+    const { data: { user } } = await sb.auth.getUser();
     if (!user) {
       return NextResponse.json({ 
         error: 'Authentication required',
@@ -195,20 +110,16 @@ export async function PUT(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    if (!id || isNaN(parseInt(id))) {
+    if (!id) {
       return NextResponse.json({ 
         error: "Valid ID is required",
         code: "INVALID_ID" 
       }, { status: 400 });
     }
 
-    // Check if task exists
-    const existingTask = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, parseInt(id)))
-      .limit(1);
-
-    if (existingTask.length === 0) {
+    const { data: exists, error: e1 } = await sb.from('tasks').select('id').eq('id', id).eq('user_id', user.id).maybeSingle();
+    if (e1) return NextResponse.json({ error: e1.message }, { status: 400 });
+    if (!exists) {
       return NextResponse.json({ 
         error: 'Task not found',
         code: 'TASK_NOT_FOUND' 
@@ -217,10 +128,7 @@ export async function PUT(request: NextRequest) {
 
     const requestBody = await request.json();
 
-    // Prepare update data
-    const updateData: any = {
-      updatedAt: new Date().toISOString()
-    };
+    const updateData: any = { updated_at: new Date().toISOString() };
 
     if (requestBody.title !== undefined) {
       if (!requestBody.title || requestBody.title.trim() === '') {
@@ -229,11 +137,11 @@ export async function PUT(request: NextRequest) {
           code: "INVALID_TITLE" 
         }, { status: 400 });
       }
-      updateData.title = requestBody.title.toString().trim();
+      updateData.title = String(requestBody.title).trim();
     }
 
     if (requestBody.description !== undefined) {
-      updateData.description = requestBody.description ? requestBody.description.toString().trim() : null;
+      updateData.description = requestBody.description ? String(requestBody.description).trim() : null;
     }
 
     if (requestBody.status !== undefined) {
@@ -244,31 +152,17 @@ export async function PUT(request: NextRequest) {
       updateData.priority = requestBody.priority;
     }
 
-    if (requestBody.category !== undefined) {
-      updateData.category = requestBody.category ? requestBody.category.toString().trim() : null;
-    }
-
     if (requestBody.dueDate !== undefined) {
-      updateData.dueDate = requestBody.dueDate;
+      updateData.due_date = requestBody.dueDate;
     }
 
     if (requestBody.completedAt !== undefined) {
-      updateData.completedAt = requestBody.completedAt;
+      updateData.completed_at = requestBody.completedAt;
     }
 
-    const updated = await db.update(tasks)
-      .set(updateData)
-      .where(eq(tasks.id, parseInt(id)))
-      .returning();
-
-    if (updated.length === 0) {
-      return NextResponse.json({ 
-        error: 'Task not found',
-        code: 'TASK_NOT_FOUND' 
-      }, { status: 404 });
-    }
-
-    return NextResponse.json(updated[0], { status: 200 });
+    const { data, error } = await sb.from('tasks').update(updateData).eq('id', id).eq('user_id', user.id).select('*').single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json(data, { status: 200 });
 
   } catch (error) {
     console.error('PUT error:', error);
@@ -280,11 +174,10 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-  const db = getDb();
-    // Authentication check with better-auth
-    const user = await authenticateRequest(request);
+    const sb = await supabaseServer();
+    const { data: { user } } = await sb.auth.getUser();
     if (!user) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Authentication required',
         code: 'AUTHENTICATION_REQUIRED'
       }, { status: 401 });
@@ -293,41 +186,38 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    if (!id || isNaN(parseInt(id))) {
-      return NextResponse.json({ 
-        error: "Valid ID is required",
-        code: "INVALID_ID" 
+    if (!id) {
+      return NextResponse.json({
+        error: 'Valid ID is required',
+        code: 'INVALID_ID'
       }, { status: 400 });
     }
 
-    // Check if task exists before deleting
-    const existingTask = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, parseInt(id)))
-      .limit(1);
+    // Ensure the task belongs to the user and delete
+    const { data: existing, error: e1 } = await sb
+      .from('tasks')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-    if (existingTask.length === 0) {
-      return NextResponse.json({ 
+    if (e1) return NextResponse.json({ error: e1.message }, { status: 400 });
+    if (!existing) {
+      return NextResponse.json({
         error: 'Task not found',
-        code: 'TASK_NOT_FOUND' 
+        code: 'TASK_NOT_FOUND'
       }, { status: 404 });
     }
 
-    const deleted = await db.delete(tasks)
-      .where(eq(tasks.id, parseInt(id)))
-      .returning();
+    const { error } = await sb
+      .from('tasks')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
 
-    if (deleted.length === 0) {
-      return NextResponse.json({ 
-        error: 'Task not found',
-        code: 'TASK_NOT_FOUND' 
-      }, { status: 404 });
-    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
-    return NextResponse.json({ 
-      message: 'Task deleted successfully',
-      task: deleted[0]
-    }, { status: 200 });
+    return NextResponse.json({ message: 'Task deleted successfully' }, { status: 200 });
 
   } catch (error) {
     console.error('DELETE error:', error);

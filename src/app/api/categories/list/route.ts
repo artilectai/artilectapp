@@ -1,329 +1,151 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/db';
-import { categories } from '@/db/schema';
-import { eq, like, and, or, desc, asc } from 'drizzle-orm';
-import { getAuth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { supabaseServer } from '@/lib/supabase/server';
 
-// Better-auth session validation
-async function authenticateRequest(request: NextRequest) {
-  try {
-    const session = await getAuth().api.getSession({
-      headers: await headers(),
-    });
-    
-    if (!session) {
-      return null;
-    }
-    
-    return session;
-  } catch (error) {
-    console.error('Authentication error:', error);
-    return null;
-  }
-}
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
+// GET /api/categories/list?type=income|expense&search=&limit=&offset=&sort=name|created_at&order=asc|desc&id=
 export async function GET(request: NextRequest) {
-  try {
-    // Authentication check
-    const session = await authenticateRequest(request);
-    if (!session) {
-      return NextResponse.json({ 
-        error: 'Authentication required',
-        code: 'UNAUTHORIZED' 
-      }, { status: 401 });
-    }
+	try {
+		const sb = await supabaseServer();
+		const { data: { user } } = await sb.auth.getUser();
+		if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    
-    // Single record fetch
-    if (id) {
-      if (!id || isNaN(parseInt(id))) {
-        return NextResponse.json({ 
-          error: "Valid ID is required",
-          code: "INVALID_ID" 
-        }, { status: 400 });
-      }
-      
-  const db = getDb();
-  const category = await db.select()
-        .from(categories)
-        .where(eq(categories.id, parseInt(id)))
-        .limit(1);
-      
-      if (category.length === 0) {
-        return NextResponse.json({ 
-          error: 'Category not found',
-          code: 'NOT_FOUND' 
-        }, { status: 404 });
-      }
-      
-      return NextResponse.json(category[0]);
-    }
-    
-    // List with filtering, search and pagination
-    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
-    const search = searchParams.get('search');
-    const userId = searchParams.get('user_id');
-    const type = searchParams.get('type');
-    const sort = searchParams.get('sort') || 'createdAt';
-    const order = searchParams.get('order') || 'desc';
-    
-  const db = getDb();
-  const baseQuery = db.select().from(categories);
-  const conditions: any[] = [];
-    
-    // Filter by user_id
-    if (userId) {
-      conditions.push(eq(categories.userId, userId));
-    }
-    
-    // Filter by type
-    if (type) {
-      if (!['task', 'transaction', 'workout'].includes(type)) {
-        return NextResponse.json({ 
-          error: "Invalid type. Must be 'task', 'transaction', or 'workout'",
-          code: "INVALID_TYPE" 
-        }, { status: 400 });
-      }
-      conditions.push(eq(categories.type, type));
-    }
-    
-    // Search by name
-    if (search) {
-      conditions.push(like(categories.name, `%${search}%`));
-    }
-    
-    // Apply conditions (build filtered query without changing the type)
-    const filteredQuery = conditions.length > 0
-      ? (baseQuery as any).where(and(...conditions) as any)
-      : baseQuery;
+		const { searchParams } = new URL(request.url);
+		const id = searchParams.get('id');
+		if (id) {
+			const { data, error } = await sb
+				.from('finance_categories')
+				.select('*')
+				.eq('id', id)
+				.eq('user_id', user.id)
+				.maybeSingle();
+			if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+			if (!data) return NextResponse.json({ error: 'Category not found' }, { status: 404 });
+			return NextResponse.json(data, { status: 200 });
+		}
 
-    // Apply sorting
-    const orderDirection = order === 'asc' ? asc : desc;
-    const sortColumn =
-      sort === 'name' ? categories.name :
-      sort === 'type' ? categories.type :
-      categories.createdAt;
+		const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+		const offset = parseInt(searchParams.get('offset') || '0');
+		const type = searchParams.get('type');
+		const search = searchParams.get('search');
+		const sort = searchParams.get('sort') || 'created_at';
+		const asc = (searchParams.get('order') || 'desc').toLowerCase() === 'asc';
 
-    const orderedQuery = (filteredQuery as any).orderBy(orderDirection(sortColumn));
-    
-    const results = await (orderedQuery as any).limit(limit).offset(offset);
-    
-    return NextResponse.json(results);
-    
-  } catch (error) {
-    console.error('GET error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
-    }, { status: 500 });
-  }
+		let q = sb.from('finance_categories').select('*').eq('user_id', user.id);
+		if (type) q = q.eq('type', type);
+		if (search) q = q.ilike('name', `%${search}%`);
+
+		const { data, error } = await q.order(sort as any, { ascending: asc }).range(offset, offset + limit - 1);
+		if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+		return NextResponse.json(data ?? [], { status: 200 });
+		} catch (e: any) {
+			console.error('categories GET error:', e);
+			const msg = e?.message ? String(e.message) : String(e);
+			return NextResponse.json({ error: 'Internal error: ' + msg }, { status: 500 });
+		}
 }
 
+// POST /api/categories/list { name, type, color }
 export async function POST(request: NextRequest) {
-  try {
-    // Authentication check
-    const session = await authenticateRequest(request);
-    if (!session) {
-      return NextResponse.json({ 
-        error: 'Authentication required',
-        code: 'UNAUTHORIZED' 
-      }, { status: 401 });
-    }
+	try {
+		const sb = await supabaseServer();
+		const { data: { user } } = await sb.auth.getUser();
+		if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
-  const db = getDb();
-  const requestBody = await request.json();
-    const { userId, name, type, color } = requestBody;
-    
-    // Validate required fields
-    if (!userId) {
-      return NextResponse.json({ 
-        error: "userId is required",
-        code: "MISSING_USER_ID" 
-      }, { status: 400 });
-    }
-    
-    if (!name) {
-      return NextResponse.json({ 
-        error: "name is required",
-        code: "MISSING_NAME" 
-      }, { status: 400 });
-    }
-    
-    if (!type) {
-      return NextResponse.json({ 
-        error: "type is required",
-        code: "MISSING_TYPE" 
-      }, { status: 400 });
-    }
-    
-    // Validate type value
-    if (!['task', 'transaction', 'workout'].includes(type)) {
-      return NextResponse.json({ 
-        error: "Invalid type. Must be 'task', 'transaction', or 'workout'",
-        code: "INVALID_TYPE" 
-      }, { status: 400 });
-    }
-    
-    // Sanitize inputs
-    const sanitizedData = {
-      userId: userId.toString().trim(),
-      name: name.toString().trim(),
-      type: type.toString().trim(),
-      color: color ? color.toString().trim() : null,
-      createdAt: new Date().toISOString()
-    };
-    
-  const newCategory = await db.insert(categories)
-      .values(sanitizedData)
-      .returning();
-    
-    return NextResponse.json(newCategory[0], { status: 201 });
-    
-  } catch (error) {
-    console.error('POST error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
-    }, { status: 500 });
-  }
+		const body = await request.json();
+		if (!body?.name || !body?.type) {
+			return NextResponse.json({ error: 'name and type are required' }, { status: 400 });
+		}
+
+		const insert = {
+			user_id: user.id,
+			name: String(body.name).trim(),
+			type: String(body.type),
+			color: body.color ?? null,
+		};
+		const { data, error } = await sb.from('finance_categories').insert(insert).select('*').single();
+		if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+		return NextResponse.json(data, { status: 201 });
+		} catch (e: any) {
+			console.error('categories POST error:', e);
+			const msg = e?.message ? String(e.message) : String(e);
+			return NextResponse.json({ error: 'Internal error: ' + msg }, { status: 500 });
+		}
 }
 
+// PUT /api/categories/list?id=... { name?, type?, color? }
 export async function PUT(request: NextRequest) {
-  try {
-    // Authentication check
-    const session = await authenticateRequest(request);
-    if (!session) {
-      return NextResponse.json({ 
-        error: 'Authentication required',
-        code: 'UNAUTHORIZED' 
-      }, { status: 401 });
-    }
+	try {
+		const sb = await supabaseServer();
+		const { data: { user } } = await sb.auth.getUser();
+		if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
-  const db = getDb();
-  const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    
-    if (!id || isNaN(parseInt(id))) {
-      return NextResponse.json({ 
-        error: "Valid ID is required",
-        code: "INVALID_ID" 
-      }, { status: 400 });
-    }
-    
-    // Check if record exists
-  const existingCategory = await db.select()
-      .from(categories)
-      .where(eq(categories.id, parseInt(id)))
-      .limit(1);
-    
-    if (existingCategory.length === 0) {
-      return NextResponse.json({ 
-        error: 'Category not found',
-        code: 'NOT_FOUND' 
-      }, { status: 404 });
-    }
-    
-    const requestBody = await request.json();
-    const { userId, name, type, color } = requestBody;
-    
-    // Validate type if provided
-    if (type && !['task', 'transaction', 'workout'].includes(type)) {
-      return NextResponse.json({ 
-        error: "Invalid type. Must be 'task', 'transaction', or 'workout'",
-        code: "INVALID_TYPE" 
-      }, { status: 400 });
-    }
-    
-    // Build update object with only provided fields
-    const updates: any = {};
-    
-    if (userId !== undefined) {
-      updates.userId = userId.toString().trim();
-    }
-    
-    if (name !== undefined) {
-      if (!name.toString().trim()) {
-        return NextResponse.json({ 
-          error: "name cannot be empty",
-          code: "INVALID_NAME" 
-        }, { status: 400 });
-      }
-      updates.name = name.toString().trim();
-    }
-    
-    if (type !== undefined) {
-      updates.type = type.toString().trim();
-    }
-    
-    if (color !== undefined) {
-      updates.color = color ? color.toString().trim() : null;
-    }
-    
-  const updatedCategory = await db.update(categories)
-      .set(updates)
-      .where(eq(categories.id, parseInt(id)))
-      .returning();
-    
-    return NextResponse.json(updatedCategory[0]);
-    
-  } catch (error) {
-    console.error('PUT error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
-    }, { status: 500 });
-  }
+		const { searchParams } = new URL(request.url);
+		const id = searchParams.get('id');
+		if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+
+		const { data: exists, error: e1 } = await sb
+			.from('finance_categories')
+			.select('id')
+			.eq('id', id)
+			.eq('user_id', user.id)
+			.maybeSingle();
+		if (e1) return NextResponse.json({ error: e1.message }, { status: 400 });
+		if (!exists) return NextResponse.json({ error: 'Category not found' }, { status: 404 });
+
+		const body = await request.json();
+		const patch: any = {};
+		if (body.name !== undefined) patch.name = String(body.name).trim();
+		if (body.type !== undefined) patch.type = String(body.type);
+		if (body.color !== undefined) patch.color = body.color ?? null;
+
+		const { data, error } = await sb
+			.from('finance_categories')
+			.update(patch)
+			.eq('id', id)
+			.eq('user_id', user.id)
+			.select('*')
+			.single();
+		if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+		return NextResponse.json(data, { status: 200 });
+		} catch (e: any) {
+			console.error('categories PUT error:', e);
+			const msg = e?.message ? String(e.message) : String(e);
+			return NextResponse.json({ error: 'Internal error: ' + msg }, { status: 500 });
+		}
 }
 
+// DELETE /api/categories/list?id=...
 export async function DELETE(request: NextRequest) {
-  try {
-    // Authentication check
-    const session = await authenticateRequest(request);
-    if (!session) {
-      return NextResponse.json({ 
-        error: 'Authentication required',
-        code: 'UNAUTHORIZED' 
-      }, { status: 401 });
-    }
+	try {
+		const sb = await supabaseServer();
+		const { data: { user } } = await sb.auth.getUser();
+		if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
-  const db = getDb();
-  const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    
-    if (!id || isNaN(parseInt(id))) {
-      return NextResponse.json({ 
-        error: "Valid ID is required",
-        code: "INVALID_ID" 
-      }, { status: 400 });
-    }
-    
-    // Check if record exists before deleting
-  const existingCategory = await db.select()
-      .from(categories)
-      .where(eq(categories.id, parseInt(id)))
-      .limit(1);
-    
-    if (existingCategory.length === 0) {
-      return NextResponse.json({ 
-        error: 'Category not found',
-        code: 'NOT_FOUND' 
-      }, { status: 404 });
-    }
-    
-  const deletedCategory = await db.delete(categories)
-      .where(eq(categories.id, parseInt(id)))
-      .returning();
-    
-    return NextResponse.json({
-      message: 'Category deleted successfully',
-      category: deletedCategory[0]
-    });
-    
-  } catch (error) {
-    console.error('DELETE error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
-    }, { status: 500 });
-  }
+		const { searchParams } = new URL(request.url);
+		const id = searchParams.get('id');
+		if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+
+		const { data: exists, error: e1 } = await sb
+			.from('finance_categories')
+			.select('id')
+			.eq('id', id)
+			.eq('user_id', user.id)
+			.maybeSingle();
+		if (e1) return NextResponse.json({ error: e1.message }, { status: 400 });
+		if (!exists) return NextResponse.json({ error: 'Category not found' }, { status: 404 });
+
+		const { error } = await sb
+			.from('finance_categories')
+			.delete()
+			.eq('id', id)
+			.eq('user_id', user.id);
+		if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+		return NextResponse.json({ message: 'Deleted' }, { status: 200 });
+		} catch (e: any) {
+			console.error('categories DELETE error:', e);
+			const msg = e?.message ? String(e.message) : String(e);
+			return NextResponse.json({ error: 'Internal error: ' + msg }, { status: 500 });
+		}
 }

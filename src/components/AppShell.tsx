@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Settings, Plus, Calendar, DollarSign, Dumbbell, User, Globe, Clock, CreditCard, Download, Trash2, Moon, Sun, Menu, X, TrendingUp, Crown, Star, Brain, ChevronRight, Shield, HelpCircle, LogOut, Palette, Volume2, Camera, Edit3, Check } from 'lucide-react';
-import { authClient, useSession } from '@/lib/auth-client';
+import { useSession, signOut } from '@/lib/supabase/useSession';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -38,7 +38,7 @@ interface AppShellProps {
   className?: string;
   subscriptionPlan?: 'free' | 'lite' | 'pro';
   onShowSubscription?: () => void;
-  userData?: any; // User data from better-auth session
+  userData?: any; // User data (kept for compatibility)
   // Context-aware action callbacks
   onAddTask?: () => void;
   onAddTransaction?: () => void;
@@ -273,23 +273,18 @@ export default function AppShell({
     navTouchStartRef.current = null;
   }, [currentMode, handleModeSwitch]);
 
-  // Logout handler using better-auth
+  // Logout handler using Supabase
   const handleLogout = useCallback(async (event?: React.MouseEvent) => {
     if (event) {
       event.preventDefault();
     }
     
     try {
-      const { error } = await authClient.signOut();
-      if (error?.code) {
-        toast.error(error.code);
-      } else {
-        localStorage.removeItem("bearer_token");
-        refetch(); // Update session state
-        setShowProfileModal(false);
-        toast.success(t('toasts.profile.signedOut'));
-        router.push('/login');
-      }
+      await signOut();
+      refetch();
+      setShowProfileModal(false);
+      toast.success(t('toasts.profile.signedOut'));
+      router.push('/login');
     } catch (error) {
       toast.error(t('toasts.profile.signOutFailed'));
     }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { /* authClient, */ useSession } from '@/lib/auth-client';
+import { useSession } from '@/lib/supabase/useSession';
 import AppShell from '@/components/AppShell';
 import OnboardingWizard from '@/components/OnboardingWizard';
 import PlannerSection from '@/components/PlannerSection';

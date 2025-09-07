@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import { getAuth } from '@/lib/auth';
 import { supabaseServiceRole } from '@/lib/supabase/admin';
+import { supabaseServer } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getAuth().api.getSession({ headers: await headers() });
-    if (!session?.user) {
+  const sb = await supabaseServer();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
     const admin = supabaseServiceRole();
     const now = new Date().toISOString();
     const { error } = await admin.from('user_profiles').upsert({
-      user_id: session.user.id,
-      email: (session.user as any).email ?? null,
-      name: (session.user as any).name ?? null,
+      user_id: user.id,
+      email: (user as any).email ?? null,
+      name: (user as any).user_metadata?.name ?? null,
       phone,
       created_at: now,
       updated_at: now,

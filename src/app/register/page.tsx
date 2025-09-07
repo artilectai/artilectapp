@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PhoneInput from "@/components/ui/phone-input";
@@ -166,15 +166,16 @@ export default function RegisterPage() {
     if (!validateForm()) return;
     setIsLoading(true);
     try {
-  const { error } = await authClient.signUp.email({
+      const { data, error } = await supabase.auth.signUp({
         email: formData.email,
-        name: formData.name.trim(),
         password: formData.password,
+        options: {
+          data: { name: formData.name.trim(), phone: formData.phone },
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined,
+        }
       });
-      if (error?.code) {
-        const mapKey = `auth.register.errors.${error.code}`;
-        const msg = t(mapKey, { defaultValue: t('auth.register.errors.GENERIC') });
-        toast.error(msg);
+      if (error) {
+        toast.error(t('auth.register.errors.GENERIC'));
         return;
       }
       // Try to mirror into Supabase with service role (non-blocking)

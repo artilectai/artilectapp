@@ -61,7 +61,7 @@ import { FinanceDataManager as FinanceStore } from "@/lib/finance-data-manager";
 import { supabase } from "@/lib/supabase/client";
 import { createAccount as createAccountAction } from "@/app/actions/finance/accounts";
 import { addTransaction as addTransactionAction } from "@/app/actions/finance/transactions";
-import { useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/supabase/useSession";
 
 // Types
 interface Account {

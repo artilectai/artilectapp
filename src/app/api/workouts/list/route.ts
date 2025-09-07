@@ -1,404 +1,140 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/db';
-import { workouts } from '@/db/schema';
-import { eq, like, and, or, desc, asc, gte, lte } from 'drizzle-orm';
-import { getAuth } from '@/lib/auth';
+import { supabaseServer } from '@/lib/supabase/server';
 
-// Better-auth authentication
-async function authenticateRequest(request: NextRequest) {
-  try {
-    const session = await getAuth().api.getSession({
-      headers: request.headers
-    });
-    
-    if (!session || !session.user) {
-      return null;
-    }
-    
-    return session.user;
-  } catch (error) {
-    console.error('Authentication error:', error);
-    return null;
-  }
-}
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
+// Unified endpoint for workouts with kind=programs|sessions
 export async function GET(request: NextRequest) {
-  try {
-  const db = getDb();
-    // Authentication check
-    const user = await authenticateRequest(request);
-    if (!user) {
-      return NextResponse.json({ 
-        error: 'Authentication required',
-        code: 'UNAUTHORIZED' 
-      }, { status: 401 });
-    }
+	try {
+		const sb = await supabaseServer();
+		const { data: { user } } = await sb.auth.getUser();
+		if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
-    const { searchParams } = new URL(request.url);
-    
-    // Pagination parameters
-    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
-    
-    // Filter parameters
-    const userId = searchParams.get('user_id');
-    const type = searchParams.get('type');
-    const search = searchParams.get('search');
-    const dateFrom = searchParams.get('date_from');
-    const dateTo = searchParams.get('date_to');
-    const id = searchParams.get('id');
-    
-    // Sorting parameters
-    const sort = searchParams.get('sort') || 'createdAt';
-    const order = searchParams.get('order') === 'asc' ? asc : desc;
+		const { searchParams } = new URL(request.url);
+		const kind = searchParams.get('kind') || 'programs';
+		const id = searchParams.get('id');
+		const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+		const offset = parseInt(searchParams.get('offset') || '0');
+		const sort = searchParams.get('sort') || 'created_at';
+		const asc = (searchParams.get('order') || 'desc').toLowerCase() === 'asc';
 
-    // Single record fetch
-    if (id) {
-      if (!id || isNaN(parseInt(id))) {
-        return NextResponse.json({ 
-          error: "Valid ID is required",
-          code: "INVALID_ID" 
-        }, { status: 400 });
-      }
+		const table = kind === 'sessions' ? 'workout_sessions' : 'workout_programs';
 
-      const workout = await db.select()
-        .from(workouts)
-        .where(and(
-          eq(workouts.id, parseInt(id)),
-          eq(workouts.userId, user.id)
-        ))
-        .limit(1);
+		if (id) {
+			const { data, error } = await sb
+				.from(table)
+				.select('*')
+				.eq('id', id)
+				.eq('user_id', user.id)
+				.maybeSingle();
+			if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+			if (!data) return NextResponse.json({ error: `${kind.slice(0, -1)} not found` }, { status: 404 });
+			return NextResponse.json(data, { status: 200 });
+		}
 
-      if (workout.length === 0) {
-        return NextResponse.json({ 
-          error: 'Workout not found',
-          code: 'NOT_FOUND' 
-        }, { status: 404 });
-      }
-
-      return NextResponse.json(workout[0]);
-    }
-
-    // Build where conditions
-    let whereConditions = [eq(workouts.userId, userId || user.id)];
-
-    if (type) {
-      whereConditions.push(eq(workouts.type, type));
-    }
-
-    if (search) {
-      const nameClause = like(workouts.name, `%${search}%`) as any;
-      const notesClause = like(workouts.notes, `%${search}%`) as any;
-      whereConditions.push(or(nameClause, notesClause) as any);
-    }
-
-    if (dateFrom) {
-      whereConditions.push(gte(workouts.date, dateFrom));
-    }
-
-    if (dateTo) {
-      whereConditions.push(lte(workouts.date, dateTo));
-    }
-
-    // Build query (avoid reassigning query object to keep types intact)
-    const baseQuery = db.select().from(workouts);
-    const filteredQuery = whereConditions.length > 0
-      ? (baseQuery as any).where(and(...whereConditions) as any)
-      : baseQuery;
-
-    // Apply sorting
-    const sortColumn = sort === 'name' ? workouts.name :
-                      sort === 'type' ? workouts.type :
-                      sort === 'date' ? workouts.date :
-                      sort === 'updatedAt' ? workouts.updatedAt :
-                      workouts.createdAt;
-
-    const orderedQuery = (filteredQuery as any).orderBy(order(sortColumn));
-
-    // Apply pagination
-    const results = await (orderedQuery as any).limit(limit).offset(offset);
-
-    return NextResponse.json(results);
-
-  } catch (error) {
-    console.error('GET error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
-    }, { status: 500 });
-  }
+		let q = sb.from(table).select('*').eq('user_id', user.id);
+		const { data, error } = await q.order(sort as any, { ascending: asc }).range(offset, offset + limit - 1);
+		if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+		return NextResponse.json(data ?? [], { status: 200 });
+	} catch (e: any) {
+		console.error('workouts GET error:', e);
+		const msg = e?.message ? String(e.message) : String(e);
+		return NextResponse.json({ error: 'Internal error: ' + msg }, { status: 500 });
+	}
 }
 
 export async function POST(request: NextRequest) {
-  try {
-  const db = getDb();
-    // Authentication check
-    const user = await authenticateRequest(request);
-    if (!user) {
-      return NextResponse.json({ 
-        error: 'Authentication required',
-        code: 'UNAUTHORIZED' 
-      }, { status: 401 });
-    }
+	try {
+		const sb = await supabaseServer();
+		const { data: { user } } = await sb.auth.getUser();
+		if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
-    const requestBody = await request.json();
-    const { name, type, durationMinutes, caloriesBurned, notes, date } = requestBody;
+		const { searchParams } = new URL(request.url);
+		const kind = searchParams.get('kind') || 'programs';
+		const table = kind === 'sessions' ? 'workout_sessions' : 'workout_programs';
+		const body = await request.json();
 
-    // Validate required fields
-    if (!name) {
-      return NextResponse.json({ 
-        error: "name is required",
-        code: "MISSING_NAME" 
-      }, { status: 400 });
-    }
-
-    if (!date) {
-      return NextResponse.json({ 
-        error: "date is required",
-        code: "MISSING_DATE" 
-      }, { status: 400 });
-    }
-
-    // Validate date format (ISO date)
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return NextResponse.json({ 
-        error: "date must be in ISO date format (YYYY-MM-DD)",
-        code: "INVALID_DATE_FORMAT" 
-      }, { status: 400 });
-    }
-
-    // Validate type if provided
-    const validTypes = ['cardio', 'strength', 'flexibility', 'sports', 'other'];
-    const workoutType = type || 'other';
-    if (!validTypes.includes(workoutType)) {
-      return NextResponse.json({ 
-        error: "type must be one of: cardio, strength, flexibility, sports, other",
-        code: "INVALID_TYPE" 
-      }, { status: 400 });
-    }
-
-    // Validate numeric fields if provided
-    if (durationMinutes !== undefined && (!Number.isInteger(durationMinutes) || durationMinutes < 0)) {
-      return NextResponse.json({ 
-        error: "durationMinutes must be a positive integer",
-        code: "INVALID_DURATION" 
-      }, { status: 400 });
-    }
-
-    if (caloriesBurned !== undefined && (!Number.isInteger(caloriesBurned) || caloriesBurned < 0)) {
-      return NextResponse.json({ 
-        error: "caloriesBurned must be a positive integer",
-        code: "INVALID_CALORIES" 
-      }, { status: 400 });
-    }
-
-    const now = new Date().toISOString();
-
-    // Prepare insert data with defaults
-    const insertData = {
-      userId: user.id,
-      name: name.trim(),
-      type: workoutType,
-      durationMinutes: durationMinutes || null,
-      caloriesBurned: caloriesBurned || null,
-      notes: notes ? notes.trim() : null,
-      date: date,
-      createdAt: now,
-      updatedAt: now
-    };
-
-    const newWorkout = await db.insert(workouts)
-      .values(insertData)
-      .returning();
-
-    return NextResponse.json(newWorkout[0], { status: 201 });
-
-  } catch (error) {
-    console.error('POST error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
-    }, { status: 500 });
-  }
+		const insert = { user_id: user.id, ...body };
+		const { data, error } = await sb.from(table).insert(insert).select('*').single();
+		if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+		return NextResponse.json(data, { status: 201 });
+	} catch (e: any) {
+		console.error('workouts POST error:', e);
+		const msg = e?.message ? String(e.message) : String(e);
+		return NextResponse.json({ error: 'Internal error: ' + msg }, { status: 500 });
+	}
 }
 
 export async function PUT(request: NextRequest) {
-  try {
-  const db = getDb();
-    // Authentication check
-    const user = await authenticateRequest(request);
-    if (!user) {
-      return NextResponse.json({ 
-        error: 'Authentication required',
-        code: 'UNAUTHORIZED' 
-      }, { status: 401 });
-    }
+	try {
+		const sb = await supabaseServer();
+		const { data: { user } } = await sb.auth.getUser();
+		if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+		const { searchParams } = new URL(request.url);
+		const kind = searchParams.get('kind') || 'programs';
+		const id = searchParams.get('id');
+		if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+		const table = kind === 'sessions' ? 'workout_sessions' : 'workout_programs';
 
-    if (!id || isNaN(parseInt(id))) {
-      return NextResponse.json({ 
-        error: "Valid ID is required",
-        code: "INVALID_ID" 
-      }, { status: 400 });
-    }
+		const { data: exists, error: e1 } = await sb
+			.from(table)
+			.select('id')
+			.eq('id', id)
+			.eq('user_id', user.id)
+			.maybeSingle();
+		if (e1) return NextResponse.json({ error: e1.message }, { status: 400 });
+		if (!exists) return NextResponse.json({ error: `${kind.slice(0, -1)} not found` }, { status: 404 });
 
-    // Check if workout exists and belongs to user
-    const existingWorkout = await db.select()
-      .from(workouts)
-      .where(and(
-        eq(workouts.id, parseInt(id)),
-        eq(workouts.userId, user.id)
-      ))
-      .limit(1);
-
-    if (existingWorkout.length === 0) {
-      return NextResponse.json({ 
-        error: 'Workout not found',
-        code: 'NOT_FOUND' 
-      }, { status: 404 });
-    }
-
-    const requestBody = await request.json();
-    const { name, type, durationMinutes, caloriesBurned, notes, date } = requestBody;
-
-    const updates: any = {
-      updatedAt: new Date().toISOString()
-    };
-
-    // Validate and update fields if provided
-    if (name !== undefined) {
-      if (!name) {
-        return NextResponse.json({ 
-          error: "name cannot be empty",
-          code: "INVALID_NAME" 
-        }, { status: 400 });
-      }
-      updates.name = name.trim();
-    }
-
-    if (type !== undefined) {
-      const validTypes = ['cardio', 'strength', 'flexibility', 'sports', 'other'];
-      if (!validTypes.includes(type)) {
-        return NextResponse.json({ 
-          error: "type must be one of: cardio, strength, flexibility, sports, other",
-          code: "INVALID_TYPE" 
-        }, { status: 400 });
-      }
-      updates.type = type;
-    }
-
-    if (durationMinutes !== undefined) {
-      if (durationMinutes !== null && (!Number.isInteger(durationMinutes) || durationMinutes < 0)) {
-        return NextResponse.json({ 
-          error: "durationMinutes must be a positive integer or null",
-          code: "INVALID_DURATION" 
-        }, { status: 400 });
-      }
-      updates.durationMinutes = durationMinutes;
-    }
-
-    if (caloriesBurned !== undefined) {
-      if (caloriesBurned !== null && (!Number.isInteger(caloriesBurned) || caloriesBurned < 0)) {
-        return NextResponse.json({ 
-          error: "caloriesBurned must be a positive integer or null",
-          code: "INVALID_CALORIES" 
-        }, { status: 400 });
-      }
-      updates.caloriesBurned = caloriesBurned;
-    }
-
-    if (notes !== undefined) {
-      updates.notes = notes ? notes.trim() : null;
-    }
-
-    if (date !== undefined) {
-      if (!date) {
-        return NextResponse.json({ 
-          error: "date cannot be empty",
-          code: "INVALID_DATE" 
-        }, { status: 400 });
-      }
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        return NextResponse.json({ 
-          error: "date must be in ISO date format (YYYY-MM-DD)",
-          code: "INVALID_DATE_FORMAT" 
-        }, { status: 400 });
-      }
-      updates.date = date;
-    }
-
-    const updatedWorkout = await db.update(workouts)
-      .set(updates)
-      .where(and(
-        eq(workouts.id, parseInt(id)),
-        eq(workouts.userId, user.id)
-      ))
-      .returning();
-
-    return NextResponse.json(updatedWorkout[0]);
-
-  } catch (error) {
-    console.error('PUT error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
-    }, { status: 500 });
-  }
+		const body = await request.json();
+		const { data, error } = await sb
+			.from(table)
+			.update(body)
+			.eq('id', id)
+			.eq('user_id', user.id)
+			.select('*')
+			.single();
+		if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+		return NextResponse.json(data, { status: 200 });
+	} catch (e: any) {
+		console.error('workouts PUT error:', e);
+		const msg = e?.message ? String(e.message) : String(e);
+		return NextResponse.json({ error: 'Internal error: ' + msg }, { status: 500 });
+	}
 }
 
 export async function DELETE(request: NextRequest) {
-  try {
-  const db = getDb();
-    // Authentication check
-    const user = await authenticateRequest(request);
-    if (!user) {
-      return NextResponse.json({ 
-        error: 'Authentication required',
-        code: 'UNAUTHORIZED' 
-      }, { status: 401 });
-    }
+	try {
+		const sb = await supabaseServer();
+		const { data: { user } } = await sb.auth.getUser();
+		if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+		const { searchParams } = new URL(request.url);
+		const kind = searchParams.get('kind') || 'programs';
+		const id = searchParams.get('id');
+		if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+		const table = kind === 'sessions' ? 'workout_sessions' : 'workout_programs';
 
-    if (!id || isNaN(parseInt(id))) {
-      return NextResponse.json({ 
-        error: "Valid ID is required",
-        code: "INVALID_ID" 
-      }, { status: 400 });
-    }
+		const { data: exists, error: e1 } = await sb
+			.from(table)
+			.select('id')
+			.eq('id', id)
+			.eq('user_id', user.id)
+			.maybeSingle();
+		if (e1) return NextResponse.json({ error: e1.message }, { status: 400 });
+		if (!exists) return NextResponse.json({ error: `${kind.slice(0, -1)} not found` }, { status: 404 });
 
-    // Check if workout exists and belongs to user before deleting
-    const existingWorkout = await db.select()
-      .from(workouts)
-      .where(and(
-        eq(workouts.id, parseInt(id)),
-        eq(workouts.userId, user.id)
-      ))
-      .limit(1);
-
-    if (existingWorkout.length === 0) {
-      return NextResponse.json({ 
-        error: 'Workout not found',
-        code: 'NOT_FOUND' 
-      }, { status: 404 });
-    }
-
-    const deleted = await db.delete(workouts)
-      .where(and(
-        eq(workouts.id, parseInt(id)),
-        eq(workouts.userId, user.id)
-      ))
-      .returning();
-
-    return NextResponse.json({
-      message: 'Workout deleted successfully',
-      deletedWorkout: deleted[0]
-    });
-
-  } catch (error) {
-    console.error('DELETE error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
-    }, { status: 500 });
-  }
+		const { error } = await sb
+			.from(table)
+			.delete()
+			.eq('id', id)
+			.eq('user_id', user.id);
+		if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+		return NextResponse.json({ message: 'Deleted' }, { status: 200 });
+	} catch (e: any) {
+		console.error('workouts DELETE error:', e);
+		const msg = e?.message ? String(e.message) : String(e);
+		return NextResponse.json({ error: 'Internal error: ' + msg }, { status: 500 });
+	}
 }

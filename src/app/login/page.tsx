@@ -4,7 +4,8 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
-import { authClient } from '@/lib/auth-client';
+import { supabase } from '@/lib/supabase/client';
+import { useSession } from '@/lib/supabase/useSession';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation('app'); // ADDED
+  const { data } = useSession();
   // Hydration-safe gate: render placeholders on SSR/first paint, real strings after mount
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -86,21 +88,19 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await authClient.signIn.email({
+      const { error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
-        rememberMe: formData.rememberMe,
-        callbackURL: "/"
       });
 
-  if (error?.code) {
+      if (error) {
         toast.error(t('toasts.auth.loginInvalid'));
         return;
       }
 
-  // Ensure Supabase profile row exists (non-blocking)
-  try { await fetch('/api/supabase/profile', { method: 'POST' }); } catch {}
-  toast.success(t('toasts.auth.loginWelcomeBack'));
+      // Ensure Supabase profile row exists (non-blocking)
+      try { await fetch('/api/supabase/profile', { method: 'POST' }); } catch {}
+      toast.success(t('toasts.auth.loginWelcomeBack'));
       router.push("/");
     } catch {
       toast.error(t('toasts.auth.loginUnexpected'));

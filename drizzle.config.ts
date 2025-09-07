@@ -1,14 +1,4 @@
-import { defineConfig } from 'drizzle-kit';
-import type { Config } from 'drizzle-kit';
+// Drizzle/BetterAuth config has been retired. Keeping this file inert to avoid typecheck/import errors.
+// Do not import or use this file.
 
-const dbConfig: Config = defineConfig({
-  schema: './src/db/schema.ts',
-  out: './drizzle',
-  dialect: 'turso',
-  dbCredentials: {
-    url: process.env.TURSO_CONNECTION_URL!,
-    authToken: process.env.TURSO_AUTH_TOKEN!,
-  },
-});
-
-export default dbConfig;
+export default {} as any;

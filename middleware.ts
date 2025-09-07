@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@/lib/auth";
 import { createServerClient } from "@supabase/ssr";
  
 export async function middleware(request: NextRequest) {
 	// Prepare a response we can mutate cookies on
 	const response = NextResponse.next();
 
-	// 1) Allow if BetterAuth session exists
-	// Forward bearer token from cookie as Authorization header for BetterAuth bearer plugin
-	const incoming = new Headers(request.headers);
-	const bearerFromCookie = request.cookies.get("bearer_token")?.value;
-	if (bearerFromCookie && !incoming.get("authorization")) {
-		incoming.set("authorization", `Bearer ${bearerFromCookie}`);
-	}
-	const session = await getAuth().api.getSession({ headers: incoming });
-	if (session) return response;
-
-	// 2) Otherwise, check Supabase Auth session
+	// Check Supabase Auth session
 	const supabase = createServerClient(
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,
 		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
