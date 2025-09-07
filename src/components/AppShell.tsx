@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Settings, Plus, Calendar, DollarSign, Dumbbell, User, Globe, Clock, CreditCard, Download, Trash2, Moon, Sun, Menu, X, TrendingUp, Crown, Star, Brain, ChevronRight, Shield, HelpCircle, LogOut, Palette, Volume2, Camera, Edit3, Check } from 'lucide-react';
@@ -70,6 +70,13 @@ export default function AppShell({
   onAddWorkout
 }: AppShellProps) {
   const { t, i18n } = useTranslation('app');
+  // Resolve brand name parts (e.g., "Artilect" + "Assistant")
+  const appName = t('app.name');
+  const [brandTop, brandBottom] = useMemo(() => {
+    const parts = (appName || '').split(' ');
+    if (parts.length <= 1) return [appName, ''];
+    return [parts[0], parts.slice(1).join(' ')];
+  }, [appName]);
   const language = (i18n.resolvedLanguage as 'en' | 'ru' | 'uz') || 'en';
   const setLanguage = (lng: 'en' | 'ru' | 'uz') => {
     if (i18nInstance.isInitialized) {
@@ -390,16 +397,26 @@ export default function AppShell({
                 <Brain className="w-4 h-4 text-[#00d563] drop-shadow-sm" />
               </div>
               
-              {/* Brand */}
+              {/* Brand: stacked on small screens, single-line on larger screens */}
               <motion.div 
-                className="font-heading font-bold text-lg bg-gradient-to-r from-[#00d563] to-[#00b850] bg-clip-text text-transparent drop-shadow-sm"
+                className="font-heading font-bold bg-gradient-to-r from-[#00d563] to-[#00b850] bg-clip-text text-transparent drop-shadow-sm"
                 whileHover={{ scale: 1.05 }}
                 transition={iosSpring.snappy}
                 style={{
                   filter: 'drop-shadow(0 0 8px rgba(0, 213, 99, 0.3))'
                 }}
               >
-                {t('app.name')}
+                {/* Single-line for md+ screens */}
+                <span className="hidden sm:inline text-lg">
+                  {appName}
+                </span>
+                {/* Stacked and slightly smaller for small phones */}
+                <span className="sm:hidden leading-tight block">
+                  <span className="block text-sm">{brandTop}</span>
+                  {brandBottom ? (
+                    <span className="block text-sm -mt-0.5">{brandBottom}</span>
+                  ) : null}
+                </span>
               </motion.div>
             </div>
 
