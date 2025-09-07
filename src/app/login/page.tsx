@@ -13,7 +13,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import TopLanguageBar from '@/components/TopLanguageBar';
 import { useTranslation } from 'react-i18next'; // ADDED
-import AuthBox from '@/components/AuthBox';
 
 interface FormData {
   email: string;
@@ -278,11 +277,6 @@ export default function LoginPage() {
                 {TT('auth.login.createNow')}
               </Link>
             </p>
-          </div>
-
-          {/* Email OTP sign-in */}
-          <div className="mt-6">
-            <AuthBox />
           </div>
 
           {/* Footer */}
