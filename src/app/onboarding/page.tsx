@@ -327,9 +327,15 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div
+      className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center px-4"
+      style={{
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)'
+      }}
+    >
       <div className="w-full max-w-md">
-        <Card className="glass-card shadow-money ios-slide-up">
+        <Card className="glass-card shadow-money ios-slide-up border-none">
           <CardHeader className="text-center pb-4">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -388,7 +394,7 @@ export default function OnboardingPage() {
                 className="flex items-center space-x-2 bg-money-gradient hover:shadow-money ios-spring"
               >
                 <span>
-                  {currentStep === steps.length ? t('buttons.finish') : t('buttons.next')}
+                  {currentStep === steps.length ? t('buttons.finish') : t('buttons.continue')}
                 </span>
                 {currentStep === steps.length ? (
                   <Check className="w-4 h-4" />

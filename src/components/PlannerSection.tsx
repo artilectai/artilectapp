@@ -238,6 +238,49 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 
   // i18n-aware date formatters
   const lang = (i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
+
+  // --- Durable storage for weekly/monthly/yearly goals (localStorage keyed by user) ---
+  const storageKey = useMemo(() => {
+    const uid = (userData?.id || userData?.email || 'anon') as string;
+    return `planner_goals_${uid}`;
+  }, [userData?.id, userData?.email]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { weekly?: any[]; monthly?: any[]; yearly?: any[] };
+      if (parsed?.weekly) setWeeklyGoals(parsed.weekly.map((g: any) => ({
+        ...g,
+        targetDate: new Date(g.targetDate),
+        createdAt: new Date(g.createdAt),
+        updatedAt: new Date(g.updatedAt)
+      })));
+      if (parsed?.monthly) setMonthlyGoals(parsed.monthly.map((g: any) => ({
+        ...g,
+        targetDate: new Date(g.targetDate),
+        createdAt: new Date(g.createdAt),
+        updatedAt: new Date(g.updatedAt)
+      })));
+      if (parsed?.yearly) setYearlyGoals(parsed.yearly.map((g: any) => ({
+        ...g,
+        targetDate: new Date(g.targetDate),
+        createdAt: new Date(g.createdAt),
+        updatedAt: new Date(g.updatedAt)
+      })));
+    } catch {}
+  }, [storageKey]);
+
+  const persistGoals = useCallback((wg: Goal[], mg: Goal[], yg: Goal[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({ weekly: wg, monthly: mg, yearly: yg }));
+      window.dispatchEvent(new Event('planner:goals-updated'));
+    } catch {}
+  }, [storageKey]);
+
+  useEffect(() => { persistGoals(weeklyGoals, monthlyGoals, yearlyGoals); }, [weeklyGoals, monthlyGoals, yearlyGoals, persistGoals]);
   const intlLocale = lang === 'ru' ? 'ru-RU' : lang === 'uz' ? 'uz-UZ' : 'en-US';
   const fmt = useMemo(() => ({
     md: new Intl.DateTimeFormat(intlLocale, { month: 'short', day: 'numeric' }),
