@@ -267,15 +267,7 @@ nextjs-portal {
   display: none !important;
 }
 
-/* Explicit page borders and bottom-safe helpers */
-.page-borders {
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  /* Create a subtle inner shadow to emulate device frame */
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02), 0 4px 30px rgba(0,0,0,0.2);
-}
-
-/* Utility to elevate bottom bars above iPhone home indicator */
+/* Bottom-safe helpers (keep nav above iPhone home indicator) */
 .pb-safe-bottom { padding-bottom: calc(var(--safe-bottom) + 12px) !important; }
 .mb-safe-bottom { margin-bottom: calc(var(--safe-bottom) + 12px) !important; }
 

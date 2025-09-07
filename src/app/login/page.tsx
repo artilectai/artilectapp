@@ -93,12 +93,14 @@ export default function LoginPage() {
         callbackURL: "/"
       });
 
-      if (error?.code) {
+  if (error?.code) {
         toast.error(t('toasts.auth.loginInvalid'));
         return;
       }
 
-      toast.success(t('toasts.auth.loginWelcomeBack'));
+  // Ensure Supabase profile row exists (non-blocking)
+  try { await fetch('/api/supabase/profile', { method: 'POST' }); } catch {}
+  toast.success(t('toasts.auth.loginWelcomeBack'));
       router.push("/");
     } catch {
       toast.error(t('toasts.auth.loginUnexpected'));

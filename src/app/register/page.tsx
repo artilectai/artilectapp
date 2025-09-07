@@ -166,7 +166,7 @@ export default function RegisterPage() {
     if (!validateForm()) return;
     setIsLoading(true);
     try {
-      const { error } = await authClient.signUp.email({
+  const { error } = await authClient.signUp.email({
         email: formData.email,
         name: formData.name.trim(),
         password: formData.password,
@@ -177,7 +177,15 @@ export default function RegisterPage() {
         toast.error(msg);
         return;
       }
-  toast.success(t('toasts.auth.registerSuccess'));
+      // Try to mirror into Supabase with service role (non-blocking)
+      try {
+        await fetch('/api/supabase/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: formData.phone })
+        });
+      } catch {}
+      toast.success(t('toasts.auth.registerSuccess'));
       router.push("/login?registered=true");
     } catch (error) {
   toast.error(t('toasts.auth.registerGenericError'));

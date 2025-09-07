@@ -6,6 +6,16 @@
 -- UUID generation for primary keys
 create extension if not exists pgcrypto;
 
+-- User profiles (mirror of BetterAuth users)
+create table if not exists public.user_profiles (
+  user_id uuid primary key,
+  email text,
+  name text,
+  phone text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null,
@@ -78,6 +88,7 @@ create table if not exists public.workout_sessions (
 
 -- RLS
 alter table public.tasks enable row level security;
+alter table public.user_profiles enable row level security;
 alter table public.finance_accounts enable row level security;
 alter table public.finance_categories enable row level security;
 alter table public.finance_transactions enable row level security;
@@ -86,6 +97,10 @@ alter table public.workout_sessions enable row level security;
 
 -- Policies: users can CRUD own rows
 create policy tasks_select on public.tasks for select using (auth.uid() = user_id);
+-- user_profiles: each user can read and upsert their own row
+create policy up_select on public.user_profiles for select using (auth.uid() = user_id);
+create policy up_insert on public.user_profiles for insert with check (auth.uid() = user_id);
+create policy up_update on public.user_profiles for update using (auth.uid() = user_id);
 create policy tasks_insert on public.tasks for insert with check (auth.uid() = user_id);
 create policy tasks_update on public.tasks for update using (auth.uid() = user_id);
 create policy tasks_delete on public.tasks for delete using (auth.uid() = user_id);
