@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className="antialiased app-frame">
           <I18nClientInit />
           <Suspense fallback={null}>
             <TelegramBridge />
@@ -46,7 +46,9 @@ export default function RootLayout({
             data-custom-data='{"appName": "ArtiLect", "version": "2.1.0", "greeting": "hi"}'
           />
           <I18nProvider>
-            {children}
+            <div className="page-borders overflow-hidden">
+              {children}
+            </div>
           </I18nProvider>
           <Toaster
             position="top-center"
