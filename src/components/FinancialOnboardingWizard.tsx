@@ -561,7 +561,14 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div
+      className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center px-4"
+      style={{
+        // Keep content clear of top bar and bottom nav (approx 84px) with safe-area support
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)'
+      }}
+    >
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
