@@ -470,7 +470,7 @@ export default function AppShell({
           className="fixed right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center ring-1 ring-black/10"
           style={{ 
             // Keep the FAB clearly above the bottom nav and safe areas
-      bottom: 'calc(env(safe-area-inset-bottom, 0px) + 104px)',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 116px)',
             background: `linear-gradient(135deg, ${fabProps.color}, ${fabProps.color}dd)`,
             // Softer, tighter shadow so it doesn't bleed outside blocks
             boxShadow: `0 8px 24px ${fabProps.color}26`
@@ -499,7 +499,7 @@ export default function AppShell({
           onTouchStart={handleNavTouchStart}
           onTouchEnd={handleNavTouchEnd}
         >
-          <div className="flex items-center justify-center h-[72px] px-4 pb-[calc(env(safe-area-inset-bottom,0px)/2)] shadow-[0_-6px_20px_rgba(0,0,0,0.25)]">
+          <div className="flex items-center justify-center h-[84px] px-4 pb-[calc(env(safe-area-inset-bottom,0px)/2)] shadow-[0_-6px_20px_rgba(0,0,0,0.25)]">
             <div className="flex items-center justify-around w-full max-w-md mx-auto gap-2">
               {navItemsBase.map((item) => {
                 const isActive = currentMode === item.id;
@@ -508,7 +508,7 @@ export default function AppShell({
                   <motion.button
                     key={item.id}
                     onClick={(event: React.MouseEvent) => handleModeSwitch(item.id, event)}
-                    className={`flex flex-col items-center gap-1 min-w-[60px] min-h-[44px] px-3 py-2 rounded-xl transition-all relative ${
+                    className={`flex flex-col items-center gap-1 min-w-[60px] min-h-[52px] px-3 py-2 rounded-xl transition-all relative ${
                       isActive 
                         ? 'text-[#00d563]' 
                         : 'text-muted-foreground hover:text-foreground'
