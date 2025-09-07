@@ -27,6 +27,7 @@ create table if not exists public.tasks (
   due_date timestamptz,
   estimate_hours int,
   tags text[],
+  completed_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

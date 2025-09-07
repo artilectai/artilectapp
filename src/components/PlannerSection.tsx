@@ -42,7 +42,7 @@ import { Calendar as DateCalendar } from "@/components/ui/calendar";
 import { DateStepper } from "@/components/ui/date-stepper";
 import { PlannerAnalytics } from "@/components/PlannerAnalytics";
 import { supabase } from "@/lib/supabase/client";
-import { createTask as createTaskAction } from "@/app/actions/tasks";
+import { createTask as createTaskAction, updateTask as updateTaskAction } from "@/app/actions/tasks";
 
 // Helper: normalize a date to start of day
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -944,20 +944,31 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     });
   }, [tasks]);
 
-  const handleToggleComplete = useCallback((itemId: string) => {
+  const handleToggleComplete = useCallback(async (itemId: string) => {
     if (viewMode === "daily") {
       // Toggle task completion
-      setTasks(prev => prev.map(task => 
-        task.id === itemId 
-          ? { 
-              ...task, 
-              status: task.status === "done" ? "todo" : "done",
-              progress: task.status === "done" ? 0 : 100,
-              completedAt: task.status === "done" ? null : (startOfDay(selectedDate)),
-              updatedAt: new Date()
-            }
-          : task
-      ));
+      let nextStatus: Task['status'] | null = null;
+      let completedAtToSave: Date | null = null;
+      setTasks(prev => prev.map(task => {
+        if (task.id !== itemId) return task;
+        nextStatus = task.status === "done" ? "todo" : "done";
+        completedAtToSave = nextStatus === "done" ? startOfDay(selectedDate) : null;
+        return {
+          ...task,
+          status: nextStatus,
+          progress: nextStatus === "done" ? 100 : 0,
+          completedAt: completedAtToSave,
+          updatedAt: new Date(),
+        };
+      }));
+      // Persist
+      try {
+        const completedISO = completedAtToSave ? (completedAtToSave as Date).toISOString() : null;
+        await updateTaskAction({ id: itemId, status: (nextStatus as any), completed_at: completedISO });
+      } catch (e) {
+        // On error, reload from server to reconcile
+        await loadTasks();
+      }
     } else if (viewMode === "weekly") {
       // Toggle weekly goal completion
       setWeeklyGoals(prev => prev.map(g => 
@@ -995,7 +1006,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           : g
       ));
     }
-  }, [selectedDate, viewMode]);
+  }, [selectedDate, viewMode, loadTasks]);
 
   const handleSaveGoal = useCallback(async (goalData: Partial<Goal>) => {
     setIsLoading(true);
