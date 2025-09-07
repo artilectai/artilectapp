@@ -156,6 +156,9 @@ padding-inline: 2rem;
   .pt-safe-top-loose { padding-top: calc(var(--safe-top) + 28px); }
   .pb-safe-bottom-narrow { padding-bottom: calc(var(--safe-bottom) + 4px); }
 
+  /* Safe modal height: keeps dialogs within top/bottom safe areas */
+  .max-h-safe-modal { max-height: calc(100lvh - var(--safe-top) - var(--safe-bottom) - 24px); }
+
   /* Optional global frame if needed */
   /* Edge-to-edge sides; components handle their own safe paddings */
   .app-frame { padding: 0; }

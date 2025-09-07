@@ -1745,7 +1745,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           if (!open) setEditingTask(null);
         }}
       >
-  <DialogContent className="w-[92vw] sm:max-w-2xl p-4 sm:p-6 max-h-[88lvh] overflow-y-auto rounded-2xl">
+  <DialogContent className="w-[92vw] sm:max-w-2xl p-4 sm:p-6 overflow-y-auto rounded-2xl">
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg sm:text-xl">
               {editingTask?.id ? t('planner.editor.task.editTitle') : t('planner.editor.task.newTitle')}
@@ -1774,7 +1774,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           if (!open) setEditingGoal(null);
         }}
       >
-  <DialogContent className="w-[92vw] sm:max-w-2xl p-4 sm:p-6 max-h-[88lvh] overflow-y-auto rounded-2xl">
+  <DialogContent className="w-[92vw] sm:max-w-2xl p-4 sm:p-6 overflow-y-auto rounded-2xl">
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg sm:text-xl">
               {editingGoal?.id ? t('planner.editor.goal.editTitle') : t('planner.editor.goal.newTitle')}

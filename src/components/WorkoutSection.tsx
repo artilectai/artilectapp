@@ -1293,7 +1293,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
       {/* New Program Dialog (mobile-first) */}
 <Dialog open={showNewProgram} onOpenChange={setShowNewProgram}>
-  <DialogContent className="w-[92vw] sm:max-w-md p-4 sm:p-6 rounded-2xl max-h-[88lvh] overflow-y-auto">
+  <DialogContent className="w-[92vw] sm:max-w-md p-4 sm:p-6 rounded-2xl overflow-y-auto">
     <DialogHeader className="pb-2">
   <DialogTitle className="text-lg sm:text-xl">{t('workout.section.dialogs.newProgram.title')}</DialogTitle>
   <DialogDescription className="sr-only">Create and configure a new workout program</DialogDescription>
@@ -1393,7 +1393,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
       {/* Program Details Dialog */}
 <Dialog open={showProgramDetails} onOpenChange={setShowProgramDetails}>
-  <DialogContent className="w-[92vw] sm:max-w-3xl p-4 sm:p-6 max-h-[88lvh] overflow-hidden rounded-2xl">
+  <DialogContent className="w-[92vw] sm:max-w-3xl p-4 sm:p-6 overflow-hidden rounded-2xl">
     <DialogHeader className="pb-2">
   <DialogTitle className="text-lg sm:text-xl flex flex-wrap items-center gap-2 break-words whitespace-normal">
         {selectedProgram && (
@@ -1476,7 +1476,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
       {/* Add Exercise Dialog */}
 <Dialog open={showAddExercise} onOpenChange={setShowAddExercise}>
-  <DialogContent className="w-[92vw] sm:max-w-md p-4 sm:p-6 max-h-[88lvh] overflow-y-auto rounded-2xl">
+  <DialogContent className="w-[92vw] sm:max-w-md p-4 sm:p-6 overflow-y-auto rounded-2xl">
     <DialogHeader className="pb-2">
   <DialogTitle className="text-lg sm:text-xl">{t('workout.section.dialogs.addExercise.title')}</DialogTitle>
   <DialogDescription className="sr-only">Fill in exercise details like sets, reps and duration</DialogDescription>
@@ -1630,7 +1630,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
       {/* Edit Exercise Dialog */}
 <Dialog open={showEditExercise} onOpenChange={setShowEditExercise}>
-  <DialogContent className="w-[92vw] sm:max-w-md p-4 sm:p-6 max-h-[88lvh] overflow-y-auto rounded-2xl">
+  <DialogContent className="w-[92vw] sm:max-w-md p-4 sm:p-6 overflow-y-auto rounded-2xl">
     <DialogHeader className="pb-2">
   <DialogTitle className="text-lg sm:text-xl">{t('workout.section.dialogs.editExercise.title')}</DialogTitle>
   <DialogDescription className="sr-only">Update exercise fields and save changes</DialogDescription>
