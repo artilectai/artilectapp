@@ -470,7 +470,7 @@ export default function AppShell({
           className="fixed right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center ring-1 ring-black/10"
           style={{ 
             // Sit just above the bottom mode switcher bar (~84px tall) with a small gap
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 120px)',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 50px)',
             background: `linear-gradient(135deg, ${fabProps.color}, ${fabProps.color}dd)`,
             // Softer, tighter shadow so it doesn't bleed outside blocks
             boxShadow: `0 8px 24px ${fabProps.color}26`
