@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence, PanInfo } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   Calendar, 
   CalendarDays, 

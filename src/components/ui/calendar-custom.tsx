@@ -3,11 +3,11 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, DayPickerProps } from "react-day-picker";
+import { DayPicker } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { enUS, ru, uz } from "date-fns/locale";
 
-type CustomCalendarProps = DayPickerProps & {
+type CustomCalendarProps = React.ComponentProps<typeof DayPicker> & {
   className?: string;
   showOutsideDays?: boolean;
 };
