@@ -52,9 +52,9 @@ interface NavItem {
 }
 
 const navItemsBase: Array<{ id: AppMode; icon: React.ReactNode }> = [
-  { id: 'planner', icon: <Calendar className="w-5 h-5" /> },
-  { id: 'finance', icon: <DollarSign className="w-5 h-5" /> },
-  { id: 'workout', icon: <Dumbbell className="w-5 h-5" /> },
+  { id: 'planner', icon: <Calendar className="w-6 h-6" /> },
+  { id: 'finance', icon: <DollarSign className="w-6 h-6" /> },
+  { id: 'workout', icon: <Dumbbell className="w-6 h-6" /> },
 ];
 
 export default function AppShell({ 
@@ -388,13 +388,13 @@ export default function AppShell({
     <HapticProvider>
   <div className={`min-h-dvh bg-gradient-to-b from-[#0a0b0d] to-[#0f1114] text-foreground flex flex-col ${className}`} style={{ height: '100dvh' }}>
         {/* Top App Bar */}
-  <header className="sticky top-0 z-50 glass-card border-t border-[#2a2d30]/30 pt-safe-top-loose">
+  <header className="sticky top-0 z-50 glass-card border-t border-[#2a2d30]/30 pt-safe-top-loose" style={{ paddingTop: 'calc(var(--safe-top) + 36px)' }}>
           <div className="flex items-center justify-between h-14 px-3">
             {/* Left side with Brand and Brain Logo */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
               {/* Brain logo - non-clickable, just for branding */}
-              <div className="p-1.5 rounded-lg bg-[#00d563]/10 backdrop-blur-sm border border-[#00d563]/20 shadow-md shadow-[#00d563]/20">
-                <Brain className="w-4 h-4 text-[#00d563] drop-shadow-sm" />
+              <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#00d563]/10 backdrop-blur-sm border border-[#00d563]/20 shadow-md shadow-[#00d563]/20">
+                <Brain className="w-5 h-5 text-[#00d563] drop-shadow-sm" />
               </div>
               
               {/* Brand: stacked on small screens, single-line on larger screens */}
@@ -407,15 +407,17 @@ export default function AppShell({
                 }}
               >
                 {/* Single-line for md+ screens */}
-                <span className="hidden sm:inline text-lg">
+                <span className="hidden sm:inline text-lg leading-none align-middle">
                   {appName}
                 </span>
                 {/* Stacked and slightly smaller for small phones */}
-                <span className="sm:hidden leading-tight block">
-                  <span className="block text-sm">{brandTop}</span>
-                  {brandBottom ? (
-                    <span className="block text-sm -mt-0.5">{brandBottom}</span>
-                  ) : null}
+                <span className="sm:hidden block h-9 leading-none">
+                  <span className="grid h-full grid-rows-2 items-center">
+                    <span className="text-xs">{brandTop}</span>
+                    {brandBottom ? (
+                      <span className="text-xs">{brandBottom}</span>
+                    ) : null}
+                  </span>
                 </span>
               </motion.div>
             </div>
@@ -536,7 +538,7 @@ export default function AppShell({
                     aria-label={t('appShell.nav.switchTo', { section: label })}
                   >
                     <motion.div
-                      className={`p-2 rounded-lg ${isActive ? 'bg-[#00d563]/15 ring-1 ring-[#00d563]/25' : ''}`}
+                      className={`p-2.5 rounded-lg ${isActive ? 'bg-[#00d563]/15 ring-1 ring-[#00d563]/25' : ''}`}
                       animate={isActive ? { scale: [1, 1.1, 1] } : {}}
                       transition={{ duration: 0.3 }}
                     >
