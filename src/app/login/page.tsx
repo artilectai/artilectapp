@@ -43,6 +43,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   // Show success message if coming from registration
   useEffect(() => {
@@ -94,7 +95,17 @@ export default function LoginPage() {
       });
 
       if (error) {
-        toast.error(t('toasts.auth.loginInvalid'));
+        // Handle common Supabase error: unconfirmed email
+        const msg = (error.message || '').toLowerCase();
+        if (msg.includes('confirm') && msg.includes('email')) {
+          try {
+            // Resend the confirmation email so the user can complete sign up
+            await supabase.auth.resend({ type: 'signup', email: formData.email });
+            toast.message('Email not confirmed. We sent a new confirmation link to your inbox.');
+          } catch {}
+        } else {
+          toast.error(t('toasts.auth.loginInvalid'));
+        }
         return;
       }
 
@@ -106,6 +117,37 @@ export default function LoginPage() {
       toast.error(t('toasts.auth.loginUnexpected'));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!formData.email) {
+      toast.error('Enter your email first.');
+      return;
+    }
+    setResendLoading(true);
+    try {
+      await supabase.auth.resend({ type: 'signup', email: formData.email });
+      toast.message('Confirmation link sent. Check your inbox.');
+    } catch {
+      toast.error('Could not resend confirmation right now.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      toast.error('Enter your email first.');
+      return;
+    }
+    try {
+      await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/update-password` : undefined,
+      });
+      toast.message('Password reset link sent. Check your inbox.');
+    } catch {
+      toast.error('Could not send reset email.');
     }
   };
 
@@ -215,6 +257,17 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
+          </div>
+
+          {/* Recovery helpers */}
+          <div className="mt-3 text-xs text-center text-muted-foreground space-x-3">
+            <button type="button" className="underline hover:text-foreground" onClick={handleResendConfirmation} disabled={resendLoading}>
+              {resendLoading ? 'Sending…' : 'Resend confirmation'}
+            </button>
+            <span>•</span>
+            <button type="button" className="underline hover:text-foreground" onClick={handleForgotPassword}>
+              Forgot password?
+            </button>
           </div>
 
           {/* Sign Up Link */}

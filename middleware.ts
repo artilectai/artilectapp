@@ -35,6 +35,6 @@ export const config = {
   matcher: [
     "/", 
 	// Exclude static assets required for i18n (public/locales/**) and other public files
-	"/((?!api|_next/static|_next/image|favicon.ico|login|register|onboarding|locales).*)"
+	"/((?!api|_next/static|_next/image|favicon.ico|login|register|onboarding|update-password|locales).*)"
   ],
 };

@@ -175,7 +175,13 @@ export default function RegisterPage() {
         }
       });
       if (error) {
-        toast.error(t('auth.register.errors.GENERIC'));
+        // surface duplicate email clearly
+        const msg = (error.message || '').toLowerCase();
+        if (msg.includes('already') && msg.includes('registered')) {
+          toast.error('This email is already registered. Try signing in.');
+        } else {
+          toast.error(t('auth.register.errors.GENERIC'));
+        }
         return;
       }
       // Try to mirror into Supabase with service role (non-blocking)
@@ -186,6 +192,13 @@ export default function RegisterPage() {
           body: JSON.stringify({ phone: formData.phone })
         });
       } catch {}
+      // If email confirmation is required, data.session will be null
+      if (!data?.session) {
+        toast.message('Check your inbox to confirm your email, then sign in.');
+        // offer immediate resend in case the email didn't arrive
+        try { await supabase.auth.resend({ type: 'signup', email: formData.email }); } catch {}
+        return;
+      }
       toast.success(t('toasts.auth.registerSuccess'));
       router.push("/login?registered=true");
     } catch (error) {
