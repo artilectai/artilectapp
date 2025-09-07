@@ -184,14 +184,6 @@ export default function RegisterPage() {
         }
         return;
       }
-      // Try to mirror into Supabase with service role (non-blocking)
-      try {
-        await fetch('/api/supabase/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: formData.phone })
-        });
-      } catch {}
       // If email confirmation is required, data.session will be null
       if (!data?.session) {
         toast.message('Check your inbox to confirm your email, then sign in.');
@@ -199,6 +191,14 @@ export default function RegisterPage() {
         try { await supabase.auth.resend({ type: 'signup', email: formData.email }); } catch {}
         return;
       }
+      // If we have an active session immediately (email confirmation disabled), mirror profile now
+      try {
+        await fetch('/api/supabase/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: formData.phone })
+        });
+      } catch {}
       toast.success(t('toasts.auth.registerSuccess'));
       router.push("/login?registered=true");
     } catch (error) {
