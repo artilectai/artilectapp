@@ -5,6 +5,7 @@ import ErrorReporter from "@/components/ErrorReporter";
 import { Toaster } from "@/components/ui/sonner";
 import Script from "next/script";
 import I18nClientInit from "@/i18n-client";
+import I18nProvider from "@/i18n/I18nProvider";
 
 export const metadata: Metadata = {
   title: "ArtiLect - Your AI-Powered Life Assistant",
@@ -31,7 +32,9 @@ export default function RootLayout({
             data-debug="true"
             data-custom-data='{"appName": "ArtiLect", "version": "2.1.0", "greeting": "hi"}'
           />
-          {children}
+          <I18nProvider>
+            {children}
+          </I18nProvider>
           <Toaster
             position="top-center"
             theme="dark"
