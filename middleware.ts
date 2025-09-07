@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import { createServerClient } from "@supabase/ssr";
  
@@ -8,7 +7,13 @@ export async function middleware(request: NextRequest) {
 	const response = NextResponse.next();
 
 	// 1) Allow if BetterAuth session exists
-	const session = await getAuth().api.getSession({ headers: await headers() });
+	// Forward bearer token from cookie as Authorization header for BetterAuth bearer plugin
+	const incoming = new Headers(request.headers);
+	const bearerFromCookie = request.cookies.get("bearer_token")?.value;
+	if (bearerFromCookie && !incoming.get("authorization")) {
+		incoming.set("authorization", `Bearer ${bearerFromCookie}`);
+	}
+	const session = await getAuth().api.getSession({ headers: incoming });
 	if (session) return response;
 
 	// 2) Otherwise, check Supabase Auth session

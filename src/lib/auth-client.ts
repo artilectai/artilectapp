@@ -14,6 +14,19 @@ export const authClient = createAuthClient({
           // Store the token securely (e.g., in localStorage)
           if(authToken){
             localStorage.setItem("bearer_token", authToken);
+                  // Also set a cookie so server-side middleware can authenticate requests
+                  try {
+                     if (typeof document !== 'undefined') {
+                        const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+                        const attrs = [
+                           'path=/',
+                           'max-age=' + 60 * 60 * 24 * 30, // 30 days
+                           'samesite=Lax',
+                        ];
+                        if (isHttps) attrs.push('secure');
+                        document.cookie = `bearer_token=${encodeURIComponent(authToken)}; ${attrs.join('; ')}`;
+                     }
+                  } catch {}
           }
       }
   }

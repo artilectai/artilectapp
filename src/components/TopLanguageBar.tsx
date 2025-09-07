@@ -40,10 +40,10 @@ export default function TopLanguageBar({ className = '' }: Props) {
 
   return (
     <div
-      className={`fixed top-0 inset-x-0 z-50 flex justify-center pt-safe-top ${className}`}
+      className={`fixed top-0 inset-x-0 z-50 flex justify-center pt-safe-top pointer-events-none ${className}`}
       suppressHydrationWarning
     >
-      <div className="inline-flex items-center gap-1 rounded-full border border-money-green/30 bg-premium-black/70 backdrop-blur px-1.5 py-1 shadow-[0_0_0_1px_rgba(0,213,99,0.25),0_0_22px_rgba(0,213,99,0.25)]">
+      <div className="inline-flex items-center gap-1 rounded-full border border-money-green/30 bg-premium-black/70 backdrop-blur px-1.5 py-1 shadow-[0_0_0_1px_rgba(0,213,99,0.25),0_0_22px_rgba(0,213,99,0.25)] pointer-events-auto">
         {langs.map((l) => {
           const active = lang === l.code;
           return (

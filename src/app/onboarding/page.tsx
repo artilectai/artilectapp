@@ -92,7 +92,7 @@ export default function OnboardingPage() {
   // Show loading while checking session
   if (isPending) {
     return (
-  <div className="min-h-dvh bg-background flex items-center justify-center px-safe pt-safe-top pb-safe-bottom">
+  <div className="min-h-dvh bg-background flex items-center justify-center px-safe pt-safe-top pb-safe-bottom overflow-hidden">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );

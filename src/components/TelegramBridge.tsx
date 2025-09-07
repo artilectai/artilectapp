@@ -21,6 +21,8 @@ export default function TelegramBridge() {
     try {
       tg.ready?.();
       tg.expand?.();
+      // Require explicit confirmation to close the web app (prevents accidental swipe-to-close)
+      tg.enableClosingConfirmation?.();
     } catch {}
   }, []);
 

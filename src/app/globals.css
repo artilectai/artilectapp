@@ -164,6 +164,9 @@ color-scheme: dark;
 body {
 background: linear-gradient(180deg, var(--color-premium-black) 0%, var(--color-background) 100%);
 color: var(--color-foreground);
+/* Reduce iOS rubber-banding and accidental close gestures inside Telegram */
+overscroll-behavior: none;
+touch-action: manipulation;
 }
 h1, h2, h3, h4 {
 font-family: var(--font-heading);
