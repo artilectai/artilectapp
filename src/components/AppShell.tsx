@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Settings, Plus, Calendar, DollarSign, Dumbbell, User, Globe, Clock, CreditCard, Download, Trash2, Moon, Sun, Menu, X, TrendingUp, Crown, Star, Brain, ChevronRight, Shield, HelpCircle, LogOut, Palette, Volume2, Camera, Edit3, Check } from 'lucide-react';
 import { useSession, signOut } from '@/lib/supabase/useSession';
+import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -103,7 +104,7 @@ export default function AppShell({
   // Profile editing states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: userData?.name || '',
+    name: userData?.name || (userData as any)?.user_metadata?.name || '',
     email: userData?.email || '',
     bio: '',
     location: ''
@@ -155,7 +156,7 @@ export default function AppShell({
   useEffect(() => {
     if (userData) {
       setProfileData({
-        name: userData.name || '',
+        name: userData.name || (userData as any)?.user_metadata?.name || '',
         email: userData.email || '',
         bio: '',
         location: ''
@@ -325,11 +326,30 @@ export default function AppShell({
   }, [emitAnalytics, onShowSubscription]);
 
   // Profile editing handlers
-  const handleSaveProfile = useCallback(() => {
-    // In a real app, this would make an API call to update user profile
-    toast.success('Profile updated successfully');
-    setIsEditingProfile(false);
-  }, [profileData]);
+  const handleSaveProfile = useCallback(async () => {
+    try {
+      if (!session?.user) return;
+      const name = (profileData.name || '').trim();
+
+      // Persist to public.user_profiles (RLS allows current user)
+      await supabase.from('user_profiles').upsert({
+        user_id: session.user.id,
+        email: session.user.email ?? null,
+        name,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+
+      // Mirror to auth metadata for consistency across app
+      await supabase.auth.updateUser({ data: { name } });
+
+      toast.success(t('toasts.profile.profileUpdated'));
+      setIsEditingProfile(false);
+      // Refresh local session snapshot
+      refetch();
+    } catch (e) {
+      toast.error('Failed to update profile');
+    }
+  }, [profileData, session, refetch, t]);
 
   const handleCancelProfileEdit = useCallback(() => {
     setProfileData({
@@ -457,9 +477,9 @@ export default function AppShell({
                 className="rounded-full"
               >
                 <Avatar className="w-8 h-8 border-2 border-[#00d563]/30">
-                  <AvatarImage src={userData?.image} alt={userData?.name} />
+                  <AvatarImage src={userData?.image} alt={profileData.name || userData?.name} />
                   <AvatarFallback className="bg-money-gradient text-[#0a0b0d] text-sm font-bold">
-                    {userData?.name?.[0] || 'U'}
+                    {profileData.name?.[0] || userData?.name?.[0] || (userData as any)?.user_metadata?.name?.[0] || 'U'}
                   </AvatarFallback>
                 </Avatar>
               </ScaleButton>
@@ -607,7 +627,7 @@ export default function AppShell({
                   </div>
                 ) : (
                   <>
-                    <h3 className="font-semibold text-lg">{userData?.name || t('profile.user')}</h3>
+                    <h3 className="font-semibold text-lg">{profileData.name || userData?.name || (userData as any)?.user_metadata?.name || t('profile.user')}</h3>
                     <p className="text-sm text-muted-foreground">{userData?.email}</p>
           {subscriptionPlan === 'pro' && (
                       <Badge className="bg-gold-gradient text-[#0a0b0d] mt-2">

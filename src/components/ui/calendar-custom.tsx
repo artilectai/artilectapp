@@ -36,7 +36,7 @@ export const CustomCalendar = React.forwardRef<
     >
   <DayPicker
         showOutsideDays={showOutsideDays}
-        locale={locale}
+  locale={locale}
         className={cn(
           "p-0 w-full",
           "text-foreground font-sans"

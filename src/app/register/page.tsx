@@ -198,7 +198,7 @@ export default function RegisterPage() {
         await fetch('/api/supabase/profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: formData.phone })
+          body: JSON.stringify({ phone: formData.phone, name: formData.name.trim() })
         });
       } catch {}
       toast.success(t('toasts.auth.registerSuccess'));

@@ -1531,49 +1531,26 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           isOpen={showCalendarPicker}
           onClose={() => setShowCalendarPicker(false)}
           title={t('planner.calendar.selectDateTitle')}
+          className="min-h-[68vh]"
         >
           <div className="space-y-4">
             <p className="text-muted-foreground text-center">
               {t('planner.calendar.selectDateDesc')}
             </p>
             <div className="flex justify-center">
-              <div className="glass-card p-4 rounded-xl">
-                <div className="grid grid-cols-7 gap-2 text-center">
-                  {/* Calendar grid */}
-                  {[t('planner.calendar.weekdayShort.su'), t('planner.calendar.weekdayShort.mo'), t('planner.calendar.weekdayShort.tu'), t('planner.calendar.weekdayShort.we'), t('planner.calendar.weekdayShort.th'), t('planner.calendar.weekdayShort.fr'), t('planner.calendar.weekdayShort.sa')].map((day) => (
-                    <div key={day} className="p-2 text-xs font-medium text-muted-foreground">
-                      {day}
-                    </div>
-                  ))}
-                  {Array.from({ length: 35 }, (_, i) => {
-                    const date = new Date();
-                    date.setDate(date.getDate() - 15 + i);
-                    const dayNumber = date.getDate();
-                    const isToday = date.toDateString() === new Date().toDateString();
-                    const isSelected = date.toDateString() === selectedDate.toDateString();
-                    
-                    return (
-                      <ScaleButton
-                        key={i}
-                        onClick={() => {
-                          setSelectedDate(date);
-                          setShowCalendarPicker(false);
-                          toast.success(t('planner.calendar.selectedToast', { date: date.toLocaleDateString() }));
-                        }}
-                        className={`p-2 rounded-lg text-sm ${
-                          isSelected 
-                            ? 'bg-[#00d563] text-white' 
-                            : isToday 
-                            ? 'bg-[#00d563]/20 text-[#00d563]' 
-                            : 'hover:bg-surface-1'
-                        }`}
-                      >
-                        {dayNumber}
-                      </ScaleButton>
-                    );
-                  })}
-                </div>
-              </div>
+              <CustomCalendar
+                mode="single"
+                showOutsideDays
+                defaultMonth={selectedDate}
+                selected={selectedDate}
+                onSelect={(date) => {
+                  if (!date) return;
+                  setSelectedDate(date);
+                  setShowCalendarPicker(false);
+                  toast.success(t('planner.calendar.selectedToast', { date: date.toLocaleDateString() }));
+                }}
+                className="w-full max-w-sm"
+              />
             </div>
           </div>
         </SlideUpModal>
@@ -1755,11 +1732,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             </DialogDescription>
           </DialogHeader>
 
-          {editingTask && (
+      {editingTask && (
             <TaskEditor
               task={editingTask}
               onSave={handleSaveTask}
               onCancel={() => setIsEditorOpen(false)}
+              onDelete={editingTask?.id ? () => { handleDeleteTask(editingTask.id as string); setIsEditorOpen(false); } : undefined}
               isLoading={isLoading}
             />
           )}
@@ -1897,10 +1875,11 @@ function TaskDetailPanel({ task, onEdit, onDelete }: {
   );
 }
 
-function TaskEditor({ task, onSave, onCancel, isLoading }: {
+function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
   task: Partial<Task>;
   onSave: (task: Partial<Task>) => void;
   onCancel: () => void;
+  onDelete?: () => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState(task);
@@ -2124,12 +2103,23 @@ function TaskEditor({ task, onSave, onCancel, isLoading }: {
 
       {/* footer */}
       <div className="sticky bottom-0 -mx-4 sm:mx-0 border-t bg-background/90 backdrop-blur px-4 py-3">
-        {/* centered inner row */}
-        <div className="mx-auto w-full max-w-[420px] flex items-center justify-between gap-3">
+        {/* actions */}
+        <div className="mx-auto w-full max-w-[420px] grid grid-cols-2 gap-3">
+          {task?.id && onDelete && (
+            <ScaleButton
+              type="button"
+              variant="ghost"
+              className="col-span-2 text-destructive hover:text-destructive-foreground hover:bg-destructive/10"
+              onClick={onDelete}
+              disabled={isLoading}
+            >
+              {t('buttons.delete')} {t('planner.nouns.task')}
+            </ScaleButton>
+          )}
           <ScaleButton
             type="button"
             variant="outline"
-            className="w-32"
+            className="w-full"
             onClick={onCancel}
             disabled={isLoading}
           >
@@ -2138,7 +2128,7 @@ function TaskEditor({ task, onSave, onCancel, isLoading }: {
 
           <ScaleButton
             type="submit"
-            className="w-32"
+            className="w-full"
             disabled={!formData.title?.trim() || isLoading}
           >
             {isLoading ? t('planner.editor.saving') : t('planner.editor.task.save')}

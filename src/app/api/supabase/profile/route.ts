@@ -24,8 +24,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, skipped: true, reason: 'No auth session yet' });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const phone: string | null = body?.phone ?? null;
+  const body = await request.json().catch(() => ({}));
+  const phone: string | null = body?.phone ?? null;
+  const nameFromBody: string | null = body?.name ?? null;
 
     // If service role is not configured, treat as a no-op so UX continues
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     const { error } = await admin.from('user_profiles').upsert({
       user_id: user.id,
       email: (user as any).email ?? null,
-      name: (user as any).user_metadata?.name ?? null,
+      name: nameFromBody ?? (user as any).user_metadata?.name ?? null,
       phone,
       created_at: now,
       updated_at: now,

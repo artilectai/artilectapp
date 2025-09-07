@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from '@/lib/supabase/useSession';
+import { supabase } from '@/lib/supabase/client';
 import AppShell from '@/components/AppShell';
 import OnboardingWizard from '@/components/OnboardingWizard';
 import PlannerSection from '@/components/PlannerSection';
@@ -82,6 +83,38 @@ export default function HomePage() {
             setShowOnboarding(false);
             setSubscriptionPlan(savedPlan || 'free');
             setUsageCount(parseInt(savedUsageCount || '0', 10));
+
+            // Sync subscription plan with Supabase profile (is_pro / pro_expires_at)
+            try {
+              const userId = session.user.id as string;
+              const now = new Date();
+              // Try primary table name
+              let { data: profile, error } = await supabase
+                .from('profiles')
+                .select('is_pro, pro_expires_at')
+                .eq('id', userId)
+                .single();
+              // Fallback to user_profiles if profiles missing
+              if (error) {
+                const alt = await supabase
+                  .from('user_profiles')
+                  .select('*')
+                  .eq('user_id', userId)
+                  .single();
+                profile = alt.data as any;
+              }
+
+              if (profile && typeof profile.is_pro === 'boolean') {
+                const expiresAt = profile.pro_expires_at ? new Date(profile.pro_expires_at as string) : null;
+                const proActive = profile.is_pro && (!expiresAt || expiresAt > now);
+                const nextPlan: SubscriptionPlan = proActive ? 'pro' : (savedPlan || 'free');
+                setSubscriptionPlan(nextPlan);
+                localStorage.setItem('subscription_plan', nextPlan);
+              }
+            } catch (e) {
+              // Non-fatal: keep local plan
+              console.warn('Failed to sync subscription from profile:', e);
+            }
           }
         }
       } catch (error) {
