@@ -747,7 +747,6 @@ export const CountUp = ({ value, duration = 1000, prefix = "$", className = "" }
       if (progress < 1) requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, duration]);
   return <span className={className}>{prefix}{displayValue.toFixed(2)}</span>;
 };

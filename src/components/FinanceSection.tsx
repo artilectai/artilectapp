@@ -256,7 +256,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         const saved = dataManager.loadData(keyWithUser('customAccountTypes'), []) as string[];
         if (Array.isArray(saved)) setCustomAccountTypes(saved);
       } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userKey]);
 
     const [newBudget, setNewBudget] = useState({
