@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { workouts } from '@/db/schema';
 import { eq, like, and, or, desc, asc, gte, lte } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { getAuth } from '@/lib/auth';
 
 // Better-auth authentication
 async function authenticateRequest(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
+    const session = await getAuth().api.getSession({
       headers: request.headers
     });
     
@@ -24,6 +24,7 @@ async function authenticateRequest(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+  const db = getDb();
     // Authentication check
     const user = await authenticateRequest(request);
     if (!user) {
@@ -129,6 +130,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+  const db = getDb();
     // Authentication check
     const user = await authenticateRequest(request);
     if (!user) {
@@ -220,6 +222,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+  const db = getDb();
     // Authentication check
     const user = await authenticateRequest(request);
     if (!user) {
@@ -344,6 +347,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+  const db = getDb();
     // Authentication check
     const user = await authenticateRequest(request);
     if (!user) {

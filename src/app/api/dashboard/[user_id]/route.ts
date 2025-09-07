@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { userProfiles, tasks, transactions, workouts, categories } from '@/db/schema';
 import { eq, and, desc, sql, count } from 'drizzle-orm';
 
@@ -13,6 +13,7 @@ export async function GET(
   context: any
 ) {
   try {
+  const db = getDb();
     // Extract bearer token from authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

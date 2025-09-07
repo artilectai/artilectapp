@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/db';
 import { transactions } from '@/db/schema';
 import { eq, like, and, or, desc, asc, gte, lte } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { getAuth } from '@/lib/auth';
 
 async function getParams<T = any>(context: any): Promise<T> {
   const p = context?.params;
@@ -15,7 +15,7 @@ export async function GET(
 ) {
   try {
     // Get session from better-auth
-    const session = await auth.api.getSession({
+    const session = await getAuth().api.getSession({
       headers: request.headers
     });
 

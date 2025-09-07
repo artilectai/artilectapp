@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { userProfiles } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { getAuth } from '@/lib/auth';
 
 async function getParams<T = any>(context: any): Promise<T> {
   const p = context?.params;
@@ -14,7 +14,8 @@ export async function GET(
   context: any
 ) {
   try {
-    const session = await auth.api.getSession({
+  const db = getDb();
+  const session = await getAuth().api.getSession({
       headers: request.headers
     });
 
@@ -68,7 +69,8 @@ export async function PUT(
   context: any
 ) {
   try {
-    const session = await auth.api.getSession({
+  const db = getDb();
+  const session = await getAuth().api.getSession({
       headers: request.headers
     });
 
@@ -243,7 +245,8 @@ export async function DELETE(
   context: any
 ) {
   try {
-    const session = await auth.api.getSession({
+  const db = getDb();
+  const session = await getAuth().api.getSession({
       headers: request.headers
     });
 

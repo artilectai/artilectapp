@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/db';
 import { categories } from '@/db/schema';
 import { eq, like, and, or, desc, asc } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { getAuth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
 // Better-auth session validation
 async function authenticateRequest(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
+    const session = await getAuth().api.getSession({
       headers: await headers(),
     });
     

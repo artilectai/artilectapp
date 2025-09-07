@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { createServerClient } from "@supabase/ssr";
  
 export async function middleware(request: NextRequest) {
@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
 	const response = NextResponse.next();
 
 	// 1) Allow if BetterAuth session exists
-	const session = await auth.api.getSession({ headers: await headers() });
+	const session = await getAuth().api.getSession({ headers: await headers() });
 	if (session) return response;
 
 	// 2) Otherwise, check Supabase Auth session

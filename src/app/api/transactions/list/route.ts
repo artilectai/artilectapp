@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { transactions } from '@/db/schema';
 import { eq, like, and, or, desc, asc, gte, lte } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { getAuth } from '@/lib/auth';
 
 // Authentication using better-auth
 async function authenticateRequest(request: NextRequest) {
-  const session = await auth.api.getSession({
+  const session = await getAuth().api.getSession({
     headers: request.headers
   });
   
@@ -19,6 +19,7 @@ async function authenticateRequest(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+  const db = getDb();
     const user = await authenticateRequest(request);
     if (!user) {
       return NextResponse.json({ 
@@ -117,6 +118,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+  const db = getDb();
     const user = await authenticateRequest(request);
     if (!user) {
       return NextResponse.json({ 
@@ -199,6 +201,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+  const db = getDb();
     const user = await authenticateRequest(request);
     if (!user) {
       return NextResponse.json({ 
@@ -282,6 +285,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+  const db = getDb();
     const user = await authenticateRequest(request);
     if (!user) {
       return NextResponse.json({ 

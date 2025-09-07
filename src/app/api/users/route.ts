@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { userProfiles } from '@/db/schema';
 import { eq, like, and, or, desc, asc } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { getAuth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
 async function authenticateRequest(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
+    const session = await getAuth().api.getSession({
       headers: await headers()
     });
     return session;
@@ -18,7 +18,8 @@ async function authenticateRequest(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await authenticateRequest(request);
+  const db = getDb();
+  const session = await authenticateRequest(request);
     if (!session) {
       return NextResponse.json({ 
         error: 'Authentication required',
@@ -79,6 +80,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+  const db = getDb();
     const session = await authenticateRequest(request);
     if (!session) {
       return NextResponse.json({ 
@@ -158,6 +160,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+  const db = getDb();
     const session = await authenticateRequest(request);
     if (!session) {
       return NextResponse.json({ 
@@ -247,6 +250,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+  const db = getDb();
     const session = await authenticateRequest(request);
     if (!session) {
       return NextResponse.json({ 
