@@ -465,12 +465,12 @@ export default function AppShell({
         </main>
 
         {/* Context-Aware Floating Action Button */}
-        <motion.button
+    <motion.button
           onClick={handleContextualAdd}
           className="fixed right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center ring-1 ring-black/10"
           style={{ 
             // Keep the FAB clearly above the bottom nav and safe areas
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 92px)',
+      bottom: 'calc(env(safe-area-inset-bottom, 0px) + 104px)',
             background: `linear-gradient(135deg, ${fabProps.color}, ${fabProps.color}dd)`,
             // Softer, tighter shadow so it doesn't bleed outside blocks
             boxShadow: `0 8px 24px ${fabProps.color}26`
@@ -495,11 +495,11 @@ export default function AppShell({
 
         {/* Bottom Navigation with Swipe Gestures */}
         <nav 
-          className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#0b0e11]/70 border-t border-[#2a2d30]/30"
+          className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#0b0e11]/70 border-t border-[#2a2d30]/30 overflow-hidden"
           onTouchStart={handleNavTouchStart}
           onTouchEnd={handleNavTouchEnd}
         >
-          <div className="flex items-center justify-center h-[60px] px-4 pb-[calc(env(safe-area-inset-bottom,0px)/2)] shadow-[0_-6px_20px_rgba(0,0,0,0.25)]">
+          <div className="flex items-center justify-center h-[72px] px-4 pb-[calc(env(safe-area-inset-bottom,0px)/2)] shadow-[0_-6px_20px_rgba(0,0,0,0.25)]">
             <div className="flex items-center justify-around w-full max-w-md mx-auto gap-2">
               {navItemsBase.map((item) => {
                 const isActive = currentMode === item.id;
@@ -529,7 +529,7 @@ export default function AppShell({
                     {isActive && (
                       <motion.div
                         layoutId="nav-indicator"
-                        className="absolute -bottom-0.5 w-4 h-1 bg-[#00d563] rounded-full shadow-[0_0_6px_#00d563]"
+                        className="absolute bottom-0 w-4 h-1 bg-[#00d563] rounded-full"
                         transition={iosSpring.snappy}
                       />
                     )}
