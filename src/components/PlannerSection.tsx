@@ -1189,7 +1189,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 
   return (
     <div className="flex flex-col h-full bg-background">
-        <div ref={swipeZoneRef} className="flex-1 overflow-y-auto touch-pan-y select-none pb-[calc(env(safe-area-inset-bottom)+100px)]">
+        <div ref={swipeZoneRef} className="w-full touch-pan-y select-none">
   {/* Header with View Mode Switch and Calendar */}
   <motion.div className="select-none touch-pan-y">
       <div className="flex items-center justify-between p-4 border-b border-border">
@@ -1532,7 +1532,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           isOpen={showCalendarPicker}
           onClose={() => setShowCalendarPicker(false)}
           title={t('planner.calendar.selectDateTitle')}
-          className="min-h-[68vh]"
+          className="min-h-[60vh]"
         >
           <div className="space-y-4">
             <p className="text-muted-foreground text-center">
@@ -1550,7 +1550,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                   setShowCalendarPicker(false);
                   toast.success(t('planner.calendar.selectedToast', { date: date.toLocaleDateString() }));
                 }}
-                className="w-full max-w-sm"
+                className="w-full"
+                classNames={{ root: "w-full" }}
               />
             </div>
           </div>
@@ -1558,7 +1559,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       )}
 
   {/* Main Content Area */}
-  <motion.div className="flex-1 flex overflow-hidden">
+  <motion.div className="flex-1 flex">
         {/* Task List */}
         <div className="flex-1 md:w-2/5 md:overflow-y-auto overflow-visible min-h-0">
           <div className="p-4">

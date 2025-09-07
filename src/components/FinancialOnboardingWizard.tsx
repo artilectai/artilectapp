@@ -601,7 +601,13 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
         {/* Content */}
         <Card className={`glass-card border-none transition-all duration-300 ${isAnimating ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
           <CardContent className="p-6">
-            {renderStepContent()}
+            {currentStep === 0 ? (
+              renderStepContent()
+            ) : (
+              <div className="max-h-[60vh] overflow-y-auto pr-2">
+                {renderStepContent()}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -626,7 +632,7 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
               t('buttons.getStarted', { defaultValue: 'Get Started' })
             ) : (
               <>
-                {t('buttons.next')}
+                {t('buttons.continue', { defaultValue: 'Continue' })}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
