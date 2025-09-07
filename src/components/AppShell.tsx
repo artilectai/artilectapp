@@ -384,9 +384,9 @@ export default function AppShell({
 
   return (
     <HapticProvider>
-  <div className={`min-h-dvh bg-gradient-to-b from-[#0a0b0d] to-[#0f1114] text-foreground flex flex-col ${className}`}>
+  <div className={`min-h-dvh bg-gradient-to-b from-[#0a0b0d] to-[#0f1114] text-foreground flex flex-col ${className}`} style={{ height: '100dvh' }}>
         {/* Top App Bar */}
-  <header className="sticky top-0 z-50 glass-card border-t border-[#2a2d30]/30 pt-safe-top">
+  <header className="sticky top-0 z-50 glass-card border-t border-[#2a2d30]/30 pt-safe-top-loose">
           <div className="flex items-center justify-between h-14 px-3">
             {/* Left side with Brand and Brain Logo */}
         <div className="flex items-center gap-2">
@@ -456,10 +456,11 @@ export default function AppShell({
     {/* Main Content Area - scrollable, body itself stays non-scrollable */}
         <main 
           ref={contentRef}
-          className="flex-1 overflow-y-auto overscroll-contain relative"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain relative"
+          style={{ WebkitOverflowScrolling: 'touch' as any }}
         >
           <motion.div 
-      className="h-full pb-20 pb-safe-bottom"
+      className="h-full pb-24 pb-safe-bottom-tight"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={iosSpring.gentle}
@@ -471,7 +472,7 @@ export default function AppShell({
         {/* Context-Aware Floating Action Button */}
         <motion.button
           onClick={handleContextualAdd}
-          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center"
+          className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center"
           style={{ 
             background: `linear-gradient(135deg, ${fabProps.color}, ${fabProps.color}dd)`,
             boxShadow: `0 4px 20px ${fabProps.color}40`
@@ -496,11 +497,11 @@ export default function AppShell({
 
         {/* Bottom Navigation with Swipe Gestures */}
         <nav 
-          className="fixed bottom-0 left-0 right-0 z-30 glass-card border-t border-[#2a2d30]/30 pb-safe-bottom"
+          className="fixed bottom-0 left-0 right-0 z-30 glass-card border-t border-[#2a2d30]/30 pb-safe-bottom-narrow"
           onTouchStart={handleNavTouchStart}
           onTouchEnd={handleNavTouchEnd}
         >
-          <div className="flex items-center justify-center h-14 px-4">
+          <div className="flex items-center justify-center h-12 px-4">
             <div className="flex items-center justify-around w-full max-w-md mx-auto">
               {navItemsBase.map((item) => {
                 const isActive = currentMode === item.id;

@@ -13,8 +13,6 @@ export default function TelegramBridge() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const backHandlerRef = useRef<(() => void) | null>(null);
-  const touchStartYRef = useRef<number | null>(null);
-  const touchTargetRef = useRef<EventTarget | null>(null);
 
   // Helper: apply Telegram guards repeatedly (idempotent)
   const applyTgGuards = () => {
@@ -31,18 +29,7 @@ export default function TelegramBridge() {
     }
   };
 
-  // Helper: find nearest scrollable parent (to decide if a downward swipe would overscroll root)
-  const getScrollableParent = (el: Element | null): HTMLElement | null => {
-    let node: HTMLElement | null = el as HTMLElement | null;
-    while (node && node !== document.body) {
-      const style = window.getComputedStyle(node);
-      if (/(auto|scroll|overlay)/.test(style.overflowY)) {
-        return node;
-      }
-      node = node.parentElement;
-    }
-    return null;
-  };
+  // Note: Avoid global touch guards that can block content scrolling; rely on Telegram guards.
 
   // Initialize Telegram WebApp
   useEffect(() => {
@@ -72,35 +59,10 @@ export default function TelegramBridge() {
     document.addEventListener('visibilitychange', handleVis);
     window.addEventListener('focus', handleFocus);
 
-    // Touch guard: prevent pull-to-dismiss gesture when content is at top and user swipes down
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches && e.touches.length === 1) {
-        touchStartYRef.current = e.touches[0].clientY;
-        touchTargetRef.current = e.target;
-      }
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (touchStartYRef.current == null || e.touches.length !== 1) return;
-      const dy = e.touches[0].clientY - touchStartYRef.current;
-      if (dy <= 0) return; // not swiping down
-      const targetEl = (touchTargetRef.current as Element | null) || null;
-      const scrollable = targetEl ? getScrollableParent(targetEl) : null;
-      const atTop = !scrollable || (scrollable.scrollTop <= 0);
-      if (atTop) {
-        // Stop iOS "pull down to dismiss" from engaging
-        e.preventDefault();
-      }
-    };
-    // Use non-passive to allow preventDefault()
-    window.addEventListener('touchstart', onTouchStart, { passive: false });
-    window.addEventListener('touchmove', onTouchMove, { passive: false });
-
     return () => {
       try { tg?.offEvent?.('viewportChanged', handleViewportChanged); } catch {}
-      document.removeEventListener('visibilitychange', handleVis);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('touchstart', onTouchStart as any);
-      window.removeEventListener('touchmove', onTouchMove as any);
+  document.removeEventListener('visibilitychange', handleVis);
+  window.removeEventListener('focus', handleFocus);
     };
   }, []);
 

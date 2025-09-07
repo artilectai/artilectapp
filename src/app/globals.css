@@ -150,6 +150,11 @@ padding-inline: 2rem;
   .pt-safe-top { padding-top: calc(var(--safe-top) + 12px); }
   .pb-safe-bottom { padding-bottom: calc(var(--safe-bottom) + 12px); }
   .px-safe { padding-left: max(16px, var(--safe-left)); padding-right: max(16px, var(--safe-right)); }
+  /* Variants to tune spacing when UI collides with system overlays */
+  .pt-safe-top-tight { padding-top: calc(var(--safe-top) + 20px); }
+  .pb-safe-bottom-tight { padding-bottom: calc(var(--safe-bottom) + 8px); }
+  .pt-safe-top-loose { padding-top: calc(var(--safe-top) + 28px); }
+  .pb-safe-bottom-narrow { padding-bottom: calc(var(--safe-bottom) + 4px); }
 
   /* Optional global frame if needed */
   /* Edge-to-edge sides; components handle their own safe paddings */
@@ -170,7 +175,7 @@ color: var(--color-foreground);
 /* Reduce iOS rubber-banding and accidental close gestures inside Telegram */
 overscroll-behavior-y: contain; /* prevent root scroll chaining */
 overscroll-behavior-x: none;
-touch-action: manipulation;
+touch-action: pan-y;
 height: 100dvh;
 overflow: hidden; /* prevent outer scroll that triggers pull-to-dismiss */
 }
