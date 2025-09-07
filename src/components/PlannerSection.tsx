@@ -21,7 +21,8 @@ import {
   History,
   Clock,
   Lock,
-  Crown
+  Crown,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +38,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CustomCalendar } from "@/components/ui/calendar-custom";
+import { Calendar } from "@/components/ui/calendar";
 import { DateStepper } from "@/components/ui/date-stepper";
 import { PlannerAnalytics } from "@/components/PlannerAnalytics";
 import { supabase } from "@/lib/supabase/client";
@@ -1538,7 +1539,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               {t('planner.calendar.selectDateDesc')}
             </p>
             <div className="flex justify-center">
-              <CustomCalendar
+              <Calendar
                 mode="single"
                 showOutsideDays
                 defaultMonth={selectedDate}
@@ -1927,6 +1928,24 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+      {/* header with optional delete icon */}
+      <div className="flex items-center justify-between -mt-1">
+        <div className="text-sm font-medium text-muted-foreground">
+          {formData?.id ? t('planner.editor.task.editTitle', { defaultValue: 'Edit Task' }) : t('planner.editor.task.newTitle', { defaultValue: 'New Task' })}
+        </div>
+        {task?.id && onDelete && (
+          <ScaleButton
+            type="button"
+            variant="ghost"
+            className="p-2 rounded-full text-destructive hover:bg-destructive/10"
+            onClick={onDelete}
+            aria-label={t('buttons.delete')}
+            title={t('buttons.delete') as string}
+          >
+            <Trash2 className="w-5 h-5" />
+          </ScaleButton>
+        )}
+      </div>
       <div className="space-y-1.5">
         <Label htmlFor="title" className="text-sm font-medium">{t('planner.editor.task.titleLabel')}</Label>
         <Input
@@ -2105,17 +2124,6 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
       <div className="sticky bottom-0 -mx-4 sm:mx-0 border-t bg-background/90 backdrop-blur px-4 py-3">
         {/* actions */}
         <div className="mx-auto w-full max-w-[420px] grid grid-cols-2 gap-3">
-          {task?.id && onDelete && (
-            <ScaleButton
-              type="button"
-              variant="ghost"
-              className="col-span-2 text-destructive hover:text-destructive-foreground hover:bg-destructive/10"
-              onClick={onDelete}
-              disabled={isLoading}
-            >
-              {t('buttons.delete')} {t('planner.nouns.task')}
-            </ScaleButton>
-          )}
           <ScaleButton
             type="button"
             variant="outline"
