@@ -152,7 +152,8 @@ padding-inline: 2rem;
   .px-safe { padding-left: max(16px, var(--safe-left)); padding-right: max(16px, var(--safe-right)); }
 
   /* Optional global frame if needed */
-  .app-frame { padding: calc(var(--safe-top) + 8px) max(16px, var(--safe-right)) calc(var(--safe-bottom) + 8px) max(16px, var(--safe-left)); }
+  /* Edge-to-edge sides; components handle their own safe paddings */
+  .app-frame { padding: 0; }
 }
 @layer base {
 html {
@@ -160,12 +161,15 @@ html {
 -moz-osx-font-smoothing: grayscale;
 text-rendering: optimizeLegibility;
 color-scheme: dark;
+height: 100%;
+overscroll-behavior: none;
 }
 body {
 background: linear-gradient(180deg, var(--color-premium-black) 0%, var(--color-background) 100%);
 color: var(--color-foreground);
 /* Reduce iOS rubber-banding and accidental close gestures inside Telegram */
-overscroll-behavior: none;
+overscroll-behavior-y: contain; /* prevent root scroll chaining */
+overscroll-behavior-x: none;
 touch-action: manipulation;
 height: 100dvh;
 overflow: hidden; /* prevent outer scroll that triggers pull-to-dismiss */
@@ -259,7 +263,7 @@ transform-origin: bottom;
 .glass-card {
 background: rgba(15, 17, 20, 0.7);
 backdrop-filter: blur(20px);
-border: 1px solid rgba(0, 213, 99, 0.1);
+/* No default border to avoid side borders on glass elements; use explicit border-* utilities where needed */
 }
 
 /* Hide Next.js error overlay portal */

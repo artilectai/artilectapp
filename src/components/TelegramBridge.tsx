@@ -13,19 +13,95 @@ export default function TelegramBridge() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const backHandlerRef = useRef<(() => void) | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const touchTargetRef = useRef<EventTarget | null>(null);
 
-  // Initialize Telegram WebApp
-  useEffect(() => {
+  // Helper: apply Telegram guards repeatedly (idempotent)
+  const applyTgGuards = () => {
     const tg = (window as any)?.Telegram?.WebApp as any;
-    if (!tg) return;
+    if (!tg) return false;
     try {
       tg.ready?.();
       tg.expand?.();
-  // Disallow swipe-down to close, so only the Close button can close the app
-  tg.disableVerticalSwipes?.();
-      // Require explicit confirmation to close the web app (prevents accidental swipe-to-close)
+      tg.disableVerticalSwipes?.();
       tg.enableClosingConfirmation?.();
-    } catch {}
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Helper: find nearest scrollable parent (to decide if a downward swipe would overscroll root)
+  const getScrollableParent = (el: Element | null): HTMLElement | null => {
+    let node: HTMLElement | null = el as HTMLElement | null;
+    while (node && node !== document.body) {
+      const style = window.getComputedStyle(node);
+      if (/(auto|scroll|overlay)/.test(style.overflowY)) {
+        return node;
+      }
+      node = node.parentElement;
+    }
+    return null;
+  };
+
+  // Initialize Telegram WebApp
+  useEffect(() => {
+    // First attempt immediately
+    applyTgGuards();
+
+    // Re-apply a few times shortly after mount (covers late SDK availability)
+    let attempts = 0;
+    const interval = window.setInterval(() => {
+      attempts += 1;
+      const ok = applyTgGuards();
+      if (ok || attempts > 10) {
+        window.clearInterval(interval);
+      }
+    }, 250);
+
+    // Re-apply when viewport changes (e.g., iOS safe-area / Telegram expanding)
+    const tg = (window as any)?.Telegram?.WebApp as any;
+    const handleViewportChanged = () => {
+      applyTgGuards();
+    };
+    try { tg?.onEvent?.('viewportChanged', handleViewportChanged); } catch {}
+
+    // Re-apply on tab visibility/focus changes
+    const handleVis = () => applyTgGuards();
+    const handleFocus = () => applyTgGuards();
+    document.addEventListener('visibilitychange', handleVis);
+    window.addEventListener('focus', handleFocus);
+
+    // Touch guard: prevent pull-to-dismiss gesture when content is at top and user swipes down
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches.length === 1) {
+        touchStartYRef.current = e.touches[0].clientY;
+        touchTargetRef.current = e.target;
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchStartYRef.current == null || e.touches.length !== 1) return;
+      const dy = e.touches[0].clientY - touchStartYRef.current;
+      if (dy <= 0) return; // not swiping down
+      const targetEl = (touchTargetRef.current as Element | null) || null;
+      const scrollable = targetEl ? getScrollableParent(targetEl) : null;
+      const atTop = !scrollable || (scrollable.scrollTop <= 0);
+      if (atTop) {
+        // Stop iOS "pull down to dismiss" from engaging
+        e.preventDefault();
+      }
+    };
+    // Use non-passive to allow preventDefault()
+    window.addEventListener('touchstart', onTouchStart, { passive: false });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+
+    return () => {
+      try { tg?.offEvent?.('viewportChanged', handleViewportChanged); } catch {}
+      document.removeEventListener('visibilitychange', handleVis);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('touchstart', onTouchStart as any);
+      window.removeEventListener('touchmove', onTouchMove as any);
+    };
   }, []);
 
   // Manage BackButton visibility and behavior based on history depth

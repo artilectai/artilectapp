@@ -164,6 +164,14 @@ export default function AppShell({
     }
   }, [theme, timezone]);
 
+  // Ensure inner content scrolls and page doesn’t overscroll
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    // Make sure the content area has its own scroll context
+    el.style.overscrollBehavior = 'contain';
+  }, []);
+
   // Handle mode switching with animation and analytics
   const handleModeSwitch = useCallback((mode: AppMode, event?: React.MouseEvent) => {
     if (event) {
@@ -378,7 +386,7 @@ export default function AppShell({
     <HapticProvider>
   <div className={`min-h-dvh bg-gradient-to-b from-[#0a0b0d] to-[#0f1114] text-foreground flex flex-col ${className}`}>
         {/* Top App Bar */}
-  <header className="sticky top-0 z-50 glass-card border-b border-[#2a2d30]/30 pt-safe-top">
+  <header className="sticky top-0 z-50 glass-card border-t border-[#2a2d30]/30 pt-safe-top">
           <div className="flex items-center justify-between h-14 px-3">
             {/* Left side with Brand and Brain Logo */}
         <div className="flex items-center gap-2">
