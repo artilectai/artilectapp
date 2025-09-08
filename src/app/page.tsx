@@ -7,6 +7,9 @@ import { useSession } from '@/lib/supabase/useSession';
 import { supabase } from '@/lib/supabase/client';
 import AppShell from '@/components/AppShell';
 import OnboardingWizard from '@/components/OnboardingWizard';
+import { FinanceOnboardingWizard } from '@/components/FinancialOnboardingWizard';
+import { WorkoutSportOnboardingWizard } from '@/components/WorkoutSportOnboardingWizard';
+import { FinanceDataManager } from '@/lib/finance-data-manager';
 import PlannerSection from '@/components/PlannerSection';
 import FinanceSection from '@/components/FinanceSection';
 import WorkoutSection from '@/components/WorkoutSection';
@@ -46,6 +49,8 @@ export default function HomePage() {
   const { t } = useTranslation('app');
   const [currentMode, setCurrentMode] = useState<AppMode>('planner');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showFinanceSetup, setShowFinanceSetup] = useState(false);
+  const [showWorkoutSetup, setShowWorkoutSetup] = useState(false);
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,6 +88,17 @@ export default function HomePage() {
             setShowOnboarding(false);
             setSubscriptionPlan(savedPlan || 'free');
             setUsageCount(parseInt(savedUsageCount || '0', 10));
+
+            // After core onboarding is done, make sure finance/workout onboardings run for first-time users
+            try {
+              const financeDone = FinanceDataManager.isSetupComplete();
+              const workoutDone = localStorage.getItem('workout_setup_complete') === 'true';
+              if (!financeDone) {
+                setShowFinanceSetup(true);
+              } else if (!workoutDone) {
+                setShowWorkoutSetup(true);
+              }
+            } catch {}
 
             // Sync subscription plan with Supabase profile (is_pro / pro_expires_at)
             try {
@@ -401,6 +417,24 @@ export default function HomePage() {
                   </motion.div>
                 </AnimatePresence>
               </AppShell>
+              {/* Global first-time setup overlays */}
+              {showFinanceSetup && (
+                <FinanceOnboardingWizard
+                  onComplete={() => {
+                    setShowFinanceSetup(false);
+                    const workoutDone = localStorage.getItem('workout_setup_complete') === 'true';
+                    if (!workoutDone) setShowWorkoutSetup(true);
+                  }}
+                />
+              )}
+              {showWorkoutSetup && (
+                <WorkoutSportOnboardingWizard
+                  onComplete={() => {
+                    localStorage.setItem('workout_setup_complete', 'true');
+                    setShowWorkoutSetup(false);
+                  }}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
