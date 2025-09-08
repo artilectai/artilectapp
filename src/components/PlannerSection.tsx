@@ -1028,7 +1028,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         try {
           const completedISO = completedAtToSave ? (completedAtToSave as Date).toISOString() : null;
           const res = await fetch(`/api/tasks/list?id=${encodeURIComponent(itemId)}`, {
-            method: 'PATCH',
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: nextStatus, completedAt: completedISO })
           });
