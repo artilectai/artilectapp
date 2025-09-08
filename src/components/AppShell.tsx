@@ -411,7 +411,7 @@ export default function AppShell({
   <header className="sticky top-0 z-50 glass-card border-t border-[#2a2d30]/30 pt-safe-top-loose" style={{ paddingTop: 'calc(var(--safe-top) + 36px)' }}>
           <div className="flex items-center justify-between h-14 px-3">
             {/* Left side with Brand and Brain Logo */}
-        <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5">
               {/* Brain logo - non-clickable, just for branding */}
               <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#00d563]/10 backdrop-blur-sm border border-[#00d563]/20 shadow-md shadow-[#00d563]/20">
                 <Brain className="w-5 h-5 text-[#00d563] drop-shadow-sm" />
@@ -426,18 +426,9 @@ export default function AppShell({
                   filter: 'drop-shadow(0 0 8px rgba(0, 213, 99, 0.3))'
                 }}
               >
-                {/* Single-line for md+ screens */}
-                <span className="hidden sm:inline text-lg leading-none align-middle">
+                {/* Always single-line brand on all screens; prevent wrap on small devices */}
+                <span className="block leading-none align-middle whitespace-nowrap truncate max-w-[52vw] text-sm sm:text-lg">
                   {appName}
-                </span>
-                {/* Stacked and slightly smaller for small phones */}
-                <span className="sm:hidden block h-9 leading-none">
-                  <span className="grid h-full grid-rows-2 items-center">
-                    <span className="text-xs">{brandTop}</span>
-                    {brandBottom ? (
-                      <span className="text-xs">{brandBottom}</span>
-                    ) : null}
-                  </span>
                 </span>
               </motion.div>
             </div>
