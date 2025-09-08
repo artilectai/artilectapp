@@ -1374,8 +1374,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
     const chartColors = ['#10B981', '#FFD700', '#EF4444', '#8B5CF6', '#F59E0B', '#06B6D4'];
 
-    // Custom pie label to keep text fully visible within chart margins
-    const renderCategoryLabel = useCallback((props: any) => {
+  // Custom pie label to keep text fully visible within chart margins (no hook to avoid rule-of-hooks after early returns)
+  const renderCategoryLabel = (props: any) => {
       const { name, percent, cx, cy, midAngle, outerRadius } = props;
       if (!name) return null;
       const RADIAN = Math.PI / 180;
@@ -1389,7 +1389,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           {label}
         </text>
       );
-    }, [isMobile, translateCategory]);
+  };
 
     return (
   <div className="flex flex-col bg-background">
