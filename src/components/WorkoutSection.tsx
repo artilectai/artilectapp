@@ -775,7 +775,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
           <div className="flex-1 overflow-hidden">
             <TabsContent value="overview" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+140px)]">
                   {programs.length === 0 ? (
                     <Card className="glass-card p-8 text-center">
                       <Dumbbell className="w-12 h-12 mx-auto mb-4 text-money-green" />
@@ -930,7 +930,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
             <TabsContent value="programs" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+140px)]">
                   {programs.length === 0 ? (
                     <Card className="glass-card p-8 text-center">
                       <LayoutTemplate className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -1052,7 +1052,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
             <TabsContent value="session" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+140px)]">
                   {!currentSession ? (
                     <Card className="glass-card p-6">
                       <div className="flex items-center gap-3 mb-2">
@@ -1121,7 +1121,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
             <TabsContent value="history" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+140px)]">
                   <Card className="glass-card p-4">
                     <h3 className="font-semibold mb-3">{t('workout.section.history.title')}</h3>
                     {history.length === 0 ? (
@@ -1150,7 +1150,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
             <TabsContent value="trackers" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 relative pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+                <div className="p-4 space-y-4 relative pb-[calc(env(safe-area-inset-bottom,0px)+140px)]">
                   {(() => {
                     return (
           !limits.trackersAllowed && (
