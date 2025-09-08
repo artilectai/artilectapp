@@ -1007,7 +1007,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       // Persist
       try {
         const completedISO = completedAtToSave ? (completedAtToSave as Date).toISOString() : null;
-        // Use browser Supabase client to avoid server-action auth cookie issues on mobile/PWA
+        // Ensure we have a signed-in user
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth?.user?.id;
+        if (!userId) throw new Error('Not signed in');
+
+        // Use browser Supabase client; also filter by user_id to be explicit
         const { error } = await supabase
           .from('tasks')
           .update({
@@ -1015,13 +1020,29 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             completed_at: completedISO,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', itemId);
-        if (error) throw error;
+          .eq('id', itemId)
+          .eq('user_id', userId);
+        if (error) throw error as any;
       } catch (e) {
-        // On error, reload from server to reconcile and show a hint
-        console.error('Failed to update task status:', e);
-        toast.error(t('toasts.planner.taskSaveFailed', { defaultValue: 'Failed to save task' }));
-        await loadTasks();
+        // Try server API fallback (uses server-side auth cookies)
+        try {
+          const completedISO = completedAtToSave ? (completedAtToSave as Date).toISOString() : null;
+          const res = await fetch(`/api/tasks/list?id=${encodeURIComponent(itemId)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: nextStatus, completedAt: completedISO })
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body?.error || `HTTP ${res.status}`);
+          }
+        } catch (e2) {
+          // On error, reload from server to reconcile and show a hint
+          const msg = (e2 as any)?.message || (e as any)?.message || (e as any)?.error_description || 'Unknown error';
+          console.error('Failed to update task status (both client and API fallback):', e, e2);
+          toast.error(`${t('toasts.planner.taskSaveFailed', { defaultValue: 'Failed to save task' })}: ${msg}`);
+          await loadTasks();
+        }
       }
     } else if (viewMode === "weekly") {
       // Toggle weekly goal completion
