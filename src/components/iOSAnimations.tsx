@@ -220,7 +220,7 @@ export const SlideUpModal = ({
           <motion.div
             role="dialog"
             aria-modal="true"
-            className={`fixed bottom-0 left-0 right-0 z-50 max-h-[92vh] md:max-w-md md:left-1/2 md:-translate-x-1/2 bg-card rounded-t-3xl overflow-hidden ${className}`}
+            className={`fixed bottom-0 left-0 right-0 z-[60] max-h-[94vh] md:max-w-md md:left-1/2 md:-translate-x-1/2 bg-card rounded-t-3xl overflow-hidden ${className}`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -234,7 +234,7 @@ export const SlideUpModal = ({
               </div>
             )}
             {/* Scroll the body ONLY */}
-            <div className="px-5 pb-5 overflow-y-auto overscroll-contain scrollbar-none max-h-[calc(92vh-56px)]">
+            <div className="px-5 pb-5 overflow-y-auto overscroll-contain scrollbar-none max-h-[calc(94vh-56px)]">
               {children}
               <div className="h-2" />
             </div>

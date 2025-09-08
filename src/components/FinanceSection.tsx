@@ -2891,8 +2891,10 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         >
           {selectedTransaction && (
             <div className="space-y-4 p-4">
-              {/* Delete action */}
-              <div className="flex items-center justify-end">
+              {/* Header row with delete on the right */}
+              <div className="flex items-center justify-between">
+                <h3 className="sr-only">{t('finance.transactions.details.title')}</h3>
+                <div />
                 <Button
                   type="button"
                   variant="ghost"
