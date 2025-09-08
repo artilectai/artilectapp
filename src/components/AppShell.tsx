@@ -493,8 +493,8 @@ export default function AppShell({
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain relative"
           style={{ WebkitOverflowScrolling: 'touch' as any }}
         >
-          <motion.div 
-      className="h-full pb-24 pb-safe-bottom-tight"
+      <motion.div 
+    className="pb-24 pb-safe-bottom-tight"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={iosSpring.gentle}

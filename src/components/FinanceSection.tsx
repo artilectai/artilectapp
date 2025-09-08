@@ -1288,7 +1288,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     const chartColors = ['#10B981', '#FFD700', '#EF4444', '#8B5CF6', '#F59E0B', '#06B6D4'];
 
     return (
-      <div className="h-full flex flex-col bg-background">
+      <div className="flex flex-col bg-background">
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-border/50">
           <div className="flex items-center justify-between mb-4">
@@ -1480,8 +1480,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           )}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+  {/* Content */}
+  <div>
           <div className="p-4">
             <Tabs value={activeTab} onValueChange={handleRestrictedTabAccess} className="w-full">
               <TabsList className="grid w-full grid-cols-4 bg-surface-1 mb-6 h-12 rounded-full">
