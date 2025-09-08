@@ -404,6 +404,25 @@ export default function AppShell({
 
   const fabProps = getFABProps();
 
+  // Keep bottom nav stable when the on-screen keyboard appears (iOS/Android)
+  const [navKeyboardOffset, setNavKeyboardOffset] = useState(0);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('visualViewport' in window)) return;
+    const vv = window.visualViewport as VisualViewport;
+    const update = () => {
+      // How much the visual viewport shrank from the layout viewport
+      const shrink = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+      setNavKeyboardOffset(shrink);
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    update();
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
+
   return (
     <HapticProvider>
   <div className={`min-h-dvh bg-gradient-to-b from-[#0a0b0d] to-[#0f1114] text-foreground flex flex-col ${className}`} style={{ height: '100dvh' }}>
@@ -495,7 +514,7 @@ export default function AppShell({
         </main>
 
     {/* Context-Aware Floating Action Button */}
-    <motion.button
+  <motion.button
           onClick={handleContextualAdd}
           className="fixed right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center ring-1 ring-black/10"
           style={{ 
@@ -503,7 +522,8 @@ export default function AppShell({
             bottom: 'calc(env(safe-area-inset-bottom, 0px) + 60px)',
             background: `linear-gradient(135deg, ${fabProps.color}, ${fabProps.color}dd)`,
             // Softer, tighter shadow so it doesn't bleed outside blocks
-            boxShadow: `0 8px 24px ${fabProps.color}26`
+      boxShadow: `0 8px 24px ${fabProps.color}26`,
+      transform: `translateY(${navKeyboardOffset}px)`
           }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -526,6 +546,7 @@ export default function AppShell({
         {/* Bottom Navigation with Swipe Gestures */}
         <nav 
           className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#0b0e11]/70 border-t border-[#2a2d30]/30 overflow-hidden"
+          style={{ transform: `translateY(${navKeyboardOffset}px)` }}
           onTouchStart={handleNavTouchStart}
           onTouchEnd={handleNavTouchEnd}
         >

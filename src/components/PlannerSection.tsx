@@ -1628,20 +1628,33 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               {t('planner.calendar.selectDateDesc')}
             </p>
             <div className="flex justify-center">
-              <DateCalendar
-                mode="single"
-                showOutsideDays
-                defaultMonth={selectedDate}
-                selected={selectedDate}
-                onSelect={(date) => {
-                  if (!date) return;
-                  setSelectedDate(date);
-                  setShowCalendarPicker(false);
-                  toast.success(t('planner.calendar.selectedToast', { date: date.toLocaleDateString() }));
-                }}
-                className="w-full"
-                classNames={{ root: "w-full" }}
-              />
+              <div className="w-full max-w-[380px] sm:max-w-[420px]">
+                <div className="glass-card rounded-2xl p-3">
+                  <DateCalendar
+                    mode="single"
+                    showOutsideDays
+                    defaultMonth={selectedDate}
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (!date) return;
+                      setSelectedDate(date);
+                      setShowCalendarPicker(false);
+                      toast.success(t('planner.calendar.selectedToast', { date: date.toLocaleDateString() }));
+                    }}
+                    className="w-full [--cell-size:2.5rem]"
+                    classNames={{
+                      root: "w-full",
+                      months: "flex flex-col gap-3",
+                      month: "flex flex-col w-full gap-2",
+                      nav: "flex items-center justify-between relative",
+                      month_caption: "flex items-center justify-center h-10 w-full px-2 text-foreground",
+                      weekdays: "flex px-1",
+                      week: "flex w-full mt-1",
+                      day: "relative w-full h-full p-0 text-center group/day aspect-square select-none",
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </SlideUpModal>

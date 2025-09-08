@@ -2890,7 +2890,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           title={t('finance.transactions.details.title')}
         >
           {selectedTransaction && (
-            <div className="space-y-4 p-4 pb-24">
+            <div className="space-y-4 p-4">
               {/* Title row: icon + name on the left, delete on the right (vertically centered) */}
               <div className="grid grid-cols-[1fr_auto] items-center mb-2">
                 <div className="flex items-center gap-3">

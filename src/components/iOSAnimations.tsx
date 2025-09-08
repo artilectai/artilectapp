@@ -234,7 +234,7 @@ export const SlideUpModal = ({
               </div>
             )}
             {/* Scroll the body ONLY */}
-            <div className="px-5 pb-24 overflow-y-auto overscroll-contain scrollbar-none max-h-[calc(95vh-56px)]">
+            <div className="px-5 pb-20 overflow-y-auto overscroll-contain scrollbar-none max-h-[calc(95vh-56px)]">
               {children}
               <div className="h-2" />
             </div>
