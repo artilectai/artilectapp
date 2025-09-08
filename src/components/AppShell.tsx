@@ -265,8 +265,8 @@ export default function AppShell({
     const deltaY = touch.clientY - navTouchStartRef.current.y;
     const deltaTime = Date.now() - navTouchStartRef.current.time;
 
-    // Only trigger if horizontal movement is greater than vertical and gesture is fast enough
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50 && deltaTime < 300) {
+    // Only trigger if horizontal swipe is clear: large X, tiny Y jitter, quick gesture
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50 && Math.abs(deltaY) < 20 && deltaTime < 300) {
       const currentIndex = navItemsBase.findIndex(item => item.id === currentMode);
       
       if (deltaX > 0 && currentIndex > 0) {
@@ -481,8 +481,8 @@ export default function AppShell({
     {/* Main Content Area - scrollable, body itself stays non-scrollable */}
         <main 
           ref={contentRef}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain relative"
-          style={{ WebkitOverflowScrolling: 'touch' as any }}
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain relative"
+          style={{ WebkitOverflowScrolling: 'touch' as any, touchAction: 'pan-y' as any }}
         >
       <motion.div 
     className="pb-24 pb-safe-bottom-tight"
