@@ -404,9 +404,24 @@ export default function AppShell({
 
   const fabProps = getFABProps();
 
-  // Keep bottom nav stable when the on-screen keyboard appears on mobile
-  // Using CSS dynamic viewport units to counter the browser's auto-shift.
-  // We avoid JS listeners for robustness across iOS/Android.
+  // Keep bottom nav stable when the on-screen keyboard appears on mobile.
+  // Primary: CSS translate by (100lvh - 100dvh). Fallback: VisualViewport -> --kb-offset.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('visualViewport' in window)) return;
+    const vv = window.visualViewport as VisualViewport;
+    const update = () => {
+      const shrink = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+      document.documentElement.style.setProperty('--kb-offset', `${shrink}px`);
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    update();
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+      document.documentElement.style.removeProperty('--kb-offset');
+    };
+  }, []);
 
   return (
     <HapticProvider>
@@ -504,12 +519,10 @@ export default function AppShell({
           className="fixed right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center ring-1 ring-black/10"
           style={{ 
             // Sit just above the bottom mode switcher bar (~84px tall) with a small gap
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 60px)',
+    bottom: 'calc(env(safe-area-inset-bottom, 0px) + 60px - var(--kb-offset, 0px))',
             background: `linear-gradient(135deg, ${fabProps.color}, ${fabProps.color}dd)`,
             // Softer, tighter shadow so it doesn't bleed outside blocks
-  boxShadow: `0 8px 24px ${fabProps.color}26`,
-  // Counter the browser's upward shift with the layout-vs-dynamic viewport diff
-  transform: 'translateY(calc(100vh - 100dvh))'
+  boxShadow: `0 8px 24px ${fabProps.color}26`
           }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -532,7 +545,7 @@ export default function AppShell({
         {/* Bottom Navigation with Swipe Gestures */}
         <nav 
           className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#0b0e11]/70 border-t border-[#2a2d30]/30 overflow-hidden"
-          style={{ transform: 'translateY(calc(100vh - 100dvh))' }}
+          style={{ bottom: 'calc(-1 * var(--kb-offset, 0px))' }}
           onTouchStart={handleNavTouchStart}
           onTouchEnd={handleNavTouchEnd}
         >
