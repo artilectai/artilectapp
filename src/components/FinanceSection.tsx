@@ -1242,6 +1242,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         currency,
         color: '#10B981',
         is_default: accounts.length === 0,
+  balance: Number(newAccount.balance || '0'),
       });
       await loadRemote();
       setNewAccount({
@@ -1284,20 +1285,70 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       setShowEditAccountDialog(true);
     };
 
-    const handleUpdateAccount = () => {
+    const handleUpdateAccount = async () => {
       if (!editAccount.id) return;
       if (!editAccount.name) {
         toast.error(t('toasts.finance.accountNameRequired'));
         return;
       }
       const nextBalance = parseFloat(editAccount.balance) || 0;
+
+      // Optimistic local update
       setAccounts(prev => prev.map(acc => acc.id === editAccount.id
         ? { ...acc, name: editAccount.name, type: editAccount.type, currency: currency, balance: nextBalance }
         : acc
       ));
-      // If the currently selected account is the one edited, ensure selector reflects any potential type/name changes (id is same)
       setShowEditAccountDialog(false);
-      toast.success(t('toasts.finance.accountUpdated'));
+
+      // Persist to Supabase (update if UUID id, else create remote and swap id locally)
+      const isUUID = (id: string | undefined) => !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth?.user?.id;
+        if (!userId) throw new Error('Not signed in');
+
+        if (isUUID(editAccount.id)) {
+          const { error } = await supabase
+            .from('finance_accounts')
+            .update({
+              name: editAccount.name,
+              type: editAccount.type as any,
+              currency,
+              balance: nextBalance,
+            })
+            .eq('id', editAccount.id)
+            .eq('user_id', userId);
+          if (error) throw error;
+        } else {
+          // No remote id yet — create one with the edited values
+          const { data, error } = await supabase
+            .from('finance_accounts')
+            .insert({
+              user_id: userId,
+              name: editAccount.name,
+              type: editAccount.type as any,
+              currency,
+              balance: nextBalance,
+              color: '#10B981',
+              is_default: accounts.length === 0,
+            })
+            .select('id')
+            .single();
+          if (error) throw error;
+          const newId = String((data as any).id);
+          setAccounts(prev => prev.map(acc => acc.id === editAccount.id ? { ...acc, id: newId } : acc));
+          if (selectedAccount === editAccount.id) setSelectedAccount(newId);
+        }
+        toast.success(t('toasts.finance.accountUpdated'));
+      } catch (e: any) {
+        console.error('Failed to persist account update:', e);
+        toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }), {
+          description: e?.message || String(e)
+        });
+      } finally {
+        // Re-sync from server to ensure consistency
+        await loadRemote();
+      }
     };
 
     const handleAddCustomAccountTypeForEdit = () => {

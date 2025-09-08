@@ -10,6 +10,7 @@ export async function createAccount(input: {
   currency?: string;
   color?: string;
   is_default?: boolean;
+  balance?: number;
 }) {
   const supabase = await supabaseServer();
   const { data: { user }, error: uErr } = await supabase.auth.getUser();

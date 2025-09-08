@@ -218,7 +218,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   
   // UI state
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
-  const [searchQuery, setSearchQuery] = useState("");
+  // Search removed
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [filterPriority, setFilterPriority] = useState<FilterPriority>("all");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -474,10 +474,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     const timeRangeFilter = getTimeRangeFilter(filterTimeRange);
     
     const filterByCommon = (item: Task | Goal) => {
-      // Search filter
-      const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (item as Task).tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Search removed
 
       // Status filter
       const matchesStatus = filterStatus === "all" || 
@@ -520,7 +517,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         return false;
       }
 
-      return matchesSearch && matchesStatus && matchesPriority && matchesTimeRange && matchesCompletion;
+  return matchesStatus && matchesPriority && matchesTimeRange && matchesCompletion;
     };
     
     switch (viewMode) {
@@ -589,7 +586,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       default:
         return [];
     }
-  }, [tasks, weeklyGoals, monthlyGoals, yearlyGoals, viewMode, searchQuery, filterStatus, filterPriority, filterTimeRange, filterCompletion, showCompletedTasks, selectedDate, getCurrentPeriod, getTimeRangeFilter]);
+  }, [tasks, weeklyGoals, monthlyGoals, yearlyGoals, viewMode, filterStatus, filterPriority, filterTimeRange, filterCompletion, showCompletedTasks, selectedDate, getCurrentPeriod, getTimeRangeFilter]);
 
   // Metrics calculation adapted for each view mode
   const metrics = useMemo(() => {
@@ -827,13 +824,6 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             } else {
               handleNewGoal();
             }
-          }
-          break;
-        case "/":
-          // Only focus search on non-touch devices to avoid opening mobile keyboard
-          if (!('ontouchstart' in window)) {
-            e.preventDefault();
-            document.getElementById("search-input")?.focus();
           }
           break;
         case "Escape":
@@ -1198,7 +1188,6 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 
   // Reset filters function
   const resetFilters = useCallback(() => {
-    setSearchQuery("");
     setFilterStatus("all");
     setFilterPriority("all");
     setFilterTimeRange("all");
@@ -1212,14 +1201,13 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   // Get active filter count
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (searchQuery) count++;
     if (filterStatus !== "all") count++;
     if (filterPriority !== "all") count++;
     if (filterTimeRange !== "all") count++;
     if (filterCompletion !== "all") count++;
     if (!showCompletedTasks) count++;
     return count;
-  }, [searchQuery, filterStatus, filterPriority, filterTimeRange, filterCompletion, showCompletedTasks]);
+  }, [filterStatus, filterPriority, filterTimeRange, filterCompletion, showCompletedTasks]);
 
   // Check if view mode is allowed for current subscription - FIXED MAPPING
   const isViewModeAllowed = useCallback((mode: ViewMode) => {
@@ -1460,21 +1448,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         </Tabs>
       </div>
 
-      {/* Enhanced Filters and Search */}
+  {/* Enhanced Filters (Search removed) */}
       <div className="p-4 border-b border-border bg-surface-2/50">
         <div className="flex flex-col gap-3">
           {/* Primary filters row */}
           <div className="flex flex-col md:flex-row gap-3">
-            <div className="flex-1">
-              <Input
-                id="search-input"
-                placeholder={t('planner.filters.searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-surface-1"
-              />
-            </div>
-            <div className="flex gap-2">
+    <div className="flex gap-2">
               <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as FilterStatus)}>
                 <SelectTrigger className="w-32 bg-surface-1">
                   <SelectValue />
@@ -1629,7 +1608,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             </p>
             <div className="flex justify-center">
               <div className="w-full max-w-[380px] sm:max-w-[420px]">
-                <div className="glass-card rounded-2xl p-3">
+                <div className="glass-card rounded-2xl p-4">
                   <DateCalendar
                     mode="single"
                     showOutsideDays
@@ -1644,11 +1623,11 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                     className="w-full [--cell-size:2.5rem]"
                     classNames={{
                       root: "w-full",
-                      months: "flex flex-col gap-3",
+                      months: "flex flex-col gap-2",
                       month: "flex flex-col w-full gap-2",
                       nav: "flex items-center justify-between relative",
                       month_caption: "flex items-center justify-center h-10 w-full px-2 text-foreground",
-                      weekdays: "flex px-1",
+                      weekdays: "flex px-0.5",
                       week: "flex w-full mt-1",
                       day: "relative w-full h-full p-0 text-center group/day aspect-square select-none",
                     }}
