@@ -1547,155 +1547,172 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
     return (
   <div className="flex flex-col bg-background">
-    {/* Header */}
-    <div className="flex-shrink-0 p-4 border-b border-border/50">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold">{t('finance.section.title')}</h1>
-          <ScaleButton
-            variant="ghost"
-            size="sm"
-            onClick={() => setBalanceVisible(!balanceVisible)}
-            className="h-10 w-10 rounded-full"
-          >
-            {balanceVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-          </ScaleButton>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 justify-end">
-          {/* Time Period Selector */}
-          <Select value={timePeriod} onValueChange={(value: TimePeriod) => setTimePeriod(value)}>
-            <SelectTrigger className="h-10 w-auto min-w-[100px] bg-surface-1/50 border-border/20 rounded-full">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm font-medium capitalize">{t(`finance.section.periods.${timePeriod}`)}</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">{t('finance.section.periods.daily')}</SelectItem>
-              <SelectItem value="weekly">{t('finance.section.periods.weekly')}</SelectItem>
-              <SelectItem value="monthly">{t('finance.section.periods.monthly')}</SelectItem>
-              <SelectItem value="quarterly">{t('finance.section.periods.quarterly')}</SelectItem>
-              <SelectItem value="yearly">{t('finance.section.periods.yearly')}</SelectItem>
-            </SelectContent>
-          </Select>
-          {/* Account Selector */}
-          <Select value={selectedAccount} onValueChange={(value) => {
-            if (value === "add_account") {
-              if (isAccountLimitReached) {
-                const planMsg = subscriptionPlan === 'free'
-                  ? t('toasts.finance.accountLimit.free')
-                  : t('toasts.finance.accountLimit.lite');
-                toast.error(planMsg);
-                onUpgrade?.();
-                return;
-              }
-              setShowAccountDialog(true);
-            } else {
-              setSelectedAccount(value);
-            }
-          }}>
-            <SelectTrigger className="h-10 w-auto min-w-[110px] sm:min-w-[140px] max-w-[45vw] sm:max-w-[260px] bg-surface-1/50 border-border/20 rounded-full">
-              <div className="flex items-center gap-2">
-                <span className="text-base">
-                  {selectedAccount === "all" ? '📊' : getAccountTypeIcon(accounts.find(a => a.id === selectedAccount)?.type || '')}
-                </span>
-                <span className="text-sm font-medium truncate max-w-[28vw] sm:max-w-[160px]">
-                  {selectedAccount === "all" ? t('finance.section.accounts.all') : accounts.find(a => a.id === selectedAccount)?.name || t('finance.section.accounts.all')}
-                </span>
-              </div>
-            </SelectTrigger>
-            <SelectContent align="end" side="bottom" className="w-56 max-w-[92vw] sm:max-w-[260px]">
-              <SelectItem value="all">
-                <div className="flex items-center gap-3 py-1">
-                  <span className="text-lg">📊</span>
-                  <div className="flex flex-col">
-                    <div className="font-medium">{t('finance.section.accounts.allAccounts')}</div>
-                    <div className="text-xs text-muted-foreground">{t('finance.section.accounts.viewAllBalances')}</div>
-                  </div>
-                </div>
-              </SelectItem>
-              {accounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
+        {/* Header */}
+        <div className="flex-shrink-0 p-4 border-b border-border/50">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold">{t('finance.section.title')}</h1>
+              <ScaleButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setBalanceVisible(!balanceVisible)}
+                className="h-10 w-10 rounded-full"
+              >
+                {balanceVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              </ScaleButton>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Time Period Selector */}
+              <Select value={timePeriod} onValueChange={(value: TimePeriod) => setTimePeriod(value)}>
+                <SelectTrigger className="h-10 w-auto min-w-[100px] bg-surface-1/50 border-border/20 rounded-full">
                   <div className="flex items-center gap-2">
-                    <span className="text-base">{getAccountTypeIcon(account.type)}</span>
-                    <span className="font-medium truncate max-w-[120px]">{account.name}</span>
-                    <button
-                      className="ml-2 p-1 rounded hover:bg-surface-1 text-muted-foreground"
-                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); openEditAccountDialogById(account.id); }}
-                      title={t('finance.section.accounts.edit')}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm font-medium capitalize">{t(`finance.section.periods.${timePeriod}`)}</span>
                   </div>
-                </SelectItem>
-              ))}
-              <Separator className="my-2" />
-              <SelectItem value="add_account">
-                <div className="flex items-center gap-3 py-1 text-money-green">
-                  <Plus className="h-5 w-5" />
-                  <span className="font-medium">{t('finance.section.accounts.add')}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">{t('finance.section.periods.daily')}</SelectItem>
+                  <SelectItem value="weekly">{t('finance.section.periods.weekly')}</SelectItem>
+                  <SelectItem value="monthly">{t('finance.section.periods.monthly')}</SelectItem>
+                  <SelectItem value="quarterly">{t('finance.section.periods.quarterly')}</SelectItem>
+                  <SelectItem value="yearly">{t('finance.section.periods.yearly')}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Account Selector */}
+              <Select value={selectedAccount} onValueChange={(value) => {
+                if (value === "add_account") {
+                  if (isAccountLimitReached) {
+                    const planMsg = subscriptionPlan === 'free'
+                      ? t('toasts.finance.accountLimit.free')
+                      : t('toasts.finance.accountLimit.lite');
+                    toast.error(planMsg);
+                    onUpgrade?.();
+                    return;
+                  }
+                  setShowAccountDialog(true);
+                } else {
+                  setSelectedAccount(value);
+                }
+              }}>
+        <SelectTrigger className="h-10 w-auto min-w-[110px] sm:min-w-[140px] max-w-[45vw] sm:max-w-none bg-surface-1/50 border-border/20 rounded-full">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">
+                      {selectedAccount === "all" ? '📊' : getAccountTypeIcon(accounts.find(a => a.id === selectedAccount)?.type || '')}
+                    </span>
+          <span className="text-sm font-medium truncate max-w-[28vw] sm:max-w-[160px]">
+                      {selectedAccount === "all" ? t('finance.section.accounts.all') : accounts.find(a => a.id === selectedAccount)?.name || t('finance.section.accounts.all')}
+                    </span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="w-56">
+                  <SelectItem value="all">
+                    <div className="flex items-center gap-3 py-1">
+                      <span className="text-lg">📊</span>
+                      <div>
+                        <div className="font-medium">{t('finance.section.accounts.allAccounts')}</div>
+                        <div className="text-xs text-muted-foreground">{t('finance.section.accounts.viewAllBalances')}</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      <div className="flex items-center gap-3 py-1">
+                        <span className="text-lg">{getAccountTypeIcon(account.type)}</span>
+                        <div className="flex-1">
+                          <div className="font-medium">{account.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatCurrency(account.balance, currency)}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="ml-2 p-1 rounded hover:bg-surface-1 text-muted-foreground"
+                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); openEditAccountDialogById(account.id); }}
+                          title={t('finance.section.accounts.edit')}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </SelectItem>
+                  ))}
+                  <Separator className="my-2" />
+                  <SelectItem value="add_account">
+                    <div className="flex items-center gap-3 py-1 text-money-green">
+                      <Plus className="h-5 w-5" />
+                      <span className="font-medium">{t('finance.section.accounts.add')}</span>
+                      {isAccountLimitReached && <Lock className="h-4 w-4 ml-auto" />}
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {/* per-account edit is now inside the dropdown items */}
+            </div>
+          </div>
+
+          {/* Balance Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="glass-card">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-green-400/10 flex items-center justify-center">
+                    <Wallet className="h-4 w-4 text-green-400" />
+                  </div>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {selectedAccount === "all" ? t('finance.section.cards.totalBalance') : t('finance.section.cards.balance')}
+                  </span>
                 </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-green-400/10 flex items-center justify-center">
-                {/* Icon for balance */}
-              </div>
-              <span className="text-sm text-muted-foreground font-medium">
-                {selectedAccount === "all" ? t('finance.section.cards.totalBalance') : t('finance.section.cards.balance')}
-              </span>
-            </div>
-            <p className="text-lg font-bold text-foreground">
-              {balanceVisible ? formatCurrency(totals.balance) : "••••••"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${totals.savings >= 0 ? 'bg-blue-400/10' : 'bg-red-400/10'}`}> 
-                <TrendingUp className={`h-4 w-4 ${totals.savings >= 0 ? 'text-blue-400' : 'text-red-400'}`} />
-              </div>
-              <span className="text-sm text-muted-foreground font-medium">{t('finance.section.cards.savings')}</span>
-            </div>
-            <p className={`text-lg font-bold ${totals.savings >= 0 ? 'text-blue-400' : 'text-red-400'}`}> 
-              {balanceVisible ? formatCurrency(totals.savings) : "••••••"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-green-400/10 flex items-center justify-center">
-                <ArrowUpRight className="h-4 w-4 text-green-400" />
-              </div>
-              <span className="text-sm text-muted-foreground font-medium">{t('finance.section.cards.income')}</span>
-            </div>
-            <p className="text-lg font-bold text-green-400">
-              {balanceVisible ? formatCurrency(totals.income) : "••••••"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-red-400/10 flex items-center justify-center">
-                <ArrowDownRight className="h-4 w-4 text-red-400" />
-              </div>
-              <span className="text-sm text-muted-foreground font-medium">{t('finance.section.cards.expenses')}</span>
-            </div>
-            <p className="text-lg font-bold text-red-400">
-              {balanceVisible ? formatCurrency(totals.expense) : "••••••"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+                <p className="text-lg font-bold text-foreground">
+                  {balanceVisible ? formatCurrency(totals.balance) : "••••••"}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    totals.savings >= 0 ? 'bg-blue-400/10' : 'bg-red-400/10'
+                  }`}>
+                    <TrendingUp className={`h-4 w-4 ${totals.savings >= 0 ? 'text-blue-400' : 'text-red-400'}`} />
+                  </div>
+                  <span className="text-sm text-muted-foreground font-medium">{t('finance.section.cards.savings')}</span>
+                </div>
+                <p className={`text-lg font-bold ${totals.savings >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                  {balanceVisible ? formatCurrency(totals.savings) : "••••••"}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-green-400/10 flex items-center justify-center">
+                    <ArrowUpRight className="h-4 w-4 text-green-400" />
+                  </div>
+                  <span className="text-sm text-muted-foreground font-medium">{t('finance.section.cards.income')}</span>
+                </div>
+                <p className="text-lg font-bold text-green-400">
+                  {balanceVisible ? formatCurrency(totals.income) : "••••••"}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-red-400/10 flex items-center justify-center">
+                    <ArrowDownRight className="h-4 w-4 text-red-400" />
+                  </div>
+                  <span className="text-sm text-muted-foreground font-medium">{t('finance.section.cards.expenses')}</span>
+                </div>
+                <p className="text-lg font-bold text-red-400">
+                  {balanceVisible ? formatCurrency(totals.expense) : "••••••"}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Transaction Limit Warning for Free Users */}
           {subscriptionPlan === 'free' && (
@@ -1747,93 +1764,93 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               <TabsContent value="dashboard" className="space-y-6">
                 {/* Quick Actions */}
                 <div className="grid grid-cols-4 gap-3">
-                <ScaleButton onClick={() => {
-                  if (isTransactionLimitReached) {
-                    toast.error(t('toasts.finance.transactionLimit', { limit: limits.maxTransactionsPerMonth }));
-                    onUpgrade?.();
-                    return;
-                  }
-                  setShowTransactionDialog(true);
-                }}>
-                  <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                    <CardContent className="p-3 text-center flex flex-col items-center justify-center h-24">
-                      <div className="w-9 h-9 bg-money-green/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <Plus className="h-5 w-5 text-money-green" />
-                      </div>
-                      <span className="font-medium text-sm">{t('finance.section.quickActions.add')}</span>
-                      <div className="h-3 mt-1">
-                        {isTransactionLimitReached ? <Lock className="h-3 w-3 mx-auto" /> : null}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </ScaleButton>
+                  <ScaleButton onClick={() => {
+                    if (isTransactionLimitReached) {
+                      toast.error(t('toasts.finance.transactionLimit', { limit: limits.maxTransactionsPerMonth }));
+                      onUpgrade?.();
+                      return;
+                    }
+                    setShowTransactionDialog(true);
+                  }}>
+                    <Card className="glass-card hover:bg-surface-1/50 transition-colors">
+                      <CardContent className="p-4 text-center flex flex-col items-center justify-center h-28">
+                        <div className="w-10 h-10 bg-money-green/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                          <Plus className="h-5 w-5 text-money-green" />
+                        </div>
+                        <span className="font-medium text-sm">{t('finance.section.quickActions.add')}</span>
+                        <div className="h-4 mt-1">
+                          {isTransactionLimitReached ? <Lock className="h-3 w-3 mx-auto" /> : null}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </ScaleButton>
 
-                <ScaleButton onClick={() => {
-                  if (isAccountLimitReached) {
-                    const planMsg = subscriptionPlan === 'free'
-                      ? t('toasts.finance.accountLimit.free')
-                      : t('toasts.finance.accountLimit.lite');
-                    toast.error(planMsg);
-                    onUpgrade?.();
-                    return;
-                  }
-                  setShowAccountDialog(true);
-                }}>
-                  <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                    <CardContent className="p-3 text-center flex flex-col items-center justify-center h-24">
-                      <div className="w-9 h-9 bg-blue-400/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <Wallet className="h-5 w-5 text-blue-400" />
-                      </div>
-                      <span className="font-medium text-sm">{t('finance.section.quickActions.account')}</span>
-                      <div className="h-3 mt-1">
-                        {isAccountLimitReached ? <Lock className="h-3 w-3 mx-auto" /> : null}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </ScaleButton>
+                  <ScaleButton onClick={() => {
+                    if (isAccountLimitReached) {
+                      const planMsg = subscriptionPlan === 'free'
+                        ? t('toasts.finance.accountLimit.free')
+                        : t('toasts.finance.accountLimit.lite');
+                      toast.error(planMsg);
+                      onUpgrade?.();
+                      return;
+                    }
+                    setShowAccountDialog(true);
+                  }}>
+                    <Card className="glass-card hover:bg-surface-1/50 transition-colors">
+                      <CardContent className="p-4 text-center flex flex-col items-center justify-center h-28">
+                        <div className="w-10 h-10 bg-blue-400/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                          <Wallet className="h-5 w-5 text-blue-400" />
+                        </div>
+                        <span className="font-medium text-sm">{t('finance.section.quickActions.account')}</span>
+                        <div className="h-4 mt-1">
+                          {isAccountLimitReached ? <Lock className="h-3 w-3 mx-auto" /> : null}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </ScaleButton>
 
-                <ScaleButton onClick={() => {
-                  if (!limits.budgetsAllowed) {
-                    toast.error(t('toasts.finance.budgetsRequirePro'));
-                    onUpgrade?.();
-                    return;
-                  }
-                  setShowBudgetDialog(true);
-                }}>
-                  <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                    <CardContent className="p-3 text-center flex flex-col items-center justify-center h-24">
-                      <div className="w-9 h-9 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <Target className="h-5 w-5 text-yellow-400" />
-                      </div>
-                      <span className="font-medium text-sm">{t('finance.section.quickActions.budget')}</span>
-                      <div className="h-3 mt-1">
-                        {!limits.budgetsAllowed ? <Lock className="h-3 w-3 mx-auto" /> : null}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </ScaleButton>
+                  <ScaleButton onClick={() => {
+                    if (!limits.budgetsAllowed) {
+                      toast.error(t('toasts.finance.budgetsRequirePro'));
+                      onUpgrade?.();
+                      return;
+                    }
+                    setShowBudgetDialog(true);
+                  }}>
+                    <Card className="glass-card hover:bg-surface-1/50 transition-colors">
+                      <CardContent className="p-4 text-center flex flex-col items-center justify-center h-28">
+                        <div className="w-10 h-10 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                          <Target className="h-5 w-5 text-yellow-400" />
+                        </div>
+                        <span className="font-medium text-sm">{t('finance.section.quickActions.budget')}</span>
+                        <div className="h-4 mt-1">
+                          {!limits.budgetsAllowed ? <Lock className="h-3 w-3 mx-auto" /> : null}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </ScaleButton>
 
-                <ScaleButton onClick={() => {
-                  if (!limits.goalsAllowed) {
-                    toast.error(t('toasts.finance.goalsRequirePro'));
-                    onUpgrade?.();
-                    return;
-                  }
-                  setShowGoalDialog(true);
-                }}>
-                  <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                    <CardContent className="p-3 text-center flex flex-col items-center justify-center h-24">
-                      <div className="w-9 h-9 bg-purple-400/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <TrendingUp className="h-5 w-5 text-purple-400" />
-                      </div>
-                      <span className="font-medium text-sm">{t('finance.section.quickActions.goal')}</span>
-                      <div className="h-3 mt-1">
-                        {!limits.goalsAllowed ? <Lock className="h-3 w-3 mx-auto" /> : null}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </ScaleButton>
-              </div>
+                  <ScaleButton onClick={() => {
+                    if (!limits.goalsAllowed) {
+                      toast.error(t('toasts.finance.goalsRequirePro'));
+                      onUpgrade?.();
+                      return;
+                    }
+                    setShowGoalDialog(true);
+                  }}>
+                    <Card className="glass-card hover:bg-surface-1/50 transition-colors">
+                      <CardContent className="p-4 text-center flex flex-col items-center justify-center h-28">
+                        <div className="w-10 h-10 bg-purple-400/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                          <TrendingUp className="h-5 w-5 text-purple-400" />
+                        </div>
+                        <span className="font-medium text-sm">{t('finance.section.quickActions.goal')}</span>
+                        <div className="h-4 mt-1">
+                          {!limits.goalsAllowed ? <Lock className="h-3 w-3 mx-auto" /> : null}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </ScaleButton>
+                </div>
 
                 {/* Financial Overview Charts with Blur Effect */}
                 {chartData.timeSeriesData.length > 0 && (
