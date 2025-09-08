@@ -9,6 +9,7 @@ import { X, Check, Star, Crown, Zap, Shield, TrendingUp, PiggyBank, FileText, Us
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useTelegramBack } from '@/hooks/useTelegramBack';
 
 // Local fallback implementations for ios-like animations
 const ScaleButton = ({ onPress, children }: { onPress: () => void; children: React.ReactNode }) => (
@@ -189,6 +190,9 @@ export const PaywallSheet = ({
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Telegram Back button integration: show Back when paywall is open
+  useTelegramBack(isOpen, onClose);
 
   const contextualMessage = contextualTrigger ? contextualMessages[contextualTrigger] : null;
 

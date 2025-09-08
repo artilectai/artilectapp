@@ -13,6 +13,7 @@ import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { supabase } from '@/lib/supabase/client';
 import { useSession } from '@/lib/supabase/useSession';
+import { useTelegramBack } from '@/hooks/useTelegramBack';
 
 type PlanId = "free" | "lite" | "pro";
 
@@ -23,6 +24,8 @@ export default function CheckoutPage() {
   const { data: session } = useSession();
   const plan = (params.get("plan") as PlanId) || "pro";
   const billing = (params.get("billing") as "monthly" | "annual") || "monthly";
+  // Ensure Telegram Back closes this page (navigates back) when opened via deep link
+  useTelegramBack(true, () => router.back());
 
   // Minimal shared plan data (kept in sync with SubscriptionPlans)
   const planMeta = useMemo(() => {
