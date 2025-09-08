@@ -212,12 +212,9 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
           const exRaw = localStorage.getItem('workout_program_exercises');
           exMap = exRaw ? JSON.parse(exRaw) : {};
         } catch {}
-        const { data: authData } = await supabase.auth.getUser();
-        const uid = authData?.user?.id;
-        const { data: pData } = await supabase
+  const { data: pData } = await supabase
           .from('workout_programs')
           .select('*')
-          .eq('user_id', uid as any)
           .order('created_at', { ascending: false });
   const mapped = (pData || []).map((p: any) => ({
           id: p.id as string,
@@ -230,12 +227,9 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
       } catch {}
 
       try {
-        const { data: authData } = await supabase.auth.getUser();
-        const uid = authData?.user?.id;
         const { data: sData } = await supabase
           .from('workout_sessions')
           .select('*')
-          .eq('user_id', uid as any)
           .order('started_at', { ascending: false })
           .limit(100);
         const mappedH = (sData || []).map((s: any) => ({
@@ -277,12 +271,9 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
       try {
         // If user hasn't completed setup and has no programs, show onboarding
         if (!setupComplete) {
-          const { data: authData } = await supabase.auth.getUser();
-          const uid = authData?.user?.id;
           const { count } = await supabase
             .from('workout_programs')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', uid as any);
+            .select('*', { count: 'exact', head: true });
           if ((count ?? 0) === 0) setShowWorkoutOnboarding(true);
         }
       } catch {
@@ -300,13 +291,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
         try {
           const exRaw = localStorage.getItem('workout_program_exercises');
           const exMap = exRaw ? JSON.parse(exRaw) : {};
-          const { data: authData } = await supabase.auth.getUser();
-          const uid = authData?.user?.id;
-          const { data: pData } = await supabase
-            .from('workout_programs')
-            .select('*')
-            .eq('user_id', uid as any)
-            .order('created_at', { ascending: false });
+          const { data: pData } = await supabase.from('workout_programs').select('*').order('created_at', { ascending: false });
           const mapped = (pData || []).map((p: any) => ({
             id: p.id as string,
             name: p.name as string,
@@ -326,12 +311,9 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
       .channel('workout-sessions-rt-main')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_sessions' }, async () => {
         try {
-          const { data: authData } = await supabase.auth.getUser();
-          const uid = authData?.user?.id;
           const { data: sData } = await supabase
             .from('workout_sessions')
             .select('*')
-            .eq('user_id', uid as any)
             .order('started_at', { ascending: false })
             .limit(100);
           const mappedH = (sData || []).map((s: any) => ({

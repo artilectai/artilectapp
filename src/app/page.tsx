@@ -70,21 +70,19 @@ export default function HomePage() {
         // If authenticated, check onboarding status
         if (session?.user) {
           if (typeof window !== 'undefined') {
-            // Treat presence of 'false' correctly: only "true" means completed
-            const onboardingCompletedRaw = localStorage.getItem('onboardingCompleted');
-            const onboardingCompleted = onboardingCompletedRaw === 'true';
+            const onboardingCompleted = localStorage.getItem('onboardingCompleted');
             const savedPlan = localStorage.getItem('subscription_plan') as SubscriptionPlan;
             const savedUsageCount = localStorage.getItem('usage_count');
 
-            // If onboarding not completed, display inline overlay wizard
+            // If onboarding not completed, redirect to onboarding
             if (!onboardingCompleted) {
-              setShowOnboarding(true);
-            } else {
-              setShowOnboarding(false);
+              router.push('/onboarding');
+              return;
             }
+
+            setShowOnboarding(false);
             setSubscriptionPlan(savedPlan || 'free');
             setUsageCount(parseInt(savedUsageCount || '0', 10));
-            
 
             // Sync subscription plan with Supabase profile (is_pro / pro_expires_at)
             try {
