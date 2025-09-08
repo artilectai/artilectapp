@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -110,6 +111,22 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
     initialBalance: 0
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [mounted, setMounted] = useState(false);
+
+  // Mount portal and lock background scroll while onboarding is open
+  useEffect(() => {
+    setMounted(true);
+    if (typeof document !== 'undefined') {
+      const prevOverflow = document.body.style.overflow;
+      const prevTouchAction = (document.body.style as any).touchAction;
+      document.body.style.overflow = 'hidden';
+      (document.body.style as any).touchAction = 'none';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        (document.body.style as any).touchAction = prevTouchAction;
+      };
+    }
+  }, []);
 
   // Haptic feedback
   const triggerHaptic = useCallback(() => {
@@ -560,14 +577,18 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center px-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center px-4 pointer-events-auto"
       style={{
         // Respect device safe areas and keep content comfortably away from edges
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
         paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)'
       }}
+      role="dialog"
+      aria-modal="true"
     >
       <div className="w-full max-w-md">
         {/* Header */}
@@ -601,13 +622,9 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
         {/* Content */}
         <Card className={`glass-card border-none transition-all duration-300 ${isAnimating ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
           <CardContent className="p-6">
-            {currentStep === 0 ? (
-              renderStepContent()
-            ) : (
-              <div className="max-h-[60vh] overflow-y-auto pr-2">
-                {renderStepContent()}
-              </div>
-            )}
+            <div className="max-h-[62vh] overflow-y-auto pr-2">
+              {renderStepContent()}
+            </div>
           </CardContent>
         </Card>
 
@@ -639,6 +656,7 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
