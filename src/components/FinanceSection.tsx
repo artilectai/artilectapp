@@ -60,7 +60,6 @@ import { FinanceOnboardingWizard } from "@/components/FinancialOnboardingWizard"
 import { FinanceDataManager as FinanceStore } from "@/lib/finance-data-manager";
 import { supabase } from "@/lib/supabase/client";
 import { createAccount as createAccountAction } from "@/app/actions/finance/accounts";
-import { addTransaction as addTransactionAction } from "@/app/actions/finance/transactions";
 import { useSession } from "@/lib/supabase/useSession";
 
 // Types
@@ -916,20 +915,106 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         return;
       }
 
-  const accountId = transactionData.accountId || accounts[0]?.id || "";
+      // Ensure user is signed in for remote save
+      const { data: userRes, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userRes?.user) {
+        toast.error(t('toasts.auth.signInRequired', { defaultValue: 'Please sign in to save transactions.' }));
+        return;
+      }
 
-      await addTransactionAction({
-        account_id: accountId,
-        type: (transactionData.type as any) || 'expense',
-        amount: Number(transactionData.amount || 0),
-        currency,
-        description: transactionData.description,
-        occurred_at: (transactionData.date || new Date()).toISOString(),
-        tags: transactionData.tags as any,
-      });
+      // Helper: detect UUID-like ids
+      const isUUID = (id: string | undefined) => !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+
+      // Ensure we have a remote-backed account id (FK)
+      const ensureRemoteAccountId = async (): Promise<string> => {
+        const desired = transactionData.accountId || accounts[0]?.id || '';
+        if (isUUID(desired)) return desired as string;
+        const remote = accounts.find(a => isUUID(a.id));
+        if (remote) return remote.id;
+        // Create a default remote account
+        const name = accounts[0]?.name || 'Main Account';
+        const type = (accounts[0]?.type as any) || 'cash';
+        const { data, error } = await supabase
+          .from('finance_accounts')
+          .insert({
+            user_id: userRes.user.id,
+            name,
+            type,
+            currency,
+            color: '#10B981',
+            is_default: true,
+          })
+          .select('id')
+          .single();
+        if (error) throw new Error(`Failed to create account: ${error.message}`);
+        return String(data.id);
+      };
+
+      // Try client-side Supabase insert first
+      const tryClientInsert = async () => {
+        const account_id = await ensureRemoteAccountId();
+        const { error } = await supabase.from('finance_transactions').insert({
+          user_id: userRes.user.id,
+          account_id,
+          type: (transactionData.type as any) || 'expense',
+          amount: Number(transactionData.amount || 0),
+          currency,
+          description: transactionData.description,
+          occurred_at: (transactionData.date || new Date()).toISOString(),
+          tags: Array.isArray(transactionData.tags) ? transactionData.tags : null,
+        });
+        if (error) throw new Error(error.message);
+      };
+
+      // Fallback: API route with timeout to avoid hangs
+      const tryApiFallback = async () => {
+        const account_id = await ensureRemoteAccountId();
+        const controller = new AbortController();
+        const to = setTimeout(() => controller.abort(), 12000);
+        try {
+          const res = await fetch('/api/transactions/list', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              account_id,
+              type: (transactionData.type as any) || 'expense',
+              amount: Number(transactionData.amount || 0),
+              currency,
+              description: transactionData.description,
+              occurred_at: (transactionData.date || new Date()).toISOString(),
+              tags: Array.isArray(transactionData.tags) ? transactionData.tags : undefined,
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(to);
+          if (!res.ok) {
+            const j = await res.json().catch(() => ({}));
+            throw new Error(j?.error || `API error ${res.status}`);
+          }
+        } catch (e: any) {
+          if (e?.name === 'AbortError') throw new Error('Network timeout while saving transaction');
+          throw e;
+        }
+      };
+
+      try {
+        await tryClientInsert();
+      } catch (e1: any) {
+        console.warn('Client insert failed, falling back to API:', e1?.message || e1);
+        try {
+          await tryApiFallback();
+        } catch (e2: any) {
+          console.error('API fallback failed:', e2);
+          toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save transaction' }), {
+            description: e2?.message || String(e2)
+          });
+          return;
+        }
+      }
+
       await loadRemote();
       setShowTransactionDialog(false);
-      toast.success("Transaction added successfully");
+      toast.success(t('finance.transactions.form.actions.saved', { defaultValue: 'Transaction added successfully' }));
     };
 
     const handleAddCustomAccountType = () => {
