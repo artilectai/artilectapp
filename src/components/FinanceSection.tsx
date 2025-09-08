@@ -53,7 +53,8 @@ import {
   Pie,
   Cell,
   BarChart as RechartsBarChart,
-  Bar
+  Bar,
+  Legend
 } from 'recharts';
 // import { CustomCalendar } from "@/components/ui/calendar-custom"; // Replaced by DateStepper for finance flows
 import { FinanceOnboardingWizard } from "@/components/FinancialOnboardingWizard";
@@ -1373,6 +1374,23 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
     const chartColors = ['#10B981', '#FFD700', '#EF4444', '#8B5CF6', '#F59E0B', '#06B6D4'];
 
+    // Custom pie label to keep text fully visible within chart margins
+    const renderCategoryLabel = useCallback((props: any) => {
+      const { name, percent, cx, cy, midAngle, outerRadius } = props;
+      if (!name) return null;
+      const RADIAN = Math.PI / 180;
+      const radius = outerRadius + 18; // distance outside the pie
+      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+      const anchor = x > cx ? 'start' : 'end';
+      const label = `${translateCategory(String(name))} ${Math.round((percent ?? 0) * 100)}%`;
+      return (
+        <text x={x} y={y} fill="#fff" textAnchor={anchor} dominantBaseline="central" style={{ fontSize: isMobile ? 12 : 13 }}>
+          {label}
+        </text>
+      );
+    }, [isMobile, translateCategory]);
+
     return (
   <div className="flex flex-col bg-background">
         {/* Header */}
@@ -1838,22 +1856,27 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                           <h3 className="text-lg font-semibold">{t('finance.section.charts.category.title')}</h3>
                         </div>
                         <div className={`${limits.analyticsBlurred ? 'filter blur-sm' : ''}`}>
-                          <ResponsiveContainer width="100%" height={240}>
-                            <RechartsPieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                          <ResponsiveContainer width="100%" height={isMobile ? 260 : 300}>
+                            <RechartsPieChart margin={{ top: 16, right: 28, bottom: 16, left: 28 }}>
                               <Pie
                                 data={chartData.categoryData}
                                 cx="50%"
                                 cy="50%"
-                                outerRadius={70}
+                                outerRadius={isMobile ? 68 : 84}
                                 fill="#8884d8"
                                 dataKey="value"
-                                label={({ name, percent }) => `${translateCategory(String(name || ''))} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                                nameKey="name"
+                                minAngle={8}
+                                paddingAngle={2}
+                                labelLine
+                                label={renderCategoryLabel}
                               >
                                 {chartData.categoryData.map((entry, index) => (
                                   <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                                 ))}
                               </Pie>
                               <Tooltip formatter={(value: number, name: any) => [formatCurrency(value as number), translateCategory(String(name || ''))]} />
+                              <Legend verticalAlign="bottom" height={isMobile ? 28 : 32} wrapperStyle={{ paddingTop: isMobile ? 6 : 8 }} formatter={(value: any) => translateCategory(String(value))} />
                             </RechartsPieChart>
                           </ResponsiveContainer>
                         </div>
