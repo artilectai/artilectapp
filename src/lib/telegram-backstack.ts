@@ -10,18 +10,21 @@ const stack: BackAction[] = [];
 export function pushBackAction(action: BackAction) {
   if (typeof window === 'undefined') return;
   stack.push(action);
+  try { window.dispatchEvent(new CustomEvent('tg-backstack-changed')); } catch {}
 }
 
 export function popBackAction(action?: BackAction) {
   if (typeof window === 'undefined') return;
   if (!action) {
     stack.pop();
+    try { window.dispatchEvent(new CustomEvent('tg-backstack-changed')); } catch {}
     return;
   }
   // Remove the last matching instance
   for (let i = stack.length - 1; i >= 0; i--) {
     if (stack[i] === action) {
       stack.splice(i, 1);
+      try { window.dispatchEvent(new CustomEvent('tg-backstack-changed')); } catch {}
       break;
     }
   }

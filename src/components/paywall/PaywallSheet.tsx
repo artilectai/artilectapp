@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { pushBackAction, popBackAction } from '@/lib/telegram-backstack';
 import { X, Check, Star, Crown, Zap, Shield, TrendingUp, PiggyBank, FileText, Users, Calendar, BarChart3, Lock, Unlock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -27,29 +28,49 @@ const ScaleButton = ({ onPress, children }: { onPress: () => void; children: Rea
   </motion.div>
 );
 
-const SlideUpModal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) => (
-  <AnimatePresence>
-    {isOpen && (
-      <motion.div
-        className="fixed inset-0 z-50"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      >
-        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+const SlideUpModal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) => {
+  // Register a back action with Telegram so the top-right Close becomes Back while open
+  useEffect(() => {
+    if (!isOpen) return;
+    const action = () => onClose();
+    pushBackAction(action);
+    return () => {
+      popBackAction(action);
+    };
+  }, [isOpen, onClose]);
+
+  // Support Escape key to close (desktop/Telegram web)
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
         <motion.div
-          className="absolute inset-x-0 bottom-0"
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="fixed inset-0 z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          {children}
+          <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+          <motion.div
+            className="absolute inset-x-0 bottom-0"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          >
+            {children}
+          </motion.div>
         </motion.div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+      )}
+    </AnimatePresence>
+  );
+};
 
 interface PaywallSheetProps {
   isOpen: boolean;

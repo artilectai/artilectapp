@@ -1477,12 +1477,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                   <SelectItem value="low">{t('planner.priority.low')}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button
+        <Button
                 variant="outline"
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className={
-                  // Match SelectTrigger: height, radius, bg, border, padding, text
-                  "h-9 px-3 py-2 rounded-md bg-surface-1 border border-input text-sm flex items-center"
+          // Match SelectTrigger: height, radius, bg, border, padding, text, and width
+          "h-9 w-32 px-3 py-2 rounded-md bg-surface-1 border border-input text-sm flex items-center justify-center"
                 }
               >
                 <Filter className="h-4 w-4 mr-1 opacity-80" />

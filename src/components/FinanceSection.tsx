@@ -1562,10 +1562,10 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               </ScaleButton>
             </div>
 
-            <div className="flex items-center gap-2 sm:flex-nowrap flex-wrap justify-end">
+            <div className="flex items-center gap-2 flex-nowrap justify-end min-w-0">
               {/* Time Period Selector */}
               <Select value={timePeriod} onValueChange={(value: TimePeriod) => setTimePeriod(value)}>
-                <SelectTrigger className="h-10 w-auto min-w-[100px] bg-surface-1/50 border-border/20 rounded-full">
+                <SelectTrigger className="h-10 w-auto min-w-[100px] bg-surface-1/50 border-border/20 rounded-full shrink-0 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span className="text-sm font-medium capitalize">{t(`finance.section.periods.${timePeriod}`)}</span>
@@ -1596,12 +1596,12 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                   setSelectedAccount(value);
                 }
               }}>
-        <SelectTrigger className="h-10 w-auto min-w-[96px] sm:min-w-[140px] max-w-[42vw] sm:max-w-none bg-surface-1/50 border-border/20 rounded-full overflow-hidden">
+        <SelectTrigger className="h-10 w-auto min-w-0 sm:min-w-[140px] max-w-[52vw] sm:max-w-[320px] bg-surface-1/50 border-border/20 rounded-full overflow-hidden whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <span className="text-base">
                       {selectedAccount === "all" ? '📊' : getAccountTypeIcon(accounts.find(a => a.id === selectedAccount)?.type || '')}
                     </span>
-          <span className="text-sm font-medium truncate max-w-[24vw] sm:max-w-[160px]">
+          <span className="text-sm font-medium truncate max-w-[38vw] sm:max-w-[200px]">
                       {selectedAccount === "all" ? t('finance.section.accounts.all') : accounts.find(a => a.id === selectedAccount)?.name || t('finance.section.accounts.all')}
                     </span>
                   </div>
@@ -1773,12 +1773,12 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     setShowTransactionDialog(true);
                   }}>
                     <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                      <CardContent className="p-3 text-center flex flex-col items-center justify-center h-24">
-                        <div className="w-9 h-9 bg-money-green/10 rounded-full flex items-center justify-center mx-auto mb-1.5">
-                          <Plus className="h-4 w-4 text-money-green" />
+                      <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
+                        <div className="w-8 h-8 bg-money-green/10 rounded-full flex items-center justify-center mx-auto mb-1">
+                          <Plus className="h-3.5 w-3.5 text-money-green" />
                         </div>
                         <span className="font-medium text-sm">{t('finance.section.quickActions.add')}</span>
-                        <div className="h-3 mt-1">
+                        <div className="h-2.5 mt-1">
                           {isTransactionLimitReached ? <Lock className="h-3 w-3 mx-auto" /> : null}
                         </div>
                       </CardContent>
@@ -1797,12 +1797,12 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     setShowAccountDialog(true);
                   }}>
                     <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                      <CardContent className="p-3 text-center flex flex-col items-center justify-center h-24">
-                        <div className="w-9 h-9 bg-blue-400/10 rounded-full flex items-center justify-center mx-auto mb-1.5">
-                          <Wallet className="h-4 w-4 text-blue-400" />
+                      <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
+                        <div className="w-8 h-8 bg-blue-400/10 rounded-full flex items-center justify-center mx-auto mb-1">
+                          <Wallet className="h-3.5 w-3.5 text-blue-400" />
                         </div>
                         <span className="font-medium text-sm">{t('finance.section.quickActions.account')}</span>
-                        <div className="h-3 mt-1">
+                        <div className="h-2.5 mt-1">
                           {isAccountLimitReached ? <Lock className="h-3 w-3 mx-auto" /> : null}
                         </div>
                       </CardContent>
@@ -1818,12 +1818,12 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     setShowBudgetDialog(true);
                   }}>
                     <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                      <CardContent className="p-3 text-center flex flex-col items-center justify-center h-24">
-                        <div className="w-9 h-9 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-1.5">
-                          <Target className="h-4 w-4 text-yellow-400" />
+                      <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
+                        <div className="w-8 h-8 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-1">
+                          <Target className="h-3.5 w-3.5 text-yellow-400" />
                         </div>
                         <span className="font-medium text-sm">{t('finance.section.quickActions.budget')}</span>
-                        <div className="h-3 mt-1">
+                        <div className="h-2.5 mt-1">
                           {!limits.budgetsAllowed ? <Lock className="h-3 w-3 mx-auto" /> : null}
                         </div>
                       </CardContent>
@@ -1839,12 +1839,12 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     setShowGoalDialog(true);
                   }}>
                     <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                      <CardContent className="p-3 text-center flex flex-col items-center justify-center h-24">
-                        <div className="w-9 h-9 bg-purple-400/10 rounded-full flex items-center justify-center mx-auto mb-1.5">
-                          <TrendingUp className="h-4 w-4 text-purple-400" />
+                      <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
+                        <div className="w-8 h-8 bg-purple-400/10 rounded-full flex items-center justify-center mx-auto mb-1">
+                          <TrendingUp className="h-3.5 w-3.5 text-purple-400" />
                         </div>
                         <span className="font-medium text-sm">{t('finance.section.quickActions.goal')}</span>
-                        <div className="h-3 mt-1">
+                        <div className="h-2.5 mt-1">
                           {!limits.goalsAllowed ? <Lock className="h-3 w-3 mx-auto" /> : null}
                         </div>
                       </CardContent>

@@ -101,10 +101,11 @@ export default function TelegramBridge() {
     sessionStorage.setItem(key, JSON.stringify(stack));
 
     // Toggle BackButton
-    const canGoBack = stack.length > 1 || hasBackActions();
-    try {
-      if (canGoBack) tg?.BackButton?.show?.(); else tg?.BackButton?.hide?.();
-    } catch {}
+    const updateBackButton = () => {
+      const canGoBack = stack.length > 1 || hasBackActions();
+      try { if (canGoBack) tg?.BackButton?.show?.(); else tg?.BackButton?.hide?.(); } catch {}
+    };
+    updateBackButton();
 
     // Bind back action
     const handleBack = () => {
@@ -125,10 +126,15 @@ export default function TelegramBridge() {
     backHandlerRef.current = handleBack;
     try { tg?.BackButton?.onClick?.(handleBack); } catch {}
 
+    // Also react to global backstack changes (e.g., modals opening/closing)
+    const onStackChanged = () => updateBackButton();
+    window.addEventListener('tg-backstack-changed', onStackChanged as any);
+
     return () => {
       if (backHandlerRef.current && tg?.BackButton?.offClick) {
         try { tg.BackButton.offClick(backHandlerRef.current); } catch {}
       }
+      window.removeEventListener('tg-backstack-changed', onStackChanged as any);
     };
   }, [pathname, searchParams, router]);
 
