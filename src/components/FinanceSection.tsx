@@ -1763,7 +1763,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
               <TabsContent value="dashboard" className="space-y-6">
                 {/* Quick Actions */}
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2">
                   <ScaleButton onClick={() => {
                     if (isTransactionLimitReached) {
                       toast.error(t('toasts.finance.transactionLimit', { limit: limits.maxTransactionsPerMonth }));
@@ -1773,13 +1773,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     setShowTransactionDialog(true);
                   }}>
                     <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                      <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
-                        <div className="w-8 h-8 bg-money-green/10 rounded-full flex items-center justify-center mx-auto mb-1">
-                          <Plus className="h-3.5 w-3.5 text-money-green" />
+                      <CardContent className="relative p-1.5 text-center flex flex-col items-center justify-center h-14 sm:h-16">
+                        <div className="w-6 h-6 bg-money-green/10 rounded-full flex items-center justify-center mx-auto mb-0.5">
+                          <Plus className="h-3 w-3 text-money-green" />
                         </div>
-                        <span className="font-medium text-sm">{t('finance.section.quickActions.add')}</span>
-                        <div className="h-2.5 mt-1">
-                          {isTransactionLimitReached ? <Lock className="h-3 w-3 mx-auto" /> : null}
+                        <span className="font-medium text-xs">{t('finance.section.quickActions.add')}</span>
+                        <div className="absolute left-0 right-0 bottom-1 flex justify-center">
+                          {isTransactionLimitReached ? <Lock className="h-3 w-3" /> : null}
                         </div>
                       </CardContent>
                     </Card>
@@ -1797,13 +1797,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     setShowAccountDialog(true);
                   }}>
                     <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                      <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
-                        <div className="w-8 h-8 bg-blue-400/10 rounded-full flex items-center justify-center mx-auto mb-1">
-                          <Wallet className="h-3.5 w-3.5 text-blue-400" />
+                      <CardContent className="relative p-1.5 text-center flex flex-col items-center justify-center h-14 sm:h-16">
+                        <div className="w-6 h-6 bg-blue-400/10 rounded-full flex items-center justify-center mx-auto mb-0.5">
+                          <Wallet className="h-3 w-3 text-blue-400" />
                         </div>
-                        <span className="font-medium text-sm">{t('finance.section.quickActions.account')}</span>
-                        <div className="h-2.5 mt-1">
-                          {isAccountLimitReached ? <Lock className="h-3 w-3 mx-auto" /> : null}
+                        <span className="font-medium text-xs">{t('finance.section.quickActions.account')}</span>
+                        <div className="absolute left-0 right-0 bottom-1 flex justify-center">
+                          {isAccountLimitReached ? <Lock className="h-3 w-3" /> : null}
                         </div>
                       </CardContent>
                     </Card>
@@ -1818,13 +1818,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     setShowBudgetDialog(true);
                   }}>
                     <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                      <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
-                        <div className="w-8 h-8 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-1">
-                          <Target className="h-3.5 w-3.5 text-yellow-400" />
+                      <CardContent className="relative p-1.5 text-center flex flex-col items-center justify-center h-14 sm:h-16">
+                        <div className="w-6 h-6 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-0.5">
+                          <Target className="h-3 w-3 text-yellow-400" />
                         </div>
-                        <span className="font-medium text-sm">{t('finance.section.quickActions.budget')}</span>
-                        <div className="h-2.5 mt-1">
-                          {!limits.budgetsAllowed ? <Lock className="h-3 w-3 mx-auto" /> : null}
+                        <span className="font-medium text-xs">{t('finance.section.quickActions.budget')}</span>
+                        <div className="absolute left-0 right-0 bottom-1 flex justify-center">
+                          {!limits.budgetsAllowed ? <Lock className="h-3 w-3" /> : null}
                         </div>
                       </CardContent>
                     </Card>
@@ -1839,13 +1839,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     setShowGoalDialog(true);
                   }}>
                     <Card className="glass-card hover:bg-surface-1/50 transition-colors">
-                      <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
-                        <div className="w-8 h-8 bg-purple-400/10 rounded-full flex items-center justify-center mx-auto mb-1">
-                          <TrendingUp className="h-3.5 w-3.5 text-purple-400" />
+                      <CardContent className="relative p-1.5 text-center flex flex-col items-center justify-center h-14 sm:h-16">
+                        <div className="w-6 h-6 bg-purple-400/10 rounded-full flex items-center justify-center mx-auto mb-0.5">
+                          <TrendingUp className="h-3 w-3 text-purple-400" />
                         </div>
-                        <span className="font-medium text-sm">{t('finance.section.quickActions.goal')}</span>
-                        <div className="h-2.5 mt-1">
-                          {!limits.goalsAllowed ? <Lock className="h-3 w-3 mx-auto" /> : null}
+                        <span className="font-medium text-xs">{t('finance.section.quickActions.goal')}</span>
+                        <div className="absolute left-0 right-0 bottom-1 flex justify-center">
+                          {!limits.goalsAllowed ? <Lock className="h-3 w-3" /> : null}
                         </div>
                       </CardContent>
                     </Card>
