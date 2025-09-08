@@ -29,7 +29,12 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-  "bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
+  // Glassy container + sensible defaults
+  "group/calendar p-3 rounded-2xl border border-white/5 bg-surface-1/70 backdrop-blur-xl shadow-lg shadow-black/20",
+  // Cell sizing
+  "[--cell-size:--spacing(8)]",
+  // Keep embedded contexts transparent
+  "[[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className
@@ -43,22 +48,22 @@ function Calendar({
       classNames={{
         root: cn("w-fit", defaultClassNames.root),
         months: cn(
-          "flex gap-2 flex-col md:flex-row relative",
+          "flex gap-3 flex-col md:flex-row relative",
           defaultClassNames.months
         ),
-        month: cn("flex flex-col w-full gap-2", defaultClassNames.month),
+        month: cn("flex flex-col w-full gap-3", defaultClassNames.month),
         nav: cn(
-          "flex items-center gap-1 w-full absolute top-0 inset-x-0 justify-between",
+          "flex items-center gap-1.5 w-full absolute top-0 inset-x-0 justify-between",
           defaultClassNames.nav
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none rounded-lg",
+          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none rounded-xl",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none rounded-lg",
+          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none rounded-xl",
           defaultClassNames.button_next
         ),
         month_caption: cn(
@@ -78,19 +83,19 @@ function Calendar({
           defaultClassNames.dropdown
         ),
         caption_label: cn(
-          "select-none font-medium",
+          "select-none font-semibold tracking-tight",
           captionLayout === "label"
-            ? "text-sm"
+            ? "text-sm px-2 py-1 rounded-lg bg-surface-2/60"
             : "rounded-md pl-2 pr-1 flex items-center gap-1 text-sm h-8 [&>svg]:text-muted-foreground [&>svg]:size-3.5",
           defaultClassNames.caption_label
         ),
         table: "w-full border-collapse",
-  weekdays: cn("flex px-0.5", defaultClassNames.weekdays),
+        weekdays: cn("flex px-0.5", defaultClassNames.weekdays),
         weekday: cn(
-          "text-muted-foreground rounded-md flex-1 font-normal text-[0.8rem] select-none",
+          "text-muted-foreground/80 rounded-md flex-1 font-medium text-[0.7rem] uppercase tracking-wide select-none",
           defaultClassNames.weekday
         ),
-  week: cn("flex w-full mt-2", defaultClassNames.week),
+        week: cn("flex w-full mt-2", defaultClassNames.week),
         week_number_header: cn(
           "select-none w-(--cell-size)",
           defaultClassNames.week_number_header
@@ -114,7 +119,7 @@ function Calendar({
           defaultClassNames.today
         ),
         outside: cn(
-          "text-muted-foreground aria-selected:text-muted-foreground",
+          "text-muted-foreground/60 aria-selected:text-muted-foreground/60",
           defaultClassNames.outside
         ),
         disabled: cn(
@@ -203,13 +208,18 @@ function CalendarDayButton({
       className={cn(
   // Fill the cell, but leave a tiny, even inset so the green rectangle is centered and not touching edges
   "m-0.5 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-medium group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10",
-        "hover:bg-[#00d563]/10 hover:text-foreground",
-  "data-[selected-single=true]:bg-[#00d563] data-[selected-single=true]:text-[#0a0b0d] data-[selected-single=true]:rounded-lg",
+  "rounded-lg transition-all duration-200",
+  "hover:bg-[#00d563]/10 hover:text-foreground",
+  // Single selected day (pill with subtle glow)
+  "data-[selected-single=true]:bg-[#00d563] data-[selected-single=true]:text-[#0a0b0d] data-[selected-single=true]:rounded-lg data-[selected-single=true]:shadow-[0_6px_16px_-4px_#00d56366]",
+  // Range styles
   "data-[range-start=true]:bg-[#00d563] data-[range-start=true]:text-[#0a0b0d] data-[range-start=true]:rounded-l-lg",
-        "data-[range-middle=true]:bg-[#00d563]/20 data-[range-middle=true]:text-foreground",
-        "data-[range-end=true]:bg-[#00d563] data-[range-end=true]:text-[#0a0b0d] data-[range-end=true]:rounded-r-lg",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00d563]/40",
-        "[&>span]:text-xs [&>span]:opacity-80",
+  "data-[range-middle=true]:bg-[#00d563]/20 data-[range-middle=true]:text-foreground",
+  "data-[range-end=true]:bg-[#00d563] data-[range-end=true]:text-[#0a0b0d] data-[range-end=true]:rounded-r-lg",
+  // Focus ring matches brand
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00d563]/40",
+  // Day number sizing
+  "[&>span]:text-xs [&>span]:opacity-80",
         defaultClassNames.day,
         className
       )}

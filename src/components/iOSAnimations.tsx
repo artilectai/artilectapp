@@ -11,6 +11,7 @@ import {
   type HTMLMotionProps,
 } from "framer-motion";
 import { Check, X, RotateCcw, Plus, TrendingUp, ArrowRight } from "lucide-react";
+import { pushBackAction, popBackAction } from '@/lib/telegram-backstack';
 
 /* -------------------------------- Springs -------------------------------- */
 
@@ -178,30 +179,13 @@ export const SlideUpModal = ({
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
-  // Show Telegram BackButton when the modal is open, and close the modal on back.
+  // Register a back action while open so TelegramBridge can route Back button
   useEffect(() => {
     if (!isOpen) return;
-    const tg = (typeof window !== 'undefined' ? (window as any)?.Telegram?.WebApp : undefined) as any;
-    if (!tg?.BackButton) return;
-
-    const handleBack = () => {
-      try { onClose(); } catch {}
-    };
-
-    try {
-      tg.BackButton.show?.();
-      tg.BackButton.onClick?.(handleBack);
-    } catch {}
-
+    const action = () => onClose();
+    pushBackAction(action);
     return () => {
-      try { tg.BackButton.offClick?.(handleBack); } catch {}
-      // Hide BackButton only if we are not on a deeper route (so TelegramBridge can control it otherwise)
-      try {
-        const key = 'tg_history_stack_v1';
-        let depth = 0;
-        try { depth = (JSON.parse(sessionStorage.getItem(key) || '[]') as string[]).length; } catch {}
-        if (depth <= 1) tg.BackButton.hide?.();
-      } catch {}
+      popBackAction(action);
     };
   }, [isOpen, onClose]);
 

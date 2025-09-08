@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import { hasBackActions, peekBackAction } from '@/lib/telegram-backstack';
 
 // A small bridge that:
 // - Initializes Telegram WebApp on mount
@@ -66,7 +67,7 @@ export default function TelegramBridge() {
     };
   }, []);
 
-  // Manage BackButton visibility and behavior based on history depth
+  // Manage BackButton visibility and behavior based on history depth and backstack
   useEffect(() => {
   const tg = (window as any)?.Telegram?.WebApp as any;
     if (!tg) return;
@@ -100,15 +101,21 @@ export default function TelegramBridge() {
     sessionStorage.setItem(key, JSON.stringify(stack));
 
     // Toggle BackButton
-    const canGoBack = stack.length > 1;
+    const canGoBack = stack.length > 1 || hasBackActions();
     try {
       if (canGoBack) tg?.BackButton?.show?.(); else tg?.BackButton?.hide?.();
     } catch {}
 
     // Bind back action
     const handleBack = () => {
-      // Go back one step inside app
-      router.back();
+      // Prefer handling via top-most back action (e.g., a modal close)
+      const top = peekBackAction();
+      if (top) {
+        try { top(); return; } catch {}
+      }
+      // Else, go back one step in app history; if cannot, try closing
+      try { router.back(); } catch {}
+      try { if (stack.length <= 1) tg.close?.(); } catch {}
     };
 
     // Keep a ref to remove handler if supported

@@ -1479,11 +1479,13 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               </Select>
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className={`${showAdvancedFilters ? 'bg-[#00d563]/20 text-[#00d563] border-[#00d563]/30' : ''}`}
+                className={
+                  // Match SelectTrigger: height, radius, bg, border, padding, text
+                  "h-9 px-3 py-2 rounded-md bg-surface-1 border border-input text-sm flex items-center"
+                }
               >
-                <Filter className="h-4 w-4 mr-1" />
+                <Filter className="h-4 w-4 mr-1 opacity-80" />
                 {t('planner.filters.button')}
                 {activeFilterCount > 0 && (
                   <Badge className="ml-1 bg-[#00d563] text-black text-xs px-1 min-w-[16px] h-4">
