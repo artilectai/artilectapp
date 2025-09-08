@@ -562,11 +562,11 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
 
   return (
     <div
-      className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center px-4"
       style={{
-        // Keep content clear of top bar and bottom nav (approx 84px) with safe-area support
+        // Respect device safe areas and keep content comfortably away from edges
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)'
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)'
       }}
     >
       <div className="w-full max-w-md">
