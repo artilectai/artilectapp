@@ -39,7 +39,7 @@ interface PasswordStrength {
 export default function RegisterPage() {
   const router = useRouter();
   const { t } = useTranslation('app'); // ADDED
-  const TELEGRAM_START_URL = (process.env.NEXT_PUBLIC_TELEGRAM_START_URL || 'https://t.me/ArtiLectAIbot/?startapp&addToHomeScreen');
+  const TELEGRAM_START_URL = (process.env.NEXT_PUBLIC_TELEGRAM_START_URL || 'https://t.me/ArtiLectAIbot');
   // Hydration-safe gate
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);

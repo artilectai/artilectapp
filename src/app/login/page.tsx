@@ -30,7 +30,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const { t } = useTranslation('app'); // ADDED
   const { data } = useSession();
-  const TELEGRAM_START_URL = (process.env.NEXT_PUBLIC_TELEGRAM_START_URL || 'https://t.me/ArtiLectAIbot/?startapp&addToHomeScreen');
+  const TELEGRAM_START_URL = (process.env.NEXT_PUBLIC_TELEGRAM_START_URL || 'https://t.me/ArtiLectAIbot');
   // Hydration-safe gate: render placeholders on SSR/first paint, real strings after mount
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
