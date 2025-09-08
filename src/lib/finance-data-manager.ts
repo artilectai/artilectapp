@@ -16,7 +16,9 @@ interface FinanceData {
 class FinanceDataManager {
   private static readonly STORAGE_KEY = 'finance_data';
   private static readonly CURRENCY_KEY = 'finance_currency';
+  // Recognize both historical and current keys
   private static readonly SETUP_KEY = 'finance_setup_complete';
+  private static readonly SETUP_KEY_ALT = 'finance_setup_completed';
 
   /**
    * Check if running in browser environment
@@ -109,8 +111,9 @@ class FinanceDataManager {
     }
 
     // Check legacy storage key for backwards compatibility
-    const legacySetup = this.getStorageItem(this.SETUP_KEY);
-    return legacySetup === 'true';
+  const legacySetup = this.getStorageItem(this.SETUP_KEY);
+  const altSetup = this.getStorageItem(this.SETUP_KEY_ALT);
+  return legacySetup === 'true' || altSetup === 'true';
   }
 
   /**
@@ -125,6 +128,7 @@ class FinanceDataManager {
     // Also set legacy key for backwards compatibility
     if (success) {
       this.setStorageItem(this.SETUP_KEY, 'true');
+      this.setStorageItem(this.SETUP_KEY_ALT, 'true');
     }
     
     return success;
@@ -285,7 +289,8 @@ class FinanceDataManager {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
       localStorage.removeItem(this.CURRENCY_KEY);
-      localStorage.removeItem(this.SETUP_KEY);
+  localStorage.removeItem(this.SETUP_KEY);
+  localStorage.removeItem(this.SETUP_KEY_ALT);
       return true;
     } catch (error) {
       console.error('Failed to clear finance data:', error);

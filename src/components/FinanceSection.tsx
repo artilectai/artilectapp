@@ -168,6 +168,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   ({ subscriptionPlan = 'free', onUpgrade }, ref) => {
   const { t, i18n } = useTranslation('app');
   const { data: session } = useSession();
+  const userId = (session as any)?.user?.id as string | undefined;
   const userKey = (session as any)?.user?.id || (session as any)?.user?.email || 'anon';
   const keyWithUser = (key: string) => `${key}_${userKey}`;
     // State
@@ -464,10 +465,11 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
     // Remote load: accounts and transactions + realtime
     const loadRemote = useCallback(async () => {
+      if (!userId) return;
       try {
         const [accRes, txRes] = await Promise.all([
-          supabase.from('finance_accounts').select('*').order('created_at', { ascending: false }),
-          supabase.from('finance_transactions').select('*').order('created_at', { ascending: false })
+          supabase.from('finance_accounts').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+          supabase.from('finance_transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false })
         ]);
         const accs = (accRes as any)?.data || [];
         const txs = (txRes as any)?.data || [];
@@ -499,23 +501,24 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       } catch (e) {
         console.error('Finance remote load failed', e);
       }
-    }, []);
+  }, [userId]);
 
     useEffect(() => {
       loadRemote();
+      if (!userId) return;
       const ch1 = supabase
         .channel('finance-accounts-rt-internal')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_accounts' }, () => loadRemote())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_accounts', filter: `user_id=eq.${userId}` }, () => loadRemote())
         .subscribe();
       const ch2 = supabase
         .channel('finance-transactions-rt-internal')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_transactions' }, () => loadRemote())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_transactions', filter: `user_id=eq.${userId}` }, () => loadRemote())
         .subscribe();
       return () => {
         supabase.removeChannel(ch1);
         supabase.removeChannel(ch2);
       };
-    }, [loadRemote]);
+    }, [loadRemote, userId]);
 
     // Listen for global currency changes (e.g., AppShell settings)
     useEffect(() => {

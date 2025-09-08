@@ -70,7 +70,9 @@ export default function HomePage() {
         // If authenticated, check onboarding status
         if (session?.user) {
           if (typeof window !== 'undefined') {
-            const onboardingCompleted = localStorage.getItem('onboardingCompleted');
+            // Treat presence of 'false' correctly: only "true" means completed
+            const onboardingCompletedRaw = localStorage.getItem('onboardingCompleted');
+            const onboardingCompleted = onboardingCompletedRaw === 'true';
             const savedPlan = localStorage.getItem('subscription_plan') as SubscriptionPlan;
             const savedUsageCount = localStorage.getItem('usage_count');
 
