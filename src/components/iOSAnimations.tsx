@@ -211,7 +211,7 @@ export const SlideUpModal = ({
         <>
           <motion.div
             aria-hidden
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 bg-black/50 z-[59]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -220,12 +220,12 @@ export const SlideUpModal = ({
           <motion.div
             role="dialog"
             aria-modal="true"
-            className={`fixed bottom-0 left-0 right-0 z-[60] max-h-[94vh] md:max-w-md md:left-1/2 md:-translate-x-1/2 bg-card rounded-t-3xl overflow-hidden ${className}`}
+            className={`fixed bottom-0 left-0 right-0 z-[100] max-h-[95vh] md:max-w-md md:left-1/2 md:-translate-x-1/2 bg-card rounded-t-3xl overflow-hidden ${className}`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={iosSpring.default}
-            style={{ paddingBottom: `calc(${SAFE_BOTTOM} + 8px)` }}
+            style={{ paddingBottom: `calc(${SAFE_BOTTOM} + 20px)` }}
           >
             <div className="w-12 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-3 mb-3" />
             {title && (
@@ -234,7 +234,7 @@ export const SlideUpModal = ({
               </div>
             )}
             {/* Scroll the body ONLY */}
-            <div className="px-5 pb-5 overflow-y-auto overscroll-contain scrollbar-none max-h-[calc(94vh-56px)]">
+            <div className="px-5 pb-24 overflow-y-auto overscroll-contain scrollbar-none max-h-[calc(95vh-56px)]">
               {children}
               <div className="h-2" />
             </div>

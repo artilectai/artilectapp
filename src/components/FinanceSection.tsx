@@ -2890,42 +2890,42 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           title={t('finance.transactions.details.title')}
         >
           {selectedTransaction && (
-            <div className="space-y-4 p-4">
-              {/* Header row with delete on the right */}
-              <div className="flex items-center justify-between">
-                <h3 className="sr-only">{t('finance.transactions.details.title')}</h3>
-                <div />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-9 px-3 rounded-full text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                  onClick={() => handleDeleteTransaction(selectedTransaction)}
-                  title={t('finance.transactions.actions.delete', { defaultValue: 'Delete' }) as string}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`p-3 rounded-full ${
-                  selectedTransaction.type === 'income' 
-                    ? 'bg-green-400/10 text-green-400' 
-                    : 'bg-red-400/10 text-red-400'
-                }`}>
-                  {selectedTransaction.type === 'income' ? 
-                    <ArrowUpRight className="h-5 w-5" /> :
-                    <ArrowDownRight className="h-5 w-5" />
-                  }
+            <div className="space-y-4 p-4 pb-24">
+              {/* Title row: icon + name on the left, delete on the right (vertically centered) */}
+              <div className="grid grid-cols-[1fr_auto] items-center mb-2">
+                <div className="flex items-center gap-3">
+                  <div className={`p-3 rounded-full ${
+                    selectedTransaction.type === 'income' 
+                      ? 'bg-green-400/10 text-green-400' 
+                      : 'bg-red-400/10 text-red-400'
+                  }`}>
+                    {selectedTransaction.type === 'income' ? 
+                      <ArrowUpRight className="h-5 w-5" /> :
+                      <ArrowDownRight className="h-5 w-5" />
+                    }
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      {selectedTransaction.description || translateCategory(selectedTransaction.category)}
+                    </h3>
+                    <p className="text-sm text-muted-foreground capitalize">
+                      {selectedTransaction.type} {t('finance.transactions.details.typeSuffix')}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    {selectedTransaction.description || translateCategory(selectedTransaction.category)}
-                  </h3>
-                  <p className="text-sm text-muted-foreground capitalize">
-                    {selectedTransaction.type} {t('finance.transactions.details.typeSuffix')}
-                  </p>
+                <div className="flex items-center justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-9 px-3 rounded-full text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    onClick={() => handleDeleteTransaction(selectedTransaction)}
+                    title={t('finance.transactions.actions.delete', { defaultValue: 'Delete' }) as string}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-
+              {/* Details */}
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t('finance.transactions.details.amount')}</span>
