@@ -468,7 +468,12 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       try {
         const [accRes, txRes] = await Promise.all([
           supabase.from('finance_accounts').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
-          supabase.from('finance_transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+          // Join category to get human-readable name for UI
+          supabase
+            .from('finance_transactions')
+            .select('*, category:finance_categories(name,type,color)')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
         ]);
         const accs = (accRes as any)?.data || [];
         const txs = (txRes as any)?.data || [];
@@ -485,17 +490,20 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           })) as Account[]);
         }
         if (Array.isArray(txs)) {
-          setTransactions(txs.map((t: any) => ({
-            id: String(t.id),
-            accountId: String(t.account_id),
-            type: t.type,
-            amount: Number(t.amount),
-            currency: t.currency || 'UZS',
-            category: t.category_id || t.category || '',
-            description: t.description || '',
-            date: t.occurred_at ? new Date(t.occurred_at) : new Date(),
-            tags: Array.isArray(t.tags) ? t.tags : [],
-          })) as Transaction[]);
+          setTransactions(
+            txs.map((t: any) => ({
+              id: String(t.id),
+              accountId: String(t.account_id),
+              type: t.type,
+              amount: Number(t.amount),
+              currency: t.currency || 'UZS',
+              // Prefer joined category name; fallback to previous text; if nothing, mark as Uncategorized
+              category: (t.category && (t.category.name || t.category)) || t.category_name || t.category_id || 'Uncategorized',
+              description: t.description || '',
+              date: t.occurred_at ? new Date(t.occurred_at) : new Date(),
+              tags: Array.isArray(t.tags) ? t.tags : [],
+            })) as Transaction[]
+          );
         }
       } catch (e) {
         console.error('Finance remote load failed', e);
@@ -925,7 +933,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       // Helper: detect UUID-like ids
       const isUUID = (id: string | undefined) => !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 
-      // Ensure we use the exact selected account; if local id, resolve by name or create remote twin
+  // Ensure we use the exact selected account; if local id, resolve by name or create remote twin
       const ensureRemoteAccountId = async (): Promise<string> => {
         const desiredId = transactionData.accountId || accounts[0]?.id || '';
         if (isUUID(desiredId)) return desiredId as string;
@@ -975,14 +983,46 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         return String(data.id);
       };
 
-    // Resolve the selected account once
-    const resolvedAccountId = await ensureRemoteAccountId();
+      // Ensure we have a finance_categories row and return its id (for non-transfer types)
+      const ensureCategoryId = async (): Promise<string | null> => {
+        const catNameRaw = (transactionData.category || '').trim();
+        const txType = (transactionData.type as any) || 'expense';
+        if (!catNameRaw || txType === 'transfer') return null;
+        // Try exact first (pick most recent if duplicates)
+        const { data: catExact } = await supabase
+          .from('finance_categories')
+          .select('id')
+          .eq('user_id', userRes.user.id)
+          .eq('name', catNameRaw)
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (catExact?.id) return String(catExact.id);
+        // Insert new category
+        const { data: inserted, error } = await supabase
+          .from('finance_categories')
+          .insert({
+            user_id: userRes.user.id,
+            name: catNameRaw,
+            type: txType === 'income' ? 'income' : 'expense',
+            color: '#06B6D4',
+          })
+          .select('id')
+          .single();
+        if (error) throw new Error(`Failed to create category: ${error.message}`);
+        return String(inserted.id);
+      };
+
+  // Resolve ids once
+  const resolvedAccountId = await ensureRemoteAccountId();
+  const resolvedCategoryId = await ensureCategoryId();
 
     // Try client-side Supabase insert first
     const tryClientInsert = async () => {
         const { error } = await supabase.from('finance_transactions').insert({
           user_id: userRes.user.id,
       account_id: resolvedAccountId,
+          category_id: resolvedCategoryId ?? null,
           type: (transactionData.type as any) || 'expense',
           amount: Number(transactionData.amount || 0),
           currency,
@@ -998,11 +1038,12 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 12000);
         try {
-          const res = await fetch('/api/transactions/list', {
+      const res = await fetch('/api/transactions/list', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
       account_id: resolvedAccountId,
+        category_id: resolvedCategoryId ?? undefined,
               type: (transactionData.type as any) || 'expense',
               amount: Number(transactionData.amount || 0),
               currency,
@@ -1037,6 +1078,23 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           return;
         }
       }
+
+  // Update the selected account balance so the Balance card reflects the change immediately
+  try {
+    const delta = ((transactionData.type as any) === 'income' ? 1 : -1) * Number(transactionData.amount || 0);
+    const current = accounts.find(a => a.id === resolvedAccountId)?.balance ?? 0;
+    const next = current + delta;
+    // Optimistic local update
+    setAccounts(prev => prev.map(a => a.id === resolvedAccountId ? { ...a, balance: next } : a));
+    // Persist to remote
+    await supabase
+      .from('finance_accounts')
+      .update({ balance: next })
+      .eq('id', resolvedAccountId)
+      .eq('user_id', userRes.user.id);
+  } catch (balErr) {
+    console.warn('Failed to update account balance:', balErr);
+  }
 
   await loadRemote();
   // Reflect the selected account in the header selector
@@ -1316,7 +1374,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     const chartColors = ['#10B981', '#FFD700', '#EF4444', '#8B5CF6', '#F59E0B', '#06B6D4'];
 
     return (
-      <div className="flex flex-col bg-background">
+  <div className="flex flex-col bg-background">
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-border/50">
           <div className="flex items-center justify-between mb-4">
@@ -1509,7 +1567,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         </div>
 
   {/* Content */}
-  <div>
+  <div className="pb-28">{/* extra bottom padding so last chart (pie) is fully visible and not cut by bottom nav */}
           <div className="p-4">
             <Tabs value={activeTab} onValueChange={handleRestrictedTabAccess} className="w-full">
               <TabsList className="grid w-full grid-cols-4 bg-surface-1 mb-6 h-12 rounded-full">
@@ -1780,22 +1838,22 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                           <h3 className="text-lg font-semibold">{t('finance.section.charts.category.title')}</h3>
                         </div>
                         <div className={`${limits.analyticsBlurred ? 'filter blur-sm' : ''}`}>
-                          <ResponsiveContainer width="100%" height={200}>
-                            <RechartsPieChart>
+                          <ResponsiveContainer width="100%" height={240}>
+                            <RechartsPieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                               <Pie
                                 data={chartData.categoryData}
                                 cx="50%"
                                 cy="50%"
-                                outerRadius={60}
+                                outerRadius={70}
                                 fill="#8884d8"
                                 dataKey="value"
-                                label={({ name, percent }) => `${t(`finance.categoryNames.${(name || '').toLowerCase().replace(/\s+/g, '_')}`, { defaultValue: name })} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                                label={({ name, percent }) => `${translateCategory(String(name || ''))} ${((percent ?? 0) * 100).toFixed(0)}%`}
                               >
                                 {chartData.categoryData.map((entry, index) => (
                                   <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                                 ))}
                               </Pie>
-                              <Tooltip formatter={(value: number, name: any) => [formatCurrency(value as number), t(`finance.categoryNames.${String(name || '').toLowerCase().replace(/\s+/g, '_')}`, { defaultValue: String(name) })]} />
+                              <Tooltip formatter={(value: number, name: any) => [formatCurrency(value as number), translateCategory(String(name || ''))]} />
                             </RechartsPieChart>
                           </ResponsiveContainer>
                         </div>
