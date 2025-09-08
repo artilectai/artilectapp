@@ -294,7 +294,6 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                     "focus-visible:ring-2 focus-visible:ring-money-green/50",
                     errors.amount && "text-destructive"
                   )}
-                  autoFocus
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">
                   {currentCurrency}
@@ -364,7 +363,6 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                   "h-12 bg-surface-1 border-border rounded-xl",
                   errors.description && "border-destructive"
                 )}
-                autoFocus
               />
               {errors.description && (
                 <p className="text-destructive text-sm mt-1">{errors.description}</p>
@@ -429,7 +427,6 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                         onChange={(e) => setCustomCategoryName(e.target.value)}
                         placeholder={t('finance.transactions.form.category.namePlaceholder')}
                         className="flex-1 h-10 bg-surface-2 border-border rounded-lg"
-                        autoFocus
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             handleCreateCustomCategory();

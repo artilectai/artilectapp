@@ -1311,7 +1311,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
       {/* New Program Dialog (mobile-first) */}
 <Dialog open={showNewProgram} onOpenChange={setShowNewProgram}>
-  <DialogContent className="w-[92vw] sm:max-w-md p-4 sm:p-6 rounded-2xl overflow-y-auto">
+  <DialogContent className="w-[92vw] sm:max-w-md p-4 sm:p-6 rounded-2xl overflow-y-auto" onOpenAutoFocus={(e)=>e.preventDefault()}>
     <DialogHeader className="pb-2">
   <DialogTitle className="text-lg sm:text-xl">{t('workout.section.dialogs.newProgram.title')}</DialogTitle>
   <DialogDescription className="sr-only">Create and configure a new workout program</DialogDescription>
@@ -1322,7 +1322,6 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
         <Label htmlFor="program-name" className="text-sm">{t('workout.section.dialogs.newProgram.nameLabel')}</Label>
         <Input
           id="program-name"
-          autoFocus
           value={newProgram.name}
           onChange={(e) => setNewProgram(prev => ({ ...prev, name: e.target.value }))}
           placeholder={t('workout.section.dialogs.newProgram.namePlaceholder')}

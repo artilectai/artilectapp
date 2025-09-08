@@ -830,8 +830,11 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           }
           break;
         case "/":
-          e.preventDefault();
-          document.getElementById("search-input")?.focus();
+          // Only focus search on non-touch devices to avoid opening mobile keyboard
+          if (!('ontouchstart' in window)) {
+            e.preventDefault();
+            document.getElementById("search-input")?.focus();
+          }
           break;
         case "Escape":
           setIsEditorOpen(false);
@@ -1810,7 +1813,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           if (!open) setEditingTask(null);
         }}
       >
-  <DialogContent className="w-[92vw] sm:max-w-2xl p-4 sm:p-6 overflow-y-auto rounded-2xl">
+  <DialogContent className="w-[92vw] sm:max-w-2xl p-4 sm:p-6 overflow-y-auto rounded-2xl" onOpenAutoFocus={(e)=>e.preventDefault()}>
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg sm:text-xl">
               {editingTask?.id ? t('planner.editor.task.editTitle') : t('planner.editor.task.newTitle')}
@@ -1840,7 +1843,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           if (!open) setEditingGoal(null);
         }}
       >
-  <DialogContent className="w-[92vw] sm:max-w-2xl p-4 sm:p-6 overflow-y-auto rounded-2xl">
+  <DialogContent className="w-[92vw] sm:max-w-2xl p-4 sm:p-6 overflow-y-auto rounded-2xl" onOpenAutoFocus={(e)=>e.preventDefault()}>
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg sm:text-xl">
               {editingGoal?.id ? t('planner.editor.goal.editTitle') : t('planner.editor.goal.newTitle')}
@@ -2042,7 +2045,6 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
           onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
           placeholder={t('planner.editor.task.titlePlaceholder')}
           required
-          autoFocus
         />
       </div>
 
@@ -2109,7 +2111,7 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
                 {formData.startDate ? formData.startDate.toLocaleDateString() : t('planner.editor.pickDate')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="p-0 w-auto z-[120]">
+            <PopoverContent align="start" className="p-0 w-auto z-[120]" onOpenAutoFocus={(e)=>e.preventDefault()}>
               <DateStepper
                 value={formData.startDate}
                 onChange={(d) => setFormData(prev => ({ ...prev, startDate: d }))}
@@ -2135,7 +2137,7 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
                 {formData.dueDate ? formData.dueDate.toLocaleDateString() : t('planner.editor.pickDate')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="p-0 w-auto z-[120]">
+            <PopoverContent align="start" className="p-0 w-auto z-[120]" onOpenAutoFocus={(e)=>e.preventDefault()}>
               <DateStepper
                 value={formData.dueDate}
                 onChange={(d) => setFormData(prev => ({ ...prev, dueDate: d }))}
@@ -2289,7 +2291,6 @@ function GoalEditor({ goal, onSave, onCancel, isLoading }: {
           onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
           placeholder={t('planner.editor.goal.titlePlaceholder')}
           required
-          autoFocus
         />
       </div>
 
@@ -2356,7 +2357,7 @@ function GoalEditor({ goal, onSave, onCancel, isLoading }: {
                 {formData.targetDate ? formData.targetDate.toLocaleDateString() : t('planner.editor.pickDate')}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="p-0 w-auto z-[60]">
+            <PopoverContent align="start" className="p-0 w-auto z-[60]" onOpenAutoFocus={(e)=>e.preventDefault()}>
               <DateStepper
                 value={formData.targetDate}
                 onChange={(d) => setFormData(prev => ({ ...prev, targetDate: d }))}
