@@ -736,35 +736,51 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     const chartData = useMemo(() => {
       const { filteredTransactions } = filteredData;
       
-      // Enhanced time series data with controlled window per period (phone-first)
+      // Enhanced time series data with sensible ranges per period
       const getExtendedDateRange = (period: TimePeriod) => {
         const now = new Date();
-        const start = new Date();
+        // Normalize "end" to end-of-day to avoid timezone off-by-ones
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+  // Helpers
+  const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+  const endOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
         
         switch (period) {
-          case 'daily':
-            // Last 7 days (inclusive) => now - 6
-            start.setDate(now.getDate() - 6);
-            break;
-          case 'weekly':
-            // Show only the last 7 days for weekly view (phone-first, inclusive)
-            start.setDate(now.getDate() - 6);
-            break;
-          case 'monthly':
-            // Last 30 days window
-            start.setDate(now.getDate() - 30);
-            break;
-          case 'quarterly':
-            // Last 90 days window
-            start.setDate(now.getDate() - 90);
-            break;
-          case 'yearly':
-            // Last 365 days window
-            start.setDate(now.getDate() - 365);
-            break;
+          case 'daily': {
+            const start = new Date(end);
+            start.setDate(start.getDate() - 6); // last 7 days inclusive
+            return { start, end };
+          }
+          case 'weekly': {
+            const start = new Date(end);
+            start.setDate(start.getDate() - 6); // keep phone-first daily points for a week
+            return { start, end };
+          }
+          case 'monthly': {
+            // Last 12 whole months including current
+            const start = startOfMonth(new Date(end.getFullYear(), end.getMonth() - 11, 1));
+            const monthEnd = endOfMonth(end);
+            return { start, end: monthEnd };
+          }
+          case 'quarterly': {
+            // Last 8 quarters including current
+            const m = end.getMonth();
+            const currentQ = Math.floor(m / 3); // 0..3
+            // Move back 7 quarters (21 months) from start of current quarter
+            const startOfCurrentQuarter = new Date(end.getFullYear(), currentQ * 3, 1);
+            const start = new Date(startOfCurrentQuarter.getFullYear(), startOfCurrentQuarter.getMonth() - 21, 1);
+            const quarterEnd = new Date(end.getFullYear(), currentQ * 3 + 3, 0, 23, 59, 59, 999);
+            return { start, end: quarterEnd };
+          }
+          case 'yearly': {
+            // Last 5 years including current
+            const start = new Date(end.getFullYear() - 4, 0, 1);
+            const yearEnd = new Date(end.getFullYear(), 11, 31, 23, 59, 59, 999);
+            return { start, end: yearEnd };
+          }
         }
-        
-        return { start, end: now };
+        return { start: new Date(end), end };
       };
 
       const { start: extendedStart, end: extendedEnd } = getExtendedDateRange(timePeriod);
@@ -777,58 +793,58 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       });
       
       // Generate all periods in range with 0 values as default
-  const generateAllPeriods = () => {
+      const generateAllPeriods = () => {
         const periods: Array<{ date: string; income: number; expense: number; netFlow: number; formattedDate: string }> = [];
+        const pad2 = (n: number) => n.toString().padStart(2, '0');
         const current = new Date(extendedStart);
-        
+
         while (current <= extendedEnd) {
-          let dateKey: string;
-          let formattedDate: string;
-          
+          let dateKey = '';
+          let formattedDate = '';
+
           switch (timePeriod) {
-            case 'daily':
-              dateKey = current.toISOString().split('T')[0];
+            case 'daily': {
+              dateKey = `${current.getFullYear()}-${pad2(current.getMonth() + 1)}-${pad2(current.getDate())}`;
               formattedDate = current.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
               current.setDate(current.getDate() + 1);
               break;
-            case 'weekly':
-      // Phone-first: treat weekly view as a 7-day daily window
-      dateKey = current.toISOString().split('T')[0];
-      formattedDate = current.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      current.setDate(current.getDate() + 1);
+            }
+            case 'weekly': {
+              // Phone-first: keep daily points over the last 7 days
+              dateKey = `${current.getFullYear()}-${pad2(current.getMonth() + 1)}-${pad2(current.getDate())}`;
+              formattedDate = current.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              current.setDate(current.getDate() + 1);
               break;
-            case 'monthly':
-              dateKey = current.toISOString().slice(0, 7);
+            }
+            case 'monthly': {
+              dateKey = `${current.getFullYear()}-${pad2(current.getMonth() + 1)}`;
               formattedDate = current.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
               current.setMonth(current.getMonth() + 1);
               break;
-            case 'quarterly':
-              const quarter = Math.ceil((current.getMonth() + 1) / 3);
-              dateKey = `${current.getFullYear()}-Q${quarter}`;
-              formattedDate = `Q${quarter} ${current.getFullYear()}`;
+            }
+            case 'quarterly': {
+              const q = Math.floor(current.getMonth() / 3) + 1; // 1..4
+              dateKey = `${current.getFullYear()}-Q${q}`;
+              formattedDate = `Q${q} ${current.getFullYear()}`;
               current.setMonth(current.getMonth() + 3);
               break;
-            case 'yearly':
-              dateKey = current.getFullYear().toString();
-              formattedDate = current.getFullYear().toString();
+            }
+            case 'yearly': {
+              dateKey = `${current.getFullYear()}`;
+              formattedDate = `${current.getFullYear()}`;
               current.setFullYear(current.getFullYear() + 1);
               break;
-            default:
-              dateKey = current.toISOString().split('T')[0];
+            }
+            default: {
+              dateKey = `${current.getFullYear()}-${pad2(current.getMonth() + 1)}-${pad2(current.getDate())}`;
               formattedDate = current.toLocaleDateString();
               current.setDate(current.getDate() + 1);
+            }
           }
 
-          // Initialize with 0 values
-          periods.push({
-            date: dateKey,
-            income: 0,
-            expense: 0,
-            netFlow: 0,
-            formattedDate
-          });
+          periods.push({ date: dateKey, income: 0, expense: 0, netFlow: 0, formattedDate });
         }
-        
+
         return periods;
       };
 
@@ -838,15 +854,16 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       
       // Fill in actual transaction data
       extendedTransactions.forEach(t => {
+        const pad2 = (n: number) => n.toString().padStart(2, '0');
         const dateKey = timePeriod === 'daily'
-          ? t.date.toISOString().split('T')[0]
+          ? `${t.date.getFullYear()}-${pad2(t.date.getMonth() + 1)}-${pad2(t.date.getDate())}`
           : timePeriod === 'weekly'
-          ? t.date.toISOString().split('T')[0] // daily points in weekly view
+          ? `${t.date.getFullYear()}-${pad2(t.date.getMonth() + 1)}-${pad2(t.date.getDate())}` // daily points in weekly view
           : timePeriod === 'monthly'
-          ? t.date.toISOString().slice(0, 7)
+          ? `${t.date.getFullYear()}-${pad2(t.date.getMonth() + 1)}`
           : timePeriod === 'quarterly'
-          ? `${t.date.getFullYear()}-Q${Math.ceil((t.date.getMonth() + 1) / 3)}`
-          : t.date.getFullYear().toString();
+          ? `${t.date.getFullYear()}-Q${Math.floor(t.date.getMonth() / 3) + 1}`
+          : `${t.date.getFullYear()}`;
         
         if (timeSeriesMap.has(dateKey)) {
           const data = timeSeriesMap.get(dateKey)!;

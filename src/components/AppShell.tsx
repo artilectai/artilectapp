@@ -404,24 +404,9 @@ export default function AppShell({
 
   const fabProps = getFABProps();
 
-  // Keep bottom nav stable when the on-screen keyboard appears (iOS/Android)
-  const [navKeyboardOffset, setNavKeyboardOffset] = useState(0);
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('visualViewport' in window)) return;
-    const vv = window.visualViewport as VisualViewport;
-    const update = () => {
-      // How much the visual viewport shrank from the layout viewport
-      const shrink = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
-      setNavKeyboardOffset(shrink);
-    };
-    vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    update();
-    return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
-    };
-  }, []);
+  // Keep bottom nav stable when the on-screen keyboard appears on mobile
+  // Using CSS dynamic viewport units to counter the browser's auto-shift.
+  // We avoid JS listeners for robustness across iOS/Android.
 
   return (
     <HapticProvider>
@@ -522,8 +507,9 @@ export default function AppShell({
             bottom: 'calc(env(safe-area-inset-bottom, 0px) + 60px)',
             background: `linear-gradient(135deg, ${fabProps.color}, ${fabProps.color}dd)`,
             // Softer, tighter shadow so it doesn't bleed outside blocks
-      boxShadow: `0 8px 24px ${fabProps.color}26`,
-      transform: `translateY(${navKeyboardOffset}px)`
+  boxShadow: `0 8px 24px ${fabProps.color}26`,
+  // Counter the browser's upward shift with the layout-vs-dynamic viewport diff
+  transform: 'translateY(calc(100vh - 100dvh))'
           }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -546,7 +532,7 @@ export default function AppShell({
         {/* Bottom Navigation with Swipe Gestures */}
         <nav 
           className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#0b0e11]/70 border-t border-[#2a2d30]/30 overflow-hidden"
-          style={{ transform: `translateY(${navKeyboardOffset}px)` }}
+          style={{ transform: 'translateY(calc(100vh - 100dvh))' }}
           onTouchStart={handleNavTouchStart}
           onTouchEnd={handleNavTouchEnd}
         >
