@@ -1007,9 +1007,20 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       // Persist
       try {
         const completedISO = completedAtToSave ? (completedAtToSave as Date).toISOString() : null;
-        await updateTaskAction({ id: itemId, status: (nextStatus as any), completed_at: completedISO });
+        // Use browser Supabase client to avoid server-action auth cookie issues on mobile/PWA
+        const { error } = await supabase
+          .from('tasks')
+          .update({
+            status: nextStatus as any,
+            completed_at: completedISO,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', itemId);
+        if (error) throw error;
       } catch (e) {
-        // On error, reload from server to reconcile
+        // On error, reload from server to reconcile and show a hint
+        console.error('Failed to update task status:', e);
+        toast.error(t('toasts.planner.taskSaveFailed', { defaultValue: 'Failed to save task' }));
         await loadTasks();
       }
     } else if (viewMode === "weekly") {
