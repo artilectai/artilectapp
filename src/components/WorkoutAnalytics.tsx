@@ -510,7 +510,10 @@ export const WorkoutAnalytics: React.FC<WorkoutAnalyticsProps> = ({ metrics }) =
   /* --------------------------------- Render -------------------------------- */
 
   return (
-    <div ref={containerRef} className="space-y-6 p-4 max-w-7xl mx-auto">
+    <div
+      ref={containerRef}
+      className="space-y-6 p-4 max-w-7xl mx-auto pb-[calc(env(safe-area-inset-bottom,0px)+96px)]"
+    >
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="text-center">
   <h2 className="text-2xl font-bold text-white mb-1 break-words">{t("workout.analytics.header")}</h2>
