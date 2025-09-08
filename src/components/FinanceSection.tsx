@@ -25,6 +25,7 @@ import {
   Lock,
   Crown
 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -909,6 +910,91 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         'all': '📊'
       };
       return (icons as any)[type] || '💰';
+    };
+
+    // Delete a transaction and reverse its effect on the account balance
+    const handleDeleteTransaction = async (tx: Transaction) => {
+      let accountsSnapshot: Account[] | null = null;
+      try {
+        const { data: userRes, error: userErr } = await supabase.auth.getUser();
+        if (userErr || !userRes?.user) {
+          toast.error(t('toasts.auth.signInRequired', { defaultValue: 'Please sign in to continue.' }));
+          return;
+        }
+
+        accountsSnapshot = accounts.map(a => ({ ...a }));
+
+        // Optimistic local balance reversal
+        const reversal = tx.type === 'expense' ? tx.amount : tx.type === 'income' ? -tx.amount : 0;
+        if (reversal !== 0) {
+          setAccounts(prev => prev.map(a => a.id === tx.accountId ? { ...a, balance: (a.balance ?? 0) + reversal } : a));
+        }
+
+        // Try client-side delete first
+        const tryClientDelete = async () => {
+          const { error } = await supabase
+            .from('finance_transactions')
+            .delete()
+            .eq('id', tx.id)
+            .eq('user_id', userRes.user.id);
+          if (error) throw new Error(error.message);
+        };
+
+        // Fallback to API route
+        const tryApiDelete = async () => {
+          const controller = new AbortController();
+          const to = setTimeout(() => controller.abort(), 12000);
+          try {
+            const res = await fetch(`/api/transactions/list?id=${encodeURIComponent(tx.id)}` , {
+              method: 'DELETE',
+              signal: controller.signal,
+            });
+            clearTimeout(to);
+            if (!res.ok) {
+              const j = await res.json().catch(() => ({}));
+              throw new Error(j?.error || `API error ${res.status}`);
+            }
+          } catch (e: any) {
+            if (e?.name === 'AbortError') throw new Error('Network timeout while deleting transaction');
+            throw e;
+          }
+        };
+
+        try {
+          await tryClientDelete();
+        } catch (e1) {
+          console.warn('Client delete failed, trying API fallback');
+          await tryApiDelete();
+        }
+
+        // Persist the reversed balance remotely as well (best-effort)
+        if (reversal !== 0) {
+          const acc = accounts.find(a => a.id === tx.accountId);
+          if (acc) {
+            const next = (acc.balance ?? 0) + reversal;
+            await supabase
+              .from('finance_accounts')
+              .update({ balance: next })
+              .eq('id', tx.accountId)
+              .eq('user_id', userRes.user.id);
+          }
+        }
+
+        // Remove locally and refresh from remote
+        setTransactions(prev => prev.filter(item => item.id !== tx.id));
+        await loadRemote();
+
+        setShowTransactionDetails(false);
+        setSelectedTransaction(null);
+        toast.success(t('finance.transactions.actions.deleted', { defaultValue: 'Transaction deleted' }));
+      } catch (e: any) {
+        console.error('Delete transaction failed', e);
+  // rollback optimistic account change
+  if (accountsSnapshot) setAccounts(accountsSnapshot);
+        toast.error(t('toasts.errors.deleteFailed', { defaultValue: 'Failed to delete transaction' }), {
+          description: e?.message || String(e)
+        });
+      }
     };
 
     // Form handlers
@@ -2805,6 +2891,18 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         >
           {selectedTransaction && (
             <div className="space-y-4 p-4">
+              {/* Delete action */}
+              <div className="flex items-center justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-9 px-3 rounded-full text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  onClick={() => handleDeleteTransaction(selectedTransaction)}
+                  title={t('finance.transactions.actions.delete', { defaultValue: 'Delete' }) as string}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
               <div className="flex items-center gap-3 mb-4">
                 <div className={`p-3 rounded-full ${
                   selectedTransaction.type === 'income' 
