@@ -81,142 +81,39 @@ export default function HomePage() {
             }
 
             setShowOnboarding(false);
-            // Initialize with a conservative plan; sanitize unknown values and never trust local 'pro'
-            const normalizedSaved = (savedPlan as unknown as string) === 'premium' ? 'pro' : savedPlan;
-            const initialPlan: SubscriptionPlan = normalizedSaved === 'pro'
-              ? 'free'
-              : (normalizedSaved === 'lite' || normalizedSaved === 'free' ? normalizedSaved : 'free');
-            setSubscriptionPlan(initialPlan);
+            setSubscriptionPlan(savedPlan || 'free');
             setUsageCount(parseInt(savedUsageCount || '0', 10));
 
-            // Fast-path: resolve plan from auth metadata immediately (no network)
-            try {
-              const meta = {
-                ...(session.user.user_metadata || {}),
-                ...(session.user.app_metadata || {})
-              } as any;
-              const now = new Date();
-              const planField: string | undefined = (meta.subscription_plan || meta.plan || meta.tier || meta.current_plan) as string | undefined;
-              const isPro: boolean = Boolean(meta.is_pro || meta.pro_active || meta.has_pro || meta.is_premium || meta.premium_active || meta.has_premium);
-              const isLite: boolean = Boolean(meta.is_lite || meta.lite_active || meta.has_lite);
-              const proExpiresRaw: string | Date | undefined = meta.pro_expires_at || meta.pro_expires || meta.pro_until;
-              const liteExpiresRaw: string | Date | undefined = meta.lite_expires_at || meta.lite_expires || meta.lite_until;
-              const proExpires = proExpiresRaw ? new Date(proExpiresRaw) : null;
-              const liteExpires = liteExpiresRaw ? new Date(liteExpiresRaw) : null;
-
-              let quickPlan: SubscriptionPlan | null = null;
-              if (planField && ['free', 'lite', 'pro'].includes(planField)) {
-                quickPlan = planField as SubscriptionPlan;
-              } else if (isPro && (!proExpires || proExpires > now)) {
-                quickPlan = 'pro';
-              } else if (isLite && (!liteExpires || liteExpires > now)) {
-                quickPlan = 'lite';
-              }
-              if (quickPlan && quickPlan !== subscriptionPlan) {
-                setSubscriptionPlan(quickPlan);
-                localStorage.setItem('subscription_plan', quickPlan);
-              }
-            } catch {}
-
-            // Sync subscription plan with Supabase profile (supports lite/pro)
+            // Sync subscription plan with Supabase profile (is_pro / pro_expires_at)
             try {
               const userId = session.user.id as string;
               const now = new Date();
-
-              // Helper to resolve plan from a flexible profile shape
-              const resolvePlanFromProfile = (raw: any, localFallback: SubscriptionPlan): SubscriptionPlan => {
-                if (!raw || typeof raw !== 'object') return localFallback === 'pro' ? 'free' : localFallback;
-
-                // Common field variants
-                const planField: string | undefined = (raw.subscription_plan || raw.plan || raw.tier || raw.current_plan) as string | undefined;
-                const isPro: boolean = Boolean(raw.is_pro || raw.pro_active || raw.has_pro || raw.is_premium || raw.premium_active || raw.has_premium);
-                const isLite: boolean = Boolean(raw.is_lite || raw.lite_active || raw.has_lite);
-                const proExpiresRaw: string | Date | undefined = raw.pro_expires_at || raw.pro_expires || raw.pro_until;
-                const liteExpiresRaw: string | Date | undefined = raw.lite_expires_at || raw.lite_expires || raw.lite_until;
-
-                const proExpires = proExpiresRaw ? new Date(proExpiresRaw) : null;
-                const liteExpires = liteExpiresRaw ? new Date(liteExpiresRaw) : null;
-
-                // 1) Explicit plan string wins if valid
-                if (planField && ['free', 'lite', 'pro'].includes(planField)) {
-                  return planField as SubscriptionPlan;
-                }
-
-                // 2) Derive from booleans and expirations
-                const proActive = isPro && (!proExpires || proExpires > now);
-                if (proActive) return 'pro';
-                const liteActive = isLite && (!liteExpires || liteExpires > now);
-                if (liteActive) return 'lite';
-
-                // 3) Fallback to local (never trust local 'pro')
-                return localFallback === 'lite' ? 'lite' : 'free';
-              };
-
-              // Try primary table "profiles" first with flexible select
-              let profile: any | null = null;
-              const p1 = await supabase
+              // Try primary table name
+              let { data: profile, error } = await supabase
                 .from('profiles')
-                .select('*')
+                .select('is_pro, pro_expires_at')
                 .eq('id', userId)
                 .single();
-
-              if (!p1.error && p1.data) {
-                profile = p1.data;
-              } else {
-                // Fallback to "user_profiles"
-                const p2 = await supabase
+              // Fallback to user_profiles if profiles missing
+              if (error) {
+                const alt = await supabase
                   .from('user_profiles')
                   .select('*')
                   .eq('user_id', userId)
                   .single();
-                if (!p2.error && p2.data) profile = p2.data;
-                // Optional: try a dedicated subscriptions table if present
-                if (!profile) {
-                  const p3 = await supabase
-                    .from('subscriptions')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('expires_at', { ascending: false })
-                    .limit(1)
-                    .maybeSingle?.();
-                  // Some clients may not support maybeSingle; fallback to single in catch
-                  if (p3 && !(p3 as any).error && (p3 as any).data) profile = (p3 as any).data;
-                  else {
-                    try {
-                      const p3b = await supabase
-                        .from('subscriptions')
-                        .select('*')
-                        .eq('user_id', userId)
-                        .order('expires_at', { ascending: false })
-                        .limit(1)
-                        .single();
-                      if (!p3b.error && p3b.data) profile = p3b.data;
-                    } catch {}
-                  }
-                }
+                profile = alt.data as any;
               }
 
-              // As a fallback, derive from Supabase auth user metadata if needed
-              let serverResolved = resolvePlanFromProfile(profile, initialPlan);
-              if ((!profile || serverResolved === 'free') && session.user) {
-                const meta = {
-                  ...(session.user.user_metadata || {}),
-                  ...(session.user.app_metadata || {})
-                } as any;
-                const metaPlan = resolvePlanFromProfile(meta, serverResolved);
-                serverResolved = metaPlan;
+              if (profile && typeof profile.is_pro === 'boolean') {
+                const expiresAt = profile.pro_expires_at ? new Date(profile.pro_expires_at as string) : null;
+                const proActive = profile.is_pro && (!expiresAt || expiresAt > now);
+                const nextPlan: SubscriptionPlan = proActive ? 'pro' : (savedPlan || 'free');
+                setSubscriptionPlan(nextPlan);
+                localStorage.setItem('subscription_plan', nextPlan);
               }
-              setSubscriptionPlan(serverResolved);
-              localStorage.setItem('subscription_plan', serverResolved);
             } catch (e) {
               // Non-fatal: keep local plan
               console.warn('Failed to sync subscription from profile:', e);
-              // Ensure we never stay on local 'pro' if server check failed
-              const savedPlan = localStorage.getItem('subscription_plan') as SubscriptionPlan;
-              if (savedPlan === 'pro') {
-                localStorage.setItem('subscription_plan', 'free');
-                setSubscriptionPlan('free');
-              }
             }
           }
         }
@@ -322,17 +219,12 @@ export default function HomePage() {
 
   const handleSubscriptionSelect = async (planId: string) => {
     try {
-      // Never set Pro locally here; route to checkout instead
-      if (planId === 'pro') {
-        setShowSubscriptionPlans(false);
-        router.push('/checkout');
-      } else {
-        setSubscriptionPlan(planId as SubscriptionPlan);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('subscription_plan', planId);
-        }
-        setShowSubscriptionPlans(false);
+      setSubscriptionPlan(planId as SubscriptionPlan);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('subscription_plan', planId);
       }
+      
+      setShowSubscriptionPlans(false);
       
       // Analytics event
       if (typeof window !== 'undefined' && 'gtag' in window) {
@@ -355,11 +247,7 @@ export default function HomePage() {
         });
       }
 
-      if (planId !== 'pro') {
-        toast.success(`🎉 Welcome to ${planId.charAt(0).toUpperCase() + planId.slice(1)}! New features unlocked.`);
-      } else {
-        toast.success('Proceed to checkout to activate Pro.');
-      }
+      toast.success(`🎉 Welcome to ${planId.charAt(0).toUpperCase() + planId.slice(1)}! New features unlocked.`);
     } catch (error) {
       console.error('Failed to update subscription:', error);
       toast.error('Failed to activate subscription');

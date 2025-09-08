@@ -15,11 +15,10 @@ import { Check, X, RotateCcw, Plus, TrendingUp, ArrowRight } from "lucide-react"
 /* -------------------------------- Springs -------------------------------- */
 
 export const iosSpring = {
-  // Tuned for faster, crisp interactions while remaining smooth
-  default: { type: "spring", damping: 20, stiffness: 420 },
-  gentle: { type: "spring", damping: 22, stiffness: 320 },
-  snappy: { type: "spring", damping: 16, stiffness: 520 },
-  bouncy: { type: "spring", damping: 14, stiffness: 380 },
+  default: { type: "spring", damping: 25, stiffness: 300 },
+  gentle: { type: "spring", damping: 30, stiffness: 200 },
+  snappy: { type: "spring", damping: 20, stiffness: 400 },
+  bouncy: { type: "spring", damping: 15, stiffness: 300 },
 } as const;
 
 /* ------------------------------ Safe-area utils --------------------------- */

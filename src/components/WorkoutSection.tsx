@@ -1287,6 +1287,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
         {showWorkoutOnboarding && (
           <WorkoutSportOnboardingWizard 
             onComplete={handleWorkoutOnboardingComplete}
+            onSkip={() => setShowWorkoutOnboarding(false)}
           />
         )}
 

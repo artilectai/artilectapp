@@ -28,6 +28,7 @@ import { Progress } from '@/components/ui/progress';
 
 interface WorkoutSportOnboardingWizardProps {
   onComplete: (preferences: WorkoutPreferences) => void;
+  onSkip?: () => void;
 }
 
 interface WorkoutPreferences {
@@ -95,7 +96,8 @@ const EXPERIENCE_LEVELS = [
 ];
 
 export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizardProps> = ({
-  onComplete
+  onComplete,
+  onSkip
 }) => {
   const { t } = useTranslation('app');
   const [currentStep, setCurrentStep] = useState(0);
@@ -118,7 +120,7 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
       setTimeout(() => {
         setCurrentStep(currentStep + 1);
         setIsAnimating(false);
-      }, 110);
+      }, 150);
     }
   };
 
@@ -128,7 +130,7 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
       setTimeout(() => {
         setCurrentStep(currentStep - 1);
         setIsAnimating(false);
-      }, 110);
+      }, 150);
     }
   };
 
@@ -467,12 +469,10 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
 
   return (
     <div
-      className="fixed left-0 right-0 z-[1000] flex items-center justify-center px-4"
+      className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center px-4"
       style={{
-        top: 'calc(env(safe-area-inset-top, 0px) + 56px)',
-        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)',
-        background: 'rgba(0,0,0,0.7)',
-        backdropFilter: 'blur(8px)'
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)'
       }}
     >
       <div className="w-full max-w-md">
@@ -488,19 +488,28 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
               />
             ))}
           </div>
-          {/* Skip removed to enforce gating */}
+          {onSkip && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSkip}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
-  {/* Progress */}
-  <Progress value={progress} className="mb-6" />
+        {/* Progress */}
+        <Progress value={progress} className="mb-8" />
 
         {/* Content */}
-    <Card className={`glass-card border-none transition-all duration-200 ${isAnimating ? 'opacity-60 scale-95' : 'opacity-100 scale-100'}`}>
+        <Card className={`glass-card border-none transition-all duration-300 ${isAnimating ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
           <CardContent className="p-6">
             {currentStep === 0 ? (
               renderStep()
             ) : (
-      <div className="max-h-[58vh] overflow-y-auto pr-2">
+              <div className="max-h-[60vh] overflow-y-auto pr-2">
                 {renderStep()}
               </div>
             )}
@@ -523,7 +532,7 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
             <Button
               onClick={nextStep}
               disabled={isAnimating || !canProceed()}
-              className="bg-money-gradient hover:opacity-95 transition-transform flex items-center gap-2 min-w-[100px] active:scale-[0.98]"
+              className="bg-money-gradient hover:opacity-90 transition-opacity flex items-center gap-2 min-w-[100px]"
             >
               {t('workout.onboarding.cta.continue')}
               <ArrowRight className="w-4 h-4" />
