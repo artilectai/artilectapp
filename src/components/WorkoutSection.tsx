@@ -715,6 +715,12 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
   return (
     <div className="h-full flex flex-col bg-background overflow-x-hidden">
+      {showWorkoutOnboarding && (
+        <WorkoutSportOnboardingWizard
+          onComplete={handleWorkoutOnboardingComplete}
+          onSkip={() => setShowWorkoutOnboarding(false)}
+        />
+      )}
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b border-border">
         <div className="flex items-center justify-between">
