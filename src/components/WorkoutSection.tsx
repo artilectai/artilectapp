@@ -537,7 +537,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
     }
 
     // Finalize numeric values from input strings
-    const sets = Math.max(0, Math.floor(Number(setsInput)) || 0);
+  const sets = Math.max(0, Math.floor(Number(setsInput)) || 0);
     const reps = Math.max(0, Math.floor(Number(repsInput)) || 0);
     const weight = Math.max(0, parseFloat((weightInput || '0').replace(',', '.')) || 0);
     const duration = Math.max(0, Math.floor(Number(durationInput)) || 0);
@@ -1283,13 +1283,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
         </div>
       </div>
 
-        {/* Workout Onboarding Wizard */}
-        {showWorkoutOnboarding && (
-          <WorkoutSportOnboardingWizard 
-            onComplete={handleWorkoutOnboardingComplete}
-            onSkip={() => setShowWorkoutOnboarding(false)}
-          />
-        )}
+  {/* Workout Onboarding Wizard is rendered early-return above when needed */}
 
       {/* New Program Dialog (mobile-first) */}
 <Dialog open={showNewProgram} onOpenChange={setShowNewProgram}>

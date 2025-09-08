@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -106,6 +107,22 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
   const [weeklyFrequency, setWeeklyFrequency] = useState(3);
   const [fitnessGoals, setFitnessGoals] = useState<string[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Mount portal and lock background scroll/touch while open
+  useEffect(() => {
+    setMounted(true);
+    if (typeof document !== 'undefined') {
+      const prevOverflow = document.body.style.overflow;
+      const prevTouchAction = (document.body.style as any).touchAction;
+      document.body.style.overflow = 'hidden';
+      (document.body.style as any).touchAction = 'none';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        (document.body.style as any).touchAction = prevTouchAction;
+      };
+    }
+  }, []);
 
   const steps = [
     { title: t('workout.onboarding.steps.welcome.title'), subtitle: t('workout.onboarding.steps.welcome.subtitle') },
@@ -467,13 +484,17 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
 
   const progress = ((currentStep + 1) / steps.length) * 100;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center px-4 pointer-events-auto"
       style={{
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)'
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)'
       }}
+      role="dialog"
+      aria-modal="true"
     >
       <div className="w-full max-w-md">
         {/* Header */}
@@ -506,13 +527,9 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
         {/* Content */}
         <Card className={`glass-card border-none transition-all duration-300 ${isAnimating ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
           <CardContent className="p-6">
-            {currentStep === 0 ? (
-              renderStep()
-            ) : (
-              <div className="max-h-[60vh] overflow-y-auto pr-2">
-                {renderStep()}
-              </div>
-            )}
+            <div className="max-h-[62vh] overflow-y-auto pr-2">
+              {renderStep()}
+            </div>
           </CardContent>
         </Card>
 
@@ -549,6 +566,7 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

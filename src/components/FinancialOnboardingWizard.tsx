@@ -333,7 +333,7 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
               )}
             </div>
           </SelectTrigger>
-          <SelectContent className="w-[--radix-select-trigger-width] min-w-[--radix-select-trigger-width] max-h-64 overflow-y-auto">
+          <SelectContent className="w-[--radix-select-trigger-width] min-w-[--radix-select-trigger-width] max-h-64 overflow-y-auto z-[10000]">
             {CURRENCIES.map((currency) => (
               <SelectItem key={currency.code} value={currency.code}>
                 <div className="flex items-center gap-3 min-w-0">
