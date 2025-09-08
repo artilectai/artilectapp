@@ -8,11 +8,15 @@ export default function AuthBox() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const TELEGRAM_START_URL = (process.env.NEXT_PUBLIC_TELEGRAM_START_URL || 'https://t.me/ArtiLectAIbot/?startapp&addToHomeScreen');
 
   async function signIn() {
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: TELEGRAM_START_URL } as any,
+    });
     if (error) setError(error.message);
     else setSent(true);
     setLoading(false);
