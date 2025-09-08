@@ -408,17 +408,55 @@ export default function AppShell({
   // Primary: CSS translate by (100lvh - 100dvh). Fallback: VisualViewport -> --kb-offset.
   useEffect(() => {
     if (typeof window === 'undefined' || !('visualViewport' in window)) return;
+
     const vv = window.visualViewport as VisualViewport;
-    const update = () => {
-      const shrink = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
-      document.documentElement.style.setProperty('--kb-offset', `${shrink}px`);
+    const baselineRef = { current: Math.max(window.innerHeight, document.documentElement.clientHeight) };
+
+    const computeShrink = () => {
+      const vh = vv.height + vv.offsetTop; // visible region height relative to layout viewport
+      let shrink = Math.max(0, baselineRef.current - vh);
+      // Fallback: if reported shrink is 0 but visual viewport clearly shrank
+      if (shrink === 0 && vv.height < baselineRef.current - 80) {
+        shrink = baselineRef.current - (vv.height + vv.offsetTop);
+      }
+      return shrink;
     };
-    vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    update();
+
+    const apply = () => {
+      const shrink = computeShrink();
+      document.documentElement.style.setProperty('--kb-offset', `${Math.max(0, Math.round(shrink))}px`);
+    };
+
+    const setBaselineSoon = () => {
+      // Allow a short delay for UA UI bars to settle before capturing baseline
+      setTimeout(() => {
+        baselineRef.current = Math.max(window.innerHeight, document.documentElement.clientHeight);
+        apply();
+      }, 150);
+    };
+
+    // Listeners
+    const onFocus = () => apply();
+    const onBlur = () => apply();
+    const onResize = () => apply();
+    const onOrientation = () => setBaselineSoon();
+
+    document.addEventListener('focusin', onFocus);
+    document.addEventListener('focusout', onBlur);
+    vv.addEventListener('resize', onResize);
+    vv.addEventListener('scroll', onResize);
+    window.addEventListener('orientationchange', onOrientation);
+
+    // Initial capture and settle
+    setBaselineSoon();
+    apply();
+
     return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
+      document.removeEventListener('focusin', onFocus);
+      document.removeEventListener('focusout', onBlur);
+      vv.removeEventListener('resize', onResize);
+      vv.removeEventListener('scroll', onResize);
+      window.removeEventListener('orientationchange', onOrientation);
       document.documentElement.style.removeProperty('--kb-offset');
     };
   }, []);
@@ -522,7 +560,8 @@ export default function AppShell({
     bottom: 'calc(env(safe-area-inset-bottom, 0px) + 60px - var(--kb-offset, 0px))',
             background: `linear-gradient(135deg, ${fabProps.color}, ${fabProps.color}dd)`,
             // Softer, tighter shadow so it doesn't bleed outside blocks
-  boxShadow: `0 8px 24px ${fabProps.color}26`
+  boxShadow: `0 8px 24px ${fabProps.color}26`,
+  transform: 'translateY(calc(100vh - 100dvh))'
           }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -545,7 +584,7 @@ export default function AppShell({
         {/* Bottom Navigation with Swipe Gestures */}
         <nav 
           className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#0b0e11]/70 border-t border-[#2a2d30]/30 overflow-hidden"
-          style={{ bottom: 'calc(-1 * var(--kb-offset, 0px))' }}
+          style={{ bottom: 'calc(-1 * var(--kb-offset, 0px))', transform: 'translateY(calc(100vh - 100dvh))' }}
           onTouchStart={handleNavTouchStart}
           onTouchEnd={handleNavTouchEnd}
         >
