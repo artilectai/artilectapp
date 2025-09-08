@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/lib/supabase/client';
+import { useSession } from '@/lib/supabase/useSession';
 
 interface WorkoutSportOnboardingWizardProps {
   onComplete: (preferences: WorkoutPreferences) => void;
@@ -101,6 +103,7 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
   onSkip
 }) => {
   const { t } = useTranslation('app');
+  const { data: session } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [experienceLevel, setExperienceLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
@@ -181,6 +184,20 @@ export const WorkoutSportOnboardingWizard: React.FC<WorkoutSportOnboardingWizard
     localStorage.setItem('workout_frequency', weeklyFrequency.toString());
     localStorage.setItem('workout_goals', JSON.stringify(fitnessGoals));
     localStorage.setItem('workout_setup_complete', 'true');
+
+    // Also persist account-scoped server flag
+    (async () => {
+      try {
+        const userId = session?.user?.id as string | undefined;
+        if (userId) {
+          await supabase.from('user_profiles').upsert({
+            user_id: userId,
+            workout_setup_completed: true,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+        }
+      } catch {}
+    })();
 
     onComplete(preferences);
   };

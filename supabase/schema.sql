@@ -12,6 +12,11 @@ create table if not exists public.user_profiles (
   email text,
   name text,
   phone text,
+  -- First-time experience flags (account-scoped, not device/Telegram)
+  onboarding_completed boolean not null default false,
+  onboarding_completed_at timestamptz,
+  finance_setup_completed boolean not null default false,
+  workout_setup_completed boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -43,6 +48,26 @@ create table if not exists public.finance_accounts (
   is_default boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+-- Subscriptions stored by authenticated user, email and phone
+create table if not exists public.subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  email text not null,
+  phone text,
+  plan text not null check (plan in ('lite','pro')),
+  status text not null default 'active' check (status in ('active','canceled','expired')),
+  started_at timestamptz not null default now(),
+  expires_at timestamptz,
+  metadata jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- One active subscription row per user (latest row wins on conflict)
+create unique index if not exists subscriptions_user_unique on public.subscriptions(user_id);
+create index if not exists subscriptions_email_idx on public.subscriptions(email);
+create index if not exists subscriptions_phone_idx on public.subscriptions(phone);
 
 create table if not exists public.finance_categories (
   id uuid primary key default gen_random_uuid(),
@@ -95,6 +120,7 @@ alter table public.finance_categories enable row level security;
 alter table public.finance_transactions enable row level security;
 alter table public.workout_programs enable row level security;
 alter table public.workout_sessions enable row level security;
+alter table public.subscriptions enable row level security;
 
 -- Policies: users can CRUD own rows
 create policy tasks_select on public.tasks for select using (auth.uid() = user_id);
@@ -130,6 +156,12 @@ create policy ws_select on public.workout_sessions for select using (auth.uid() 
 create policy ws_insert on public.workout_sessions for insert with check (auth.uid() = user_id);
 create policy ws_update on public.workout_sessions for update using (auth.uid() = user_id);
 create policy ws_delete on public.workout_sessions for delete using (auth.uid() = user_id);
+
+-- Subscriptions: users can only access and manage their own subscription
+create policy subs_select on public.subscriptions for select using (auth.uid() = user_id);
+create policy subs_insert on public.subscriptions for insert with check (auth.uid() = user_id);
+create policy subs_update on public.subscriptions for update using (auth.uid() = user_id);
+create policy subs_delete on public.subscriptions for delete using (auth.uid() = user_id);
 
 -- Realtime
 -- In Supabase Dashboard -> Database -> Replication, enable "postgres_changes" for these tables under the public schema.

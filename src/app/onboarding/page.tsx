@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { ChevronRight, ChevronLeft, User, Globe, Clock, Calendar, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18nInstance from "@/i18n/config";
+import { supabase } from "@/lib/supabase/client";
 
 // Use reliable two-letter abbreviations instead of emoji/flags to avoid "��" glyphs
 const LANGUAGES = [
@@ -148,7 +149,7 @@ export default function OnboardingPage() {
     if (!validateStep(currentStep)) return;
 
     setIsSubmitting(true);
-    try {
+  try {
       // Store preferences in localStorage
       localStorage.setItem("userPreferences", JSON.stringify(preferences));
       
@@ -159,6 +160,19 @@ export default function OnboardingPage() {
       localStorage.setItem("onboardingCompleted", "true");
   toast.success(t('toasts.onboarding.preferencesSaved'));
       
+      // Also persist account-scoped onboarding flag
+      try {
+        if (session?.user?.id) {
+          await supabase.from('user_profiles').upsert({
+            user_id: session.user.id as string,
+            email: session.user.email ?? null,
+            onboarding_completed: true,
+            onboarding_completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+        }
+      } catch {}
+
       // Small delay for better UX
       setTimeout(() => {
         router.push("/");

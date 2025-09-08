@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Crown, Shield, Lock, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { supabase } from '@/lib/supabase/client';
+import { useSession } from '@/lib/supabase/useSession';
 
 type PlanId = "free" | "lite" | "pro";
 
@@ -18,6 +20,7 @@ export default function CheckoutPage() {
   const { t, i18n } = useTranslation("app");
   const router = useRouter();
   const params = useSearchParams();
+  const { data: session } = useSession();
   const plan = (params.get("plan") as PlanId) || "pro";
   const billing = (params.get("billing") as "monthly" | "annual") || "monthly";
 
@@ -56,8 +59,16 @@ export default function CheckoutPage() {
   const [cvc, setCvc] = useState("");
   const [country, setCountry] = useState("UZ");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [agree, setAgree] = useState(false);
   const [processing, setProcessing] = useState(false);
+
+  // Prefill email from session if present
+  useEffect(() => {
+    if (session?.user?.email && !email) {
+      setEmail(session.user.email);
+    }
+  }, [session?.user?.email]);
 
   const formatPrice = (v: number) => (v === 0 ? t("plans.free") : `${new Intl.NumberFormat("uz-UZ").format(v)} UZS`);
 
@@ -76,9 +87,12 @@ export default function CheckoutPage() {
   };
 
   const canSubmit = useMemo(() => {
+    const phoneDigits = phone.replace(/[^0-9]/g, "");
+    const phoneOk = phone.trim().length > 0 && phoneDigits.length >= 8 && phoneDigits.length <= 15;
     return (
       name.trim().length > 2 &&
       email.includes("@") &&
+      phoneOk &&
       /^(\d{4} \d{4} \d{4} \d{4}|\d{16})$/.test(number.replace(/\s+/g, "").replace(/(\d{4})(?=\d)/g, "$1 ")) &&
       /^(0[1-9]|1[0-2])\/(\d{2})$/.test(expiry) &&
       /^\d{3,4}$/.test(cvc) &&
@@ -86,7 +100,7 @@ export default function CheckoutPage() {
       agree &&
       plan !== "free"
     );
-  }, [name, email, number, expiry, cvc, country, agree, plan]);
+  }, [name, email, phone, number, expiry, cvc, country, agree, plan]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,10 +111,47 @@ export default function CheckoutPage() {
       // Simulate payment confirmation
       await new Promise((r) => setTimeout(r, 1200));
 
-      // Save selected plan locally; a real app would handle this server-side on webhook success
-      if (typeof window !== "undefined") {
-        localStorage.setItem("subscription_plan", plan);
+      // Persist subscription to Supabase, keyed by auth user_id and purchaser email/phone
+      const userId: string | undefined = session?.user?.id as string | undefined;
+      if (!userId) {
+        throw new Error('No authenticated user');
       }
+
+    // Normalize phone (basic): keep digits and leading +, ensure + prefix
+    const cleaned = phone.replace(/[^\d+]/g, "");
+    const normalizedPhone = cleaned.startsWith('+') ? cleaned : (cleaned ? `+${cleaned}` : null);
+
+    // Upsert to user_profiles to keep phone on file
+      try {
+        await supabase.from('user_profiles').upsert({
+          user_id: userId,
+          email: session?.user?.email ?? email,
+          name: (session?.user?.user_metadata as any)?.name ?? null,
+      phone: normalizedPhone,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+      } catch {}
+
+      // Create/update subscription row with email and optional phone
+      const now = new Date();
+      const expiresAt = plan === 'pro'
+        ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+        : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { error: subErr } = await supabase.from('subscriptions').upsert({
+        user_id: userId,
+        email,
+  phone: normalizedPhone,
+        plan,
+        status: 'active',
+        started_at: now.toISOString(),
+        expires_at: expiresAt,
+        updated_at: now.toISOString(),
+      }, { onConflict: 'user_id' });
+      if (subErr) throw subErr;
+
+      // Cache locally for quick gating without extra roundtrip
+      if (typeof window !== 'undefined') localStorage.setItem('subscription_plan', plan);
 
       // Redirect back to app root
       router.replace("/");
@@ -158,6 +209,10 @@ export default function CheckoutPage() {
               <div className="space-y-2">
                 <Label htmlFor="email">{t('checkout.form.email')}</Label>
                 <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">{t('auth.register.phoneLabel')}</Label>
+                <Input id="phone" type="tel" placeholder="+998 90 123 45 67" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="name">{t('checkout.form.cardholderName')}</Label>

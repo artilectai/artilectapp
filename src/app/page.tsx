@@ -70,7 +70,22 @@ export default function HomePage() {
         // If authenticated, check onboarding status
         if (session?.user) {
           if (typeof window !== 'undefined') {
-            const onboardingCompleted = localStorage.getItem('onboardingCompleted');
+            // Prefer server-side onboarding flag; fallback to localStorage
+            let onboardingCompleted: string | null = null;
+            try {
+              const { data: up } = await supabase
+                .from('user_profiles')
+                .select('onboarding_completed')
+                .eq('user_id', session.user.id as string)
+                .maybeSingle();
+              if (up && typeof up.onboarding_completed === 'boolean') {
+                onboardingCompleted = up.onboarding_completed ? 'true' : null;
+              } else {
+                onboardingCompleted = localStorage.getItem('onboardingCompleted');
+              }
+            } catch {
+              onboardingCompleted = localStorage.getItem('onboardingCompleted');
+            }
             const savedPlan = localStorage.getItem('subscription_plan') as SubscriptionPlan;
             const savedUsageCount = localStorage.getItem('usage_count');
 
@@ -84,33 +99,51 @@ export default function HomePage() {
             setSubscriptionPlan(savedPlan || 'free');
             setUsageCount(parseInt(savedUsageCount || '0', 10));
 
-            // Sync subscription plan with Supabase profile (is_pro / pro_expires_at)
+            // Sync subscription plan from Subscriptions first, then legacy profile is_pro
             try {
               const userId = session.user.id as string;
               const now = new Date();
-              // Try primary table name
-              let { data: profile, error } = await supabase
-                .from('profiles')
-                .select('is_pro, pro_expires_at')
-                .eq('id', userId)
-                .single();
-              // Fallback to user_profiles if profiles missing
-              if (error) {
-                const alt = await supabase
-                  .from('user_profiles')
-                  .select('*')
-                  .eq('user_id', userId)
-                  .single();
-                profile = alt.data as any;
+              // Check new subscriptions table
+              const { data: sub } = await supabase
+                .from('subscriptions')
+                .select('plan, status, expires_at')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+              if (sub && sub.status === 'active') {
+                const exp = sub.expires_at ? new Date(sub.expires_at as string) : null;
+                const active = !exp || exp > now;
+                if (active && (sub.plan === 'pro' || sub.plan === 'lite')) {
+                  const nextPlan: SubscriptionPlan = sub.plan as SubscriptionPlan;
+                  setSubscriptionPlan(nextPlan);
+                  localStorage.setItem('subscription_plan', nextPlan);
+                  return;
+                }
               }
 
-              if (profile && typeof profile.is_pro === 'boolean') {
-                const expiresAt = profile.pro_expires_at ? new Date(profile.pro_expires_at as string) : null;
-                const proActive = profile.is_pro && (!expiresAt || expiresAt > now);
-                const nextPlan: SubscriptionPlan = proActive ? 'pro' : (savedPlan || 'free');
-                setSubscriptionPlan(nextPlan);
-                localStorage.setItem('subscription_plan', nextPlan);
-              }
+              // Legacy fallback: profiles.is_pro
+              try {
+                let { data: profile, error } = await supabase
+                  .from('profiles')
+                  .select('is_pro, pro_expires_at')
+                  .eq('id', userId)
+                  .single();
+                if (error) {
+                  const alt = await supabase
+                    .from('user_profiles')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .single();
+                  profile = alt.data as any;
+                }
+                if (profile && typeof profile.is_pro === 'boolean') {
+                  const expiresAt = profile.pro_expires_at ? new Date(profile.pro_expires_at as string) : null;
+                  const proActive = profile.is_pro && (!expiresAt || expiresAt > now);
+                  const nextPlan: SubscriptionPlan = proActive ? 'pro' : (savedPlan || 'free');
+                  setSubscriptionPlan(nextPlan);
+                  localStorage.setItem('subscription_plan', nextPlan);
+                }
+              } catch {}
             } catch (e) {
               // Non-fatal: keep local plan
               console.warn('Failed to sync subscription from profile:', e);
@@ -143,6 +176,18 @@ export default function HomePage() {
         localStorage.setItem('user_preferences', JSON.stringify(data));
         localStorage.setItem('onboardingCompleted', 'true');
       }
+      // Persist account-scoped onboarding flag
+      try {
+        if (session?.user?.id) {
+          await supabase.from('user_profiles').upsert({
+            user_id: session.user.id as string,
+            email: session.user.email ?? null,
+            onboarding_completed: true,
+            onboarding_completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+        }
+      } catch {}
       
       setShowOnboarding(false);
       

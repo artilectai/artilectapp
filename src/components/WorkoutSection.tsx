@@ -33,6 +33,7 @@ import {
 import { WorkoutAnalytics } from './WorkoutAnalytics';
 import { WorkoutSportOnboardingWizard } from '@/components/WorkoutSportOnboardingWizard';
 import { supabase } from '@/lib/supabase/client';
+import { useSession } from '@/lib/supabase/useSession';
 import { createProgram } from '@/app/actions/workout/programs';
 import { logSession } from '@/app/actions/workout/sessions';
 
@@ -82,6 +83,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
   onAddWorkout
 }, ref) => {
   const { t } = useTranslation('app');
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<'overview' | 'programs' | 'session' | 'history' | 'trackers'>('overview');
   const [programs, setPrograms] = useState<Program[]>([]);
   const [showWorkoutOnboarding, setShowWorkoutOnboarding] = useState(false);
@@ -267,7 +269,23 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
         }
       } catch {}
 
-      const setupComplete = localStorage.getItem('workout_setup_complete') === 'true';
+      // Prefer account-scoped server flag; fallback to localStorage
+      let setupComplete = false;
+      try {
+        const userId = (session as any)?.user?.id as string | undefined;
+        if (userId) {
+          const { data: up } = await supabase
+            .from('user_profiles')
+            .select('workout_setup_completed')
+            .eq('user_id', userId)
+            .maybeSingle();
+          setupComplete = Boolean(up?.workout_setup_completed);
+        } else {
+          setupComplete = localStorage.getItem('workout_setup_complete') === 'true';
+        }
+      } catch {
+        setupComplete = localStorage.getItem('workout_setup_complete') === 'true';
+      }
       try {
         // If user hasn't completed setup and has no programs, show onboarding
         if (!setupComplete) {
@@ -281,7 +299,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
         if (!setupComplete && programs.length === 0) setShowWorkoutOnboarding(true);
       }
     })();
-  }, []);
+  }, [session?.user?.id]);
 
   // Realtime subscriptions for programs and sessions
   useEffect(() => {
