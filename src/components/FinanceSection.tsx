@@ -925,21 +925,46 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       // Helper: detect UUID-like ids
       const isUUID = (id: string | undefined) => !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 
-      // Ensure we have a remote-backed account id (FK)
+      // Ensure we use the exact selected account; if local id, resolve by name or create remote twin
       const ensureRemoteAccountId = async (): Promise<string> => {
-        const desired = transactionData.accountId || accounts[0]?.id || '';
-        if (isUUID(desired)) return desired as string;
-        const remote = accounts.find(a => isUUID(a.id));
-        if (remote) return remote.id;
-        // Create a default remote account
-        const name = accounts[0]?.name || 'Main Account';
-        const type = (accounts[0]?.type as any) || 'cash';
+        const desiredId = transactionData.accountId || accounts[0]?.id || '';
+        if (isUUID(desiredId)) return desiredId as string;
+
+        // Try find selected account by id in current list
+        const selected = accounts.find(a => a.id === desiredId);
+        if (selected) {
+          // If there is already a remote account with the same name, use it
+          const sameNameRemote = accounts.find(a => a.name === selected.name && isUUID(a.id));
+          if (sameNameRemote) return sameNameRemote.id;
+          // Create a remote account mirroring selected
+          const { data, error } = await supabase
+            .from('finance_accounts')
+            .insert({
+              user_id: userRes.user.id,
+              name: selected.name,
+              type: selected.type,
+              currency: selected.currency || currency,
+              color: selected.color || '#10B981',
+              is_default: !!selected.isDefault,
+            })
+            .select('id')
+            .single();
+          if (error) throw new Error(`Failed to create account: ${error.message}`);
+          return String(data.id);
+        }
+
+        // Fallback: use any existing remote account if present
+        const anyRemote = accounts.find(a => isUUID(a.id));
+        if (anyRemote) return anyRemote.id;
+
+        // Last resort: create a default remote account
+        const fallbackName = 'Main Account';
         const { data, error } = await supabase
           .from('finance_accounts')
           .insert({
             user_id: userRes.user.id,
-            name,
-            type,
+            name: fallbackName,
+            type: 'cash',
             currency,
             color: '#10B981',
             is_default: true,
@@ -950,12 +975,14 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         return String(data.id);
       };
 
-      // Try client-side Supabase insert first
-      const tryClientInsert = async () => {
-        const account_id = await ensureRemoteAccountId();
+    // Resolve the selected account once
+    const resolvedAccountId = await ensureRemoteAccountId();
+
+    // Try client-side Supabase insert first
+    const tryClientInsert = async () => {
         const { error } = await supabase.from('finance_transactions').insert({
           user_id: userRes.user.id,
-          account_id,
+      account_id: resolvedAccountId,
           type: (transactionData.type as any) || 'expense',
           amount: Number(transactionData.amount || 0),
           currency,
@@ -967,8 +994,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       };
 
       // Fallback: API route with timeout to avoid hangs
-      const tryApiFallback = async () => {
-        const account_id = await ensureRemoteAccountId();
+  const tryApiFallback = async () => {
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 12000);
         try {
@@ -976,7 +1002,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              account_id,
+      account_id: resolvedAccountId,
               type: (transactionData.type as any) || 'expense',
               amount: Number(transactionData.amount || 0),
               currency,
@@ -1012,7 +1038,9 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         }
       }
 
-      await loadRemote();
+  await loadRemote();
+  // Reflect the selected account in the header selector
+  setSelectedAccount(resolvedAccountId);
       setShowTransactionDialog(false);
       toast.success(t('finance.transactions.form.actions.saved', { defaultValue: 'Transaction added successfully' }));
     };
