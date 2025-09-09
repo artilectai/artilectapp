@@ -1895,6 +1895,22 @@ function TaskDetailPanel({ task, onEdit, onDelete }: {
         </div>
       </div>
 
+      {task.checklist.length > 0 && (
+        <div className="mb-6">
+          <h3 className="font-medium mb-2">{t('planner.detail.checklist')}</h3>
+          <div className="space-y-2">
+            {task.checklist.map(item => (
+              <div key={item.id} className="flex items-center gap-2">
+                <Checkbox checked={item.completed} disabled />
+                <span className={item.completed ? "line-through text-muted-foreground" : ""}>
+                  {item.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {task.description && (
         <div className="mb-6">
           <h3 className="font-medium mb-2">{t('planner.detail.description')}</h3>
@@ -1941,21 +1957,7 @@ function TaskDetailPanel({ task, onEdit, onDelete }: {
         </div>
       )}
 
-      {task.checklist.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-medium mb-2">{t('planner.detail.checklist')}</h3>
-          <div className="space-y-2">
-            {task.checklist.map(item => (
-              <div key={item.id} className="flex items-center gap-2">
-                <Checkbox checked={item.completed} disabled />
-                <span className={item.completed ? "line-through text-muted-foreground" : ""}>
-                  {item.text}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }
@@ -2040,6 +2042,35 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
           placeholder={t('planner.editor.task.titlePlaceholder')}
           required
         />
+      </div>
+
+      {/* Checklist immediately after title */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <Label className="text-sm font-medium">{t('planner.editor.checklistLabel')}</Label>
+          <ScaleButton type="button" variant="outline" size="sm" onClick={addChecklistItem}>
+            {t('planner.editor.addItem')}
+          </ScaleButton>
+        </div>
+        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+          {formData.checklist?.map((item) => (
+            <div key={item.id} className="flex items-center gap-2">
+              <Checkbox
+                checked={item.completed}
+                onCheckedChange={(c) => updateChecklistItem(item.id, { completed: !!c })}
+              />
+              <Input
+                value={item.text}
+                onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
+                placeholder={t('planner.editor.checklistItemPlaceholder')}
+                className="h-10 flex-1 min-w-0"
+              />
+              <ScaleButton type="button" variant="ghost" size="sm" onClick={() => removeChecklistItem(item.id)}>
+                ×
+              </ScaleButton>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -2175,33 +2206,7 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
         />
       </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <Label className="text-sm font-medium">{t('planner.editor.checklistLabel')}</Label>
-          <ScaleButton type="button" variant="outline" size="sm" onClick={addChecklistItem}>
-            {t('planner.editor.addItem')}
-          </ScaleButton>
-        </div>
-        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-          {formData.checklist?.map((item) => (
-            <div key={item.id} className="flex items-center gap-2">
-              <Checkbox
-                checked={item.completed}
-                onCheckedChange={(c) => updateChecklistItem(item.id, { completed: !!c })}
-              />
-              <Input
-                value={item.text}
-                onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
-                placeholder={t('planner.editor.checklistItemPlaceholder')}
-                className="h-10 flex-1 min-w-0"
-              />
-              <ScaleButton type="button" variant="ghost" size="sm" onClick={() => removeChecklistItem(item.id)}>
-                ×
-              </ScaleButton>
-            </div>
-          ))}
-        </div>
-      </div>
+      
 
       {/* footer */}
       <div className="sticky bottom-0 -mx-4 sm:mx-0 border-t bg-background/90 backdrop-blur px-4 py-3">

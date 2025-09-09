@@ -1,0 +1,10 @@
+aiogram~=3.22
+fastapi~=0.115
+uvicorn[standard]~=0.30
+python-dotenv~=1.0
+openai>=1.40
+supabase~=2.6
+pydantic~=2.8
+itsdangerous~=2.2
+python-dateutil~=2.9
+pytz~=2024.1
