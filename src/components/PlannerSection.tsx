@@ -239,48 +239,109 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   // i18n-aware date formatters
   const lang = (i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
 
-  // --- Durable storage for weekly/monthly/yearly goals (localStorage keyed by user) ---
-  const storageKey = useMemo(() => {
-    const uid = (userData?.id || userData?.email || 'anon') as string;
-    return `planner_goals_${uid}`;
-  }, [userData?.id, userData?.email]);
+  // --- Supabase-backed storage for weekly/monthly/yearly goals ---
+  const loadGoals = useCallback(async () => {
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+      if (!userId) {
+        setWeeklyGoals([]); setMonthlyGoals([]); setYearlyGoals([]);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('planner_goals')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      const rows = (data || []) as any[];
+      const allGoals: Goal[] = rows.map((row) => ({
+        id: String(row.id),
+        title: row.title || '',
+        description: row.description || undefined,
+        status: (row.status || 'planning') as Goal['status'],
+        priority: (row.priority || 'medium') as Goal['priority'],
+        type: (row.type || 'weekly') as Goal['type'],
+        targetDate: row.target_date ? new Date(row.target_date) : new Date(),
+        milestones: Array.isArray(row.milestones)
+          ? row.milestones.map((m: any) => ({ ...m, dueDate: m?.dueDate ? new Date(m.dueDate) : undefined }))
+          : [],
+        progress: typeof row.progress === 'number' ? row.progress : 0,
+        createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+        updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
+      }));
+      setWeeklyGoals(allGoals.filter(g => g.type === 'weekly'));
+      setMonthlyGoals(allGoals.filter(g => g.type === 'monthly'));
+      setYearlyGoals(allGoals.filter(g => g.type === 'yearly'));
+    } catch (e) {
+      console.error('Failed to load planner_goals:', e);
+    }
+  }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { weekly?: any[]; monthly?: any[]; yearly?: any[] };
-      if (parsed?.weekly) setWeeklyGoals(parsed.weekly.map((g: any) => ({
-        ...g,
-        targetDate: new Date(g.targetDate),
-        createdAt: new Date(g.createdAt),
-        updatedAt: new Date(g.updatedAt)
-      })));
-      if (parsed?.monthly) setMonthlyGoals(parsed.monthly.map((g: any) => ({
-        ...g,
-        targetDate: new Date(g.targetDate),
-        createdAt: new Date(g.createdAt),
-        updatedAt: new Date(g.updatedAt)
-      })));
-      if (parsed?.yearly) setYearlyGoals(parsed.yearly.map((g: any) => ({
-        ...g,
-        targetDate: new Date(g.targetDate),
-        createdAt: new Date(g.createdAt),
-        updatedAt: new Date(g.updatedAt)
-      })));
-    } catch {}
-  }, [storageKey]);
+    loadGoals();
+    const ch = supabase
+      .channel('planner-goals-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'planner_goals' }, () => loadGoals())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [loadGoals]);
 
-  const persistGoals = useCallback((wg: Goal[], mg: Goal[], yg: Goal[]) => {
-    if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem(storageKey, JSON.stringify({ weekly: wg, monthly: mg, yearly: yg }));
-      window.dispatchEvent(new Event('planner:goals-updated'));
-    } catch {}
-  }, [storageKey]);
+  // One-time migration: import localStorage goals into Supabase if user is signed-in and no rows exist yet
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth?.user?.id;
+        if (!userId) return; // only migrate for signed-in users
 
-  useEffect(() => { persistGoals(weeklyGoals, monthlyGoals, yearlyGoals); }, [weeklyGoals, monthlyGoals, yearlyGoals, persistGoals]);
+        const { count, error: cntErr } = await supabase
+          .from('planner_goals')
+          .select('id', { count: 'exact', head: true });
+        if (cntErr) throw cntErr;
+        if ((count ?? 0) > 0) return; // already in DB, skip migration
+
+        // read any legacy local storage
+        const legacyKey = (() => {
+          const uid = (userData?.id || userData?.email || 'anon') as string;
+          return `planner_goals_${uid}`;
+        })();
+        const raw = typeof window !== 'undefined' ? localStorage.getItem(legacyKey) : null;
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as { weekly?: any[]; monthly?: any[]; yearly?: any[] };
+        const toRows: any[] = [];
+        const pushGoals = (arr: any[] | undefined, type: 'weekly'|'monthly'|'yearly') => {
+          (arr || []).forEach(g => {
+            toRows.push({
+              user_id: userId,
+              title: g.title || '',
+              description: g.description || null,
+              status: g.status || 'planning',
+              priority: g.priority || 'medium',
+              type,
+              target_date: g.targetDate ? new Date(g.targetDate).toISOString() : new Date().toISOString(),
+              milestones: Array.isArray(g.milestones) ? g.milestones : [],
+              progress: typeof g.progress === 'number' ? g.progress : 0,
+              created_at: g.createdAt ? new Date(g.createdAt).toISOString() : new Date().toISOString(),
+              updated_at: g.updatedAt ? new Date(g.updatedAt).toISOString() : new Date().toISOString(),
+            });
+          });
+        };
+        pushGoals(parsed.weekly, 'weekly');
+        pushGoals(parsed.monthly, 'monthly');
+        pushGoals(parsed.yearly, 'yearly');
+        if (toRows.length === 0) return;
+
+        const { error: insErr } = await supabase.from('planner_goals').insert(toRows);
+        if (insErr) throw insErr;
+        // Clear legacy and reload
+        localStorage.removeItem(legacyKey);
+        await loadGoals();
+        toast.success(t('toasts.planner.goalSaved', { defaultValue: 'Goals synced to cloud' }));
+      } catch (e) {
+        // silent
+      }
+    })();
+  }, [userData?.id, userData?.email, t, loadGoals]);
   const intlLocale = lang === 'ru' ? 'ru-RU' : lang === 'uz' ? 'uz-UZ' : 'en-US';
   const fmt = useMemo(() => ({
     md: new Intl.DateTimeFormat(intlLocale, { month: 'short', day: 'numeric' }),
@@ -1038,95 +1099,113 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         }
       }
     } else if (viewMode === "weekly") {
-      // Toggle weekly goal completion
-      setWeeklyGoals(prev => prev.map(g => 
-        g.id === itemId
-          ? {
-              ...g,
-              status: g.status === "completed" ? "in_progress" : "completed",
-              progress: g.status === "completed" ? 0 : 100,
-              updatedAt: new Date()
-            }
-          : g
-      ));
+      // Toggle weekly goal completion and persist
+      let next: Goal | undefined;
+      setWeeklyGoals(prev => prev.map(g => {
+        if (g.id !== itemId) return g;
+        const toggled = {
+          ...g,
+          status: g.status === 'completed' ? 'in_progress' : 'completed',
+          progress: g.status === 'completed' ? 0 : 100,
+          updatedAt: new Date(),
+        } as Goal;
+        next = toggled; return toggled;
+      }));
+      try {
+        if (next) {
+          await supabase.from('planner_goals').update({
+            status: next.status,
+            progress: next.progress,
+            updated_at: new Date().toISOString(),
+          }).eq('id', next.id);
+        }
+      } catch (e) { /* reload on error */ await loadGoals(); }
     } else if (viewMode === "monthly") {
-      // Toggle monthly goal completion
-      setMonthlyGoals(prev => prev.map(g => 
-        g.id === itemId
-          ? {
-              ...g,
-              status: g.status === "completed" ? "in_progress" : "completed",
-              progress: g.status === "completed" ? 0 : 100,
-              updatedAt: new Date()
-            }
-          : g
-      ));
+      let next: Goal | undefined;
+      setMonthlyGoals(prev => prev.map(g => {
+        if (g.id !== itemId) return g;
+        const toggled = {
+          ...g,
+          status: g.status === 'completed' ? 'in_progress' : 'completed',
+          progress: g.status === 'completed' ? 0 : 100,
+          updatedAt: new Date(),
+        } as Goal;
+        next = toggled; return toggled;
+      }));
+      try {
+        if (next) {
+          await supabase.from('planner_goals').update({
+            status: next.status,
+            progress: next.progress,
+            updated_at: new Date().toISOString(),
+          }).eq('id', next.id);
+        }
+      } catch (e) { await loadGoals(); }
     } else {
-      // Toggle yearly goal completion
-      setYearlyGoals(prev => prev.map(g => 
-        g.id === itemId
-          ? {
-              ...g,
-              status: g.status === "completed" ? "in_progress" : "completed",
-              progress: g.status === "completed" ? 0 : 100,
-              updatedAt: new Date()
-            }
-          : g
-      ));
+      let next: Goal | undefined;
+      setYearlyGoals(prev => prev.map(g => {
+        if (g.id !== itemId) return g;
+        const toggled = {
+          ...g,
+          status: g.status === 'completed' ? 'in_progress' : 'completed',
+          progress: g.status === 'completed' ? 0 : 100,
+          updatedAt: new Date(),
+        } as Goal;
+        next = toggled; return toggled;
+      }));
+      try {
+        if (next) {
+          await supabase.from('planner_goals').update({
+            status: next.status,
+            progress: next.progress,
+            updated_at: new Date().toISOString(),
+          }).eq('id', next.id);
+        }
+      } catch (e) { await loadGoals(); }
     }
-  }, [selectedDate, viewMode, loadTasks]);
+  }, [selectedDate, viewMode, loadTasks, loadGoals]);
 
   const handleSaveGoal = useCallback(async (goalData: Partial<Goal>) => {
     setIsLoading(true);
     
     try {
-      // Optimistic update
+  const { data: auth } = await supabase.auth.getUser();
+  const userId = auth?.user?.id;
+  if (!userId) throw new Error('Not signed in');
+      // Persist to Supabase with optimistic UI
       if (goalData.id) {
-        // Update existing goal
-        if (viewMode === "weekly") {
-          setWeeklyGoals(prev => prev.map(g => 
-            g.id === goalData.id ? { ...g, ...goalData, updatedAt: new Date() } : g
-          ));
-        } else if (viewMode === "monthly") {
-          setMonthlyGoals(prev => prev.map(g => 
-            g.id === goalData.id ? { ...g, ...goalData, updatedAt: new Date() } : g
-          ));
-        } else {
-          setYearlyGoals(prev => prev.map(g => 
-            g.id === goalData.id ? { ...g, ...goalData, updatedAt: new Date() } : g
-          ));
-        }
-      } else {
-        // Create new goal
-        const newGoal: Goal = {
-          id: Date.now().toString(),
-          title: goalData.title || t('planner.default.untitledGoal'),
-          description: goalData.description,
-          status: goalData.status || "planning",
-          priority: goalData.priority || "medium",
-          targetDate: goalData.targetDate || selectedDate,
+        const payload = {
+          title: goalData.title,
+          description: goalData.description ?? null,
+          status: goalData.status,
+          priority: goalData.priority,
+          type: goalData.type,
+          target_date: goalData.targetDate ? goalData.targetDate.toISOString() : undefined,
           milestones: goalData.milestones || [],
-          progress: goalData.progress || 0,
-          type: viewMode as "weekly" | "monthly" | "yearly",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        
-        if (viewMode === "weekly") {
-          setWeeklyGoals(prev => [newGoal, ...prev]);
-        } else if (viewMode === "monthly") {
-          setMonthlyGoals(prev => [newGoal, ...prev]);
-        } else {
-          setYearlyGoals(prev => [newGoal, ...prev]);
-        }
+          progress: typeof goalData.progress === 'number' ? goalData.progress : undefined,
+          updated_at: new Date().toISOString(),
+        } as any;
+        await supabase.from('planner_goals').update(payload).eq('id', goalData.id);
+      } else {
+        const toInsert = {
+          user_id: userId,
+          title: goalData.title || t('planner.default.untitledGoal'),
+          description: goalData.description || null,
+          status: goalData.status || 'planning',
+          priority: goalData.priority || 'medium',
+          type: (goalData.type as any) || (viewMode as any),
+          target_date: (goalData.targetDate || selectedDate).toISOString(),
+          milestones: goalData.milestones || [],
+          progress: typeof goalData.progress === 'number' ? goalData.progress : 0,
+        } as any;
+        await supabase.from('planner_goals').insert(toInsert);
       }
       
       setIsGoalEditorOpen(false);
       setEditingGoal(null);
   toast.success(t('toasts.planner.goalSaved'));
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await loadGoals();
       
     } catch (error) {
       // Rollback on error
@@ -1134,12 +1213,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     } finally {
       setIsLoading(false);
     }
-  }, [viewMode, selectedDate]);
+  }, [viewMode, selectedDate, t, loadGoals]);
 
   const handleDeleteGoal = useCallback((goalId: string) => {
-    const goalToDelete = viewMode === "weekly" ? weeklyGoals.find(g => g.id === goalId) : 
-                         viewMode === "monthly" ? monthlyGoals.find(g => g.id === goalId) : 
-                         yearlyGoals.find(g => g.id === goalId);
+  const goalToDelete = viewMode === "weekly" ? weeklyGoals.find(g => g.id === goalId) : 
+             viewMode === "monthly" ? monthlyGoals.find(g => g.id === goalId) : 
+             yearlyGoals.find(g => g.id === goalId);
     
     if (!goalToDelete) return;
 
@@ -1154,22 +1233,45 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     
     setSelectedGoal(null);
     
-    // Show undo option
-  toast.success(t('toasts.planner.goalDeleted'), {
-      action: {
-    label: t('common.undo', { defaultValue: 'Undo' }),
-        onClick: () => {
-          if (viewMode === "weekly") {
-            setWeeklyGoals(prev => [...prev, goalToDelete]);
-          } else if (viewMode === "monthly") {
-            setMonthlyGoals(prev => [...prev, goalToDelete]);
-          } else {
-            setYearlyGoals(prev => [...prev, goalToDelete]);
+    // Persist deletion
+    (async () => {
+      try {
+        await supabase.from('planner_goals').delete().eq('id', goalId);
+      } catch (e) {
+        toast.error(t('toasts.planner.goalSaveFailed'));
+        await loadGoals();
+        return;
+      }
+      // Undo option (recreate)
+      toast.success(t('toasts.planner.goalDeleted'), {
+        action: {
+          label: t('common.undo', { defaultValue: 'Undo' }),
+          onClick: async () => {
+            try {
+              if (!goalToDelete) return;
+              const { data: auth } = await supabase.auth.getUser();
+              const userId = auth?.user?.id;
+              if (!userId) return;
+              await supabase.from('planner_goals').insert({
+                user_id: userId,
+                title: goalToDelete.title,
+                description: goalToDelete.description || null,
+                status: goalToDelete.status,
+                priority: goalToDelete.priority,
+                type: goalToDelete.type,
+                target_date: goalToDelete.targetDate.toISOString(),
+                milestones: goalToDelete.milestones || [],
+                progress: goalToDelete.progress,
+                created_at: goalToDelete.createdAt.toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+              await loadGoals();
+            } catch {}
           }
         }
-      }
-    });
-  }, [viewMode, weeklyGoals, monthlyGoals, yearlyGoals]);
+      });
+    })();
+  }, [viewMode, weeklyGoals, monthlyGoals, yearlyGoals, t, loadGoals]);
 
   const formatDate = (date: Date) => {
     const today = new Date();

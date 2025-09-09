@@ -112,6 +112,22 @@ create table if not exists public.workout_sessions (
   created_at timestamptz not null default now()
 );
 
+-- Planner goals (weekly/monthly/yearly)
+create table if not exists public.planner_goals (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  title text not null,
+  description text,
+  status text not null default 'planning' check (status in ('planning','in_progress','completed','paused')),
+  priority text not null default 'medium' check (priority in ('low','medium','high')),
+  type text not null check (type in ('weekly','monthly','yearly')),
+  target_date timestamptz not null,
+  milestones jsonb not null default '[]'::jsonb,
+  progress int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- RLS
 alter table public.tasks enable row level security;
 alter table public.user_profiles enable row level security;
@@ -121,6 +137,7 @@ alter table public.finance_transactions enable row level security;
 alter table public.workout_programs enable row level security;
 alter table public.workout_sessions enable row level security;
 alter table public.subscriptions enable row level security;
+alter table public.planner_goals enable row level security;
 
 -- Policies: users can CRUD own rows
 create policy tasks_select on public.tasks for select using (auth.uid() = user_id);
@@ -156,6 +173,12 @@ create policy ws_select on public.workout_sessions for select using (auth.uid() 
 create policy ws_insert on public.workout_sessions for insert with check (auth.uid() = user_id);
 create policy ws_update on public.workout_sessions for update using (auth.uid() = user_id);
 create policy ws_delete on public.workout_sessions for delete using (auth.uid() = user_id);
+
+-- Planner goals policies: CRUD own rows
+create policy pg_select on public.planner_goals for select using (auth.uid() = user_id);
+create policy pg_insert on public.planner_goals for insert with check (auth.uid() = user_id);
+create policy pg_update on public.planner_goals for update using (auth.uid() = user_id);
+create policy pg_delete on public.planner_goals for delete using (auth.uid() = user_id);
 
 -- Subscriptions: users can only access and manage their own subscription
 create policy subs_select on public.subscriptions for select using (auth.uid() = user_id);
