@@ -3,7 +3,7 @@
 import React, { useState, useCallback, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { ScaleButton } from "@/components/iOSAnimations";
+import { ScaleButton, SlideUpModal } from "@/components/iOSAnimations";
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,6 +30,8 @@ import {
   Save,
   X
 } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as DateCalendar } from "@/components/ui/calendar";
 import { WorkoutAnalytics } from './WorkoutAnalytics';
 import { WorkoutSportOnboardingWizard } from '@/components/WorkoutSportOnboardingWizard';
 import { supabase } from '@/lib/supabase/client';
@@ -85,6 +87,9 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
   const { t } = useTranslation('app');
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<'overview' | 'programs' | 'session' | 'history' | 'trackers'>('overview');
+  // Planner-style date controls
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showCalendarPicker, setShowCalendarPicker] = useState(false);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [showWorkoutOnboarding, setShowWorkoutOnboarding] = useState(false);
   const [currentSession, setCurrentSession] = useState<null | { programId: string; startedAt: string; completed: Record<string, boolean> }>(null);
@@ -741,29 +746,87 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
       )}
   {/* Header removed per design: no title or plan badge */}
 
+      {/* Planner-style Date Header */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {(() => {
+              // Render 7 adjacent days like Planner daily view
+              const days: Date[] = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(selectedDate);
+                d.setDate(selectedDate.getDate() - 3 + i);
+                d.setHours(0,0,0,0);
+                return d;
+              });
+              const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+              const wd = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'short' });
+              return (
+                <div className="flex items-center gap-2">
+                  {days.map((d) => {
+                    const isSel = isSameDay(d, selectedDate);
+                    const isToday = isSameDay(d, new Date());
+                    return (
+                      <ScaleButton
+                        key={d.toISOString()}
+                        onClick={() => setSelectedDate(d)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          isSel
+                            ? 'bg-[#00d563] text-white'
+                            : isToday
+                            ? 'bg-[#00d563]/20 text-[#00d563] hover:bg-[#00d563]/30'
+                            : 'hover:bg-surface-1 text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="text-xs">{wd(d)}</div>
+                          <div className={`text-sm ${isSel ? 'font-bold' : ''}`}>{d.getDate()}</div>
+                        </div>
+                      </ScaleButton>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+      <div className="flex items-center gap-3">
+            <ScaleButton
+              onClick={() => setShowCalendarPicker(true)}
+              className="shrink-0 h-9 w-9 md:h-10 md:w-auto md:px-3 flex items-center justify-center gap-2 rounded-xl hover:bg-surface-1/50 text-emerald-400"
+            >
+        <CalendarIcon className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden md:inline text-sm font-medium">
+                {selectedDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              </span>
+            </ScaleButton>
+          </div>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="flex-1 flex flex-col">
         <Tabs value={activeTab} onValueChange={(value) => {
           setActiveTab(value as typeof activeTab);
         }} className="flex-1 flex flex-col">
-          {/* Full-width tab bar like Planner (daily/weekly/monthly/yearly) */}
-          <TabsList className="grid w-full grid-cols-5 gap-2 bg-surface-1 mx-4 mt-4 mb-2 h-12 rounded-full px-2">
-            <TabsTrigger value="overview" className="text-xs flex items-center justify-center rounded-full h-9">
-              <BarChart3 className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="programs" className="text-xs flex items-center justify-center rounded-full h-9">
-              <LayoutTemplate className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="session" className="text-xs flex items-center justify-center rounded-full h-9">
-              <Play className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="history" className="text-xs flex items-center justify-center rounded-full h-9">
-              <Logs className="w-4 h-4" />
-            </TabsTrigger>
-            <TabsTrigger value="trackers" className="text-xs flex items-center justify-center rounded-full h-9">
-              <Timer className="w-4 h-4" />
-            </TabsTrigger>
-          </TabsList>
+          {/* Match Planner tabs bar (container + defaults from ui/tabs.tsx) */}
+          <div className="px-4 py-2 border-b border-border bg-surface-1/50">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+              </TabsTrigger>
+              <TabsTrigger value="programs" className="flex items-center gap-2">
+                <LayoutTemplate className="w-4 h-4" />
+              </TabsTrigger>
+              <TabsTrigger value="session" className="flex items-center gap-2">
+                <Play className="w-4 h-4" />
+              </TabsTrigger>
+              <TabsTrigger value="history" className="flex items-center gap-2">
+                <Logs className="w-4 h-4" />
+              </TabsTrigger>
+              <TabsTrigger value="trackers" className="flex items-center gap-2">
+                <Timer className="w-4 h-4" />
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <div className="flex-1 overflow-hidden">
       <TabsContent value="overview" className="h-full mt-0">
@@ -1217,6 +1280,51 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
           </div>
         </Tabs>
       </div>
+
+      {/* Calendar Picker Modal */}
+      {showCalendarPicker && (
+        <SlideUpModal
+          isOpen={showCalendarPicker}
+          onClose={() => setShowCalendarPicker(false)}
+          title={t('planner.calendar.selectDateTitle')}
+          className="min-h-[60vh]"
+        >
+          <div className="space-y-4">
+            <p className="text-muted-foreground text-center">
+              {t('planner.calendar.selectDateDesc')}
+            </p>
+            <div className="flex justify-center">
+              <div className="w-full max-w-[380px] sm:max-w-[420px]">
+                <div className="glass-card rounded-2xl p-4">
+                  <DateCalendar
+                    mode="single"
+                    showOutsideDays
+                    defaultMonth={selectedDate}
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (!date) return;
+                      setSelectedDate(date);
+                      setShowCalendarPicker(false);
+                      toast.success(t('planner.calendar.selectedToast', { date: date.toLocaleDateString() }));
+                    }}
+                    className="w-full [--cell-size:2.5rem]"
+                    classNames={{
+                      root: "w-full",
+                      months: "flex flex-col gap-2",
+                      month: "flex flex-col w-full gap-2",
+                      nav: "flex items-center justify-between relative",
+                      month_caption: "flex items-center justify-center h-10 w-full px-2 text-foreground",
+                      weekdays: "flex px-0.5",
+                      week: "flex w-full mt-1",
+                      day: "relative w-full h-full p-0 text-center group/day aspect-square select-none",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </SlideUpModal>
+      )}
 
   {/* Analytics Section (Planner/Finance style) */}
   {/* Add extra bottom padding so last cards aren't hidden behind bottom nav/FAB */}

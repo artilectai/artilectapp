@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Activity, Calendar, Flame, Target, TrendingUp, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Activity, Calendar, Flame, Target, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Doughnut, Line, Bar } from "react-chartjs-2";
 import { useTranslation } from "react-i18next";
@@ -517,72 +517,7 @@ export const WorkoutAnalytics: React.FC<WorkoutAnalyticsProps> = ({ metrics }) =
   <p className="text-gray-400">{t("workout.analytics.subheader")}</p>
       </motion.div>
 
-      {/* Week Navigator (like planner) */}
-      {(() => {
-        const days: Date[] = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(weekStart);
-          d.setDate(weekStart.getDate() + i);
-          return d;
-        });
-  const fmt = (d: Date) => d.toLocaleDateString(locale, { month: "short", day: "numeric" });
-        const rangeLabel = `${fmt(days[0])} – ${fmt(days[6])}`;
-        return (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-400">{t("workout.analytics.labels.week")}</div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const d = new Date(weekStart);
-                    d.setDate(d.getDate() - 7);
-                    setWeekStart(d);
-                  }}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <div className="text-sm text-gray-300 min-w-[120px] max-w-[180px] text-center font-medium tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">{rangeLabel}</div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const d = new Date(weekStart);
-                    d.setDate(d.getDate() + 7);
-                    setWeekStart(d);
-                  }}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="grid grid-cols-7 gap-2">
-              {days.map((d, idx) => {
-                const isSelected = idx === selectedDayIndex;
-                const isToday = sameDay(d, new Date());
-                return (
-                  <Button
-                    key={idx}
-                    variant="outline"
-                    size="sm"
-                    className={`rounded-lg px-2 py-1.5 justify-center border-gray-600/60 overflow-hidden ${
-                      isSelected ? "border-[#10B981] bg-[#10B981]/10 text-white" : ""
-                    } ${isToday ? "ring-1 ring-[#10B981]/60" : ""}`}
-                    onClick={() => setSelectedDayIndex(idx)}
-                  >
-                    <div className="flex flex-col items-center leading-tight">
-                      <span className={`text-[10px] ${isToday ? "text-[#10B981]" : "text-gray-400"}`}>
-                        {d.toLocaleDateString(locale, { weekday: "short" })}
-                      </span>
-                      <span className="text-sm leading-none">{d.getDate()}</span>
-                    </div>
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
+  {/* Week Navigator removed: dates/calendar now live above the Workout tabs, per design */}
 
       {/* Key stats (phone → 2 cols, tablet → 3, desktop → 4) */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
