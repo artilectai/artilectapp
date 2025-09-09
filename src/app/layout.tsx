@@ -8,6 +8,8 @@ import Script from "next/script";
 import I18nClientInit from "@/i18n-client";
 import I18nProvider from "@/i18n/I18nProvider";
 import TelegramBridge from "@/components/TelegramBridge";
+import TelegramBootstrap from "@/components/TelegramBootstrap";
+import ViewportHeightFix from "@/components/ViewportHeightFix";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
@@ -36,6 +38,8 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <TelegramBridge />
           </Suspense>
+          <TelegramBootstrap />
+          <ViewportHeightFix />
           <ErrorReporter />
           <Script
             src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"

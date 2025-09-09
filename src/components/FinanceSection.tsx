@@ -1474,19 +1474,15 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         if (error) throw error;
         const newId = String((data as any).id);
         setBudgets(prev => prev.map(b => b.id === optimistic.id ? { ...b, id: newId } : b));
+        // Success UI only after DB insert succeeds
+        setNewBudget({ category: '', limit: '', period: 'monthly' });
+        setShowBudgetDialog(false);
+        toast.success(t('toasts.finance.budgetCreated'));
       } catch (e) {
         // rollback
         setBudgets(prev => prev.filter(b => b.id !== optimistic.id));
         toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }));
       }
-      setNewBudget({
-        category: '',
-        limit: '',
-        period: 'monthly'
-      });
-      
-      setShowBudgetDialog(false);
-  toast.success(t('toasts.finance.budgetCreated'));
     };
 
     const handleSaveGoal = async () => {
@@ -1529,19 +1525,14 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         if (error) throw error;
         const newId = String((data as any).id);
         setGoals(prev => prev.map(g => g.id === optimistic.id ? { ...g, id: newId } : g));
+        // Success UI only after DB insert succeeds
+        setNewGoal({ name: '', targetAmount: '', deadline: '', category: '' });
+        setShowGoalDialog(false);
+        toast.success(t('toasts.finance.goalCreated'));
       } catch (e) {
         setGoals(prev => prev.filter(g => g.id !== optimistic.id));
         toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }));
       }
-      setNewGoal({
-        name: '',
-        targetAmount: '',
-        deadline: '',
-        category: ''
-      });
-      
-      setShowGoalDialog(false);
-  toast.success(t('toasts.finance.goalCreated'));
     };
 
   const handleUpdateBudgetProgress = async () => {

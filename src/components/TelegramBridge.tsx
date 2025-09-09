@@ -74,6 +74,7 @@ export default function TelegramBridge() {
 
     const key = 'tg_history_stack_v1';
     const current = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
+  const isRoot = pathname === '/' || pathname === '/home';
 
     // Read stack
     let stack: string[] = [];
@@ -102,7 +103,9 @@ export default function TelegramBridge() {
 
     // Toggle BackButton
     const updateBackButton = () => {
-      const canGoBack = stack.length > 1 || hasBackActions();
+      // Route-based rule: show Back on any non-root route (even with empty history)
+      const routeWantsBack = !isRoot;
+      const canGoBack = routeWantsBack || stack.length > 1 || hasBackActions();
       try { if (canGoBack) tg?.BackButton?.show?.(); else tg?.BackButton?.hide?.(); } catch {}
     };
     updateBackButton();

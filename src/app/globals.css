@@ -145,6 +145,11 @@ padding-inline: 2rem;
 
   /* Prefer dynamic viewport height to avoid 100vh bugs on iOS */
   .min-h-dvh { min-height: 100dvh; }
+  /* Root height based on Telegram viewport */
+  html, body, #__next, #root {
+    height: var(--tgvh, 100dvh);
+    min-height: var(--tgvh, 100dvh);
+  }
 
   /* Safe paddings with sensible defaults for phone “borders” */
   .pt-safe-top { padding-top: calc(var(--safe-top) + 12px); }
@@ -169,7 +174,7 @@ html {
 -moz-osx-font-smoothing: grayscale;
 text-rendering: optimizeLegibility;
 color-scheme: dark;
-height: 100%;
+height: var(--tgvh, 100dvh);
 overscroll-behavior: none;
 }
 body {
@@ -179,7 +184,7 @@ color: var(--color-foreground);
 overscroll-behavior-y: contain; /* prevent root scroll chaining */
 overscroll-behavior-x: none;
 touch-action: pan-y;
-height: 100dvh;
+height: var(--tgvh, 100dvh);
 overflow: hidden; /* prevent outer scroll that triggers pull-to-dismiss */
 }
 h1, h2, h3, h4 {
