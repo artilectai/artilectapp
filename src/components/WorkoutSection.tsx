@@ -924,7 +924,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
 
             <TabsContent value="programs" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+                <div className="p-4 space-y-4 pb-4">
                   {programs.length === 0 ? (
                     <Card className="glass-card p-8 text-center">
                       <LayoutTemplate className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -995,49 +995,7 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
                         {t('workout.section.cta.addNewProgram')}
                       </Button>
 
-                      {/* Analytics at Bottom with Blur Effect (Planner/Finance style) */}
-                      <div className="flex-shrink-0 p-4">
-                        <div className="relative rounded-xl">
-                          {/* Blurred underlying analytics card when locked */}
-                          <Card className={`glass-card p-2 md:p-4 ${!limits.analyticsAllowed ? 'filter blur-sm pointer-events-none select-none' : ''}`}>
-                            <WorkoutAnalytics />
-                          </Card>
-
-                          {/* Centered Overlay Upgrade (Finance style) */}
-                          {!limits.analyticsAllowed && (
-                            <div className="absolute inset-0 z-10 bg-black/20 backdrop-blur-[2px] flex items-center justify-center rounded-xl">
-                              <div className="text-center p-4">
-                                <Crown className="h-8 w-8 mx-auto mb-2 text-money-green" />
-                                <p className="text-sm font-medium text-white mb-1">{t('workout.analytics.header')}</p>
-                                {(() => {
-                                  const targetPlan = 'pro';
-                                  const planLabel = t(`plans.${targetPlan}`);
-                                  return (
-                                    <p className="text-xs text-white/80 mb-3">
-                                      {t('workout.analytics.overlay.subtitle', {
-                                        plan: planLabel,
-                                        defaultValue: 'Unlock detailed analytics with {{plan}} subscription'
-                                      })}
-                                    </p>
-                                  );
-                                })()}
-                                <ScaleButton onClick={onUpgrade} className="rounded-lg">
-                                  <div className="bg-money-gradient text-[#0a0b0d] px-4 py-2 rounded-lg text-sm font-medium">
-                                    {(() => {
-                                      const targetPlan = 'pro';
-                                      const planLabel = t(`plans.${targetPlan}`);
-                                      return t('workout.analytics.overlay.upgradeCta', {
-                                        plan: planLabel,
-                                        defaultValue: 'Upgrade to {{plan}}'
-                                      });
-                                    })()}
-                                  </div>
-                                </ScaleButton>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      {/* Removed duplicate analytics block inside Programs tab */}
                     </div>
                   )}
                 </div>
