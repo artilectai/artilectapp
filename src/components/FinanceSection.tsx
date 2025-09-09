@@ -175,8 +175,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     // State
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [budgets, setBudgets] = useState<Budget[]>([]);
-    const [goals, setGoals] = useState<Goal[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<string>("all");
     const [balanceVisible, setBalanceVisible] = useState(true);
     const [activeTab, setActiveTab] = useState("dashboard");
@@ -389,8 +389,21 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
       const initializeFinance = async () => {
         try {
-          // Check if financial setup is complete
-          const setupComplete = FinanceStore.isSetupComplete();
+          // Check if financial setup is complete (prefer server profile when signed in)
+          let setupComplete = FinanceStore.isSetupComplete();
+          try {
+            if (userId) {
+              const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('finance_setup_completed, currency')
+                .eq('user_id', userId)
+                .maybeSingle();
+              if (profile) {
+                setupComplete = !!profile.finance_setup_completed || setupComplete;
+                if (profile.currency) setCurrency(profile.currency);
+              }
+            }
+          } catch {}
           
           if (!setupComplete) {
             setShowFinanceOnboarding(true);
@@ -398,7 +411,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             return;
           }
 
-          // Load existing data if setup is complete
+          // Load existing data if setup is complete (legacy local only)
           const loadData = () => {
             try {
               const savedAccounts = dataManager.loadData('accounts', []) as any[];
@@ -464,11 +477,11 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       }
     }, [accounts, transactions, budgets, goals, currency, isInitialized]);
 
-    // Remote load: accounts and transactions + realtime
+    // Remote load: accounts, transactions, budgets, goals + realtime
     const loadRemote = useCallback(async () => {
       if (!userId) return;
       try {
-        const [accRes, txRes] = await Promise.all([
+        const [accRes, txRes, budRes, goalRes] = await Promise.all([
           supabase.from('finance_accounts').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
           // Join category to get human-readable name for UI
           supabase
@@ -476,9 +489,22 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             .select('*, category:finance_categories(name,type,color)')
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
+          ,
+          supabase
+            .from('finance_budgets')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('finance_goals')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
         ]);
         const accs = (accRes as any)?.data || [];
         const txs = (txRes as any)?.data || [];
+        const buds = (budRes as any)?.data || [];
+        const gos = (goalRes as any)?.data || [];
         if (Array.isArray(accs)) {
           setAccounts(accs.map((a: any) => ({
             id: String(a.id),
@@ -507,6 +533,26 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             })) as Transaction[]
           );
         }
+        if (Array.isArray(buds)) {
+          setBudgets(buds.map((b: any) => ({
+            id: String(b.id),
+            category: b.category,
+            limit: Number(b.limit_amount),
+            spent: Number(b.spent ?? 0),
+            currency: b.currency || 'UZS',
+            period: b.period
+          })) as Budget[]);
+        }
+        if (Array.isArray(gos)) {
+          setGoals(gos.map((g: any) => ({
+            id: String(g.id),
+            name: g.name,
+            targetAmount: Number(g.target_amount),
+            currentAmount: Number(g.current_amount ?? 0),
+            deadline: g.deadline ? new Date(g.deadline) : new Date(),
+            category: g.category || ''
+          })) as Goal[]);
+        }
       } catch (e) {
         console.error('Finance remote load failed', e);
       }
@@ -523,9 +569,19 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         .channel('finance-transactions-rt-internal')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_transactions', filter: `user_id=eq.${userId}` }, () => loadRemote())
         .subscribe();
+      const ch3 = supabase
+        .channel('finance-budgets-rt-internal')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_budgets', filter: `user_id=eq.${userId}` }, () => loadRemote())
+        .subscribe();
+      const ch4 = supabase
+        .channel('finance-goals-rt-internal')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_goals', filter: `user_id=eq.${userId}` }, () => loadRemote())
+        .subscribe();
       return () => {
         supabase.removeChannel(ch1);
         supabase.removeChannel(ch2);
+        supabase.removeChannel(ch3);
+        supabase.removeChannel(ch4);
       };
     }, [loadRemote, userId]);
 
@@ -549,7 +605,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     }, [currency]);
 
     // Handle financial onboarding completion
-    const handleFinanceOnboardingComplete = useCallback((accountData: any) => {
+    const handleFinanceOnboardingComplete = useCallback(async (accountData: any) => {
       // Add the account to state
       const newAccount: Account = {
         id: accountData.id,
@@ -572,6 +628,18 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
       // Mark setup as complete in the local data manager too
       dataManager.markSetupComplete();
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (uid) {
+          await supabase.from('user_profiles').upsert({
+            user_id: uid,
+            finance_setup_completed: true,
+            currency: accountData.currency,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' });
+        }
+      } catch {}
     }, [dataManager]);
 
     // Create default account if none exist
@@ -1364,7 +1432,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       setEditCustomAccountTypeName('');
     };
 
-    const handleSaveBudget = () => {
+  const handleSaveBudget = async () => {
                     if (!limits.budgetsAllowed) {
                       toast.error(t('toasts.finance.budgetsRequirePro'));
         onUpgrade?.();
@@ -1376,16 +1444,41 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         return;
       }
 
-      const budget: Budget = {
-        id: Date.now().toString(),
+      const limitValue = parseFloat(newBudget.limit);
+      const optimistic: Budget = {
+        id: `temp_${Date.now()}`,
         category: newBudget.category,
-        limit: parseFloat(newBudget.limit),
+        limit: limitValue,
         spent: 0,
         currency: currency,
         period: newBudget.period
       };
 
-      setBudgets(prev => [...prev, budget]);
+      setBudgets(prev => [optimistic, ...prev]);
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (!uid) throw new Error('Not signed in');
+        const { data, error } = await supabase
+          .from('finance_budgets')
+          .insert({
+            user_id: uid,
+            category: optimistic.category,
+            limit_amount: optimistic.limit,
+            spent: optimistic.spent,
+            currency: optimistic.currency,
+            period: optimistic.period,
+          })
+          .select('id')
+          .single();
+        if (error) throw error;
+        const newId = String((data as any).id);
+        setBudgets(prev => prev.map(b => b.id === optimistic.id ? { ...b, id: newId } : b));
+      } catch (e) {
+        // rollback
+        setBudgets(prev => prev.filter(b => b.id !== optimistic.id));
+        toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }));
+      }
       setNewBudget({
         category: '',
         limit: '',
@@ -1396,7 +1489,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   toast.success(t('toasts.finance.budgetCreated'));
     };
 
-    const handleSaveGoal = () => {
+    const handleSaveGoal = async () => {
                     if (!limits.goalsAllowed) {
                       toast.error(t('toasts.finance.goalsRequirePro'));
         onUpgrade?.();
@@ -1408,16 +1501,38 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         return;
       }
 
-      const goal: Goal = {
-        id: Date.now().toString(),
+      const optimistic: Goal = {
+        id: `temp_${Date.now()}`,
         name: newGoal.name,
         targetAmount: parseFloat(newGoal.targetAmount),
         currentAmount: 0,
         deadline: new Date(newGoal.deadline),
         category: newGoal.category
       };
-
-      setGoals(prev => [...prev, goal]);
+      setGoals(prev => [optimistic, ...prev]);
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (!uid) throw new Error('Not signed in');
+        const { data, error } = await supabase
+          .from('finance_goals')
+          .insert({
+            user_id: uid,
+            name: optimistic.name,
+            target_amount: optimistic.targetAmount,
+            current_amount: optimistic.currentAmount,
+            deadline: optimistic.deadline.toISOString(),
+            category: optimistic.category || null,
+          })
+          .select('id')
+          .single();
+        if (error) throw error;
+        const newId = String((data as any).id);
+        setGoals(prev => prev.map(g => g.id === optimistic.id ? { ...g, id: newId } : g));
+      } catch (e) {
+        setGoals(prev => prev.filter(g => g.id !== optimistic.id));
+        toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }));
+      }
       setNewGoal({
         name: '',
         targetAmount: '',
@@ -1429,7 +1544,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   toast.success(t('toasts.finance.goalCreated'));
     };
 
-    const handleUpdateBudgetProgress = () => {
+  const handleUpdateBudgetProgress = async () => {
       if (!selectedBudget || !budgetProgressAmount) {
         toast.error("Please enter an amount");
         return;
@@ -1441,11 +1556,31 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         return;
       }
 
-      setBudgets(prev => prev.map(budget => 
+      const prev = budgets.find(b => b.id === selectedBudget.id);
+      setBudgets(prevList => prevList.map(budget => 
         budget.id === selectedBudget.id 
           ? { ...budget, spent: budget.spent + amount }
           : budget
       ));
+
+      try {
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (isUUID.test(selectedBudget.id)) {
+          const b = budgets.find(b => b.id === selectedBudget.id);
+          const newSpent = (b?.spent ?? 0) + amount;
+          const { error } = await supabase
+            .from('finance_budgets')
+            .update({ spent: newSpent, updated_at: new Date().toISOString() })
+            .eq('id', selectedBudget.id);
+          if (error) throw error;
+        }
+      } catch (e) {
+        // rollback
+        setBudgets(prevList => prevList.map(budget => 
+          budget.id === selectedBudget.id && prev ? { ...budget, spent: prev.spent } : budget
+        ));
+        toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }));
+      }
 
       setShowBudgetProgress(false);
       setBudgetProgressAmount('');
@@ -1453,7 +1588,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       toast.success("Budget progress updated");
     };
 
-    const handleUpdateGoalProgress = () => {
+  const handleUpdateGoalProgress = async () => {
       if (!selectedGoal || !goalProgressAmount) {
         toast.error("Please enter an amount");
         return;
@@ -1465,11 +1600,29 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         return;
       }
 
-      setGoals(prev => prev.map(goal => 
+      const prev = goals.find(g => g.id === selectedGoal.id);
+      const optimisticAmount = Math.min((prev?.currentAmount ?? 0) + amount, prev?.targetAmount ?? amount);
+      setGoals(prevList => prevList.map(goal => 
         goal.id === selectedGoal.id 
-          ? { ...goal, currentAmount: Math.min(goal.currentAmount + amount, goal.targetAmount) }
+          ? { ...goal, currentAmount: optimisticAmount }
           : goal
       ));
+
+      try {
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (isUUID.test(selectedGoal.id)) {
+          const { error } = await supabase
+            .from('finance_goals')
+            .update({ current_amount: optimisticAmount, updated_at: new Date().toISOString() })
+            .eq('id', selectedGoal.id);
+          if (error) throw error;
+        }
+      } catch (e) {
+        setGoals(prevList => prevList.map(goal => 
+          goal.id === selectedGoal.id && prev ? { ...goal, currentAmount: prev.currentAmount } : goal
+        ));
+        toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }));
+      }
 
       setShowGoalProgress(false);
       setGoalProgressAmount('');
@@ -1491,6 +1644,59 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       }
       setActiveTab(tab);
     };
+
+    // One-time migration: import legacy local budgets/goals to Supabase for signed-in users
+    useEffect(() => {
+      (async () => {
+        try {
+          if (!userId) return;
+          // If we already have any budgets/goals in DB, skip
+          const [{ count: bCount }, { count: gCount }] = await Promise.all([
+            supabase.from('finance_budgets').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+            supabase.from('finance_goals').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+          ] as any);
+          const hasRemote = (bCount ?? 0) > 0 || (gCount ?? 0) > 0;
+          if (hasRemote) return;
+
+          const legacyBudgets = dataManager.loadData('budgets', []) as any[];
+          const legacyGoals = dataManager.loadData('goals', []) as any[];
+          if ((legacyBudgets?.length ?? 0) === 0 && (legacyGoals?.length ?? 0) === 0) return;
+
+          if (legacyBudgets?.length) {
+            await supabase.from('finance_budgets').insert(
+              legacyBudgets.map((b: any) => ({
+                user_id: userId,
+                category: b.category,
+                limit_amount: b.limit,
+                spent: b.spent ?? 0,
+                currency: b.currency || 'UZS',
+                period: b.period || 'monthly',
+              }))
+            );
+          }
+          if (legacyGoals?.length) {
+            await supabase.from('finance_goals').insert(
+              legacyGoals.map((g: any) => ({
+                user_id: userId,
+                name: g.name,
+                target_amount: g.targetAmount,
+                current_amount: g.currentAmount ?? 0,
+                deadline: new Date(g.deadline).toISOString(),
+                category: g.category || null,
+              }))
+            );
+          }
+          // Optional: clear legacy local copies after migration
+          try {
+            dataManager.saveData('budgets', []);
+            dataManager.saveData('goals', []);
+          } catch {}
+          await loadRemote();
+        } catch (e) {
+          console.warn('Finance legacy migration skipped/failed', e);
+        }
+      })();
+    }, [userId, loadRemote]);
 
     // Show onboarding if not initialized or if explicitly showing onboarding
     if (!isInitialized) {
@@ -1521,6 +1727,19 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             setAccounts([defaultAccount]);
             dataManager.markSetupComplete();
             FinanceStore.markSetupComplete();
+            (async () => {
+              try {
+                const { data: auth } = await supabase.auth.getUser();
+                const uid = auth?.user?.id;
+                if (uid) {
+                  await supabase.from('user_profiles').upsert({
+                    user_id: uid,
+                    finance_setup_completed: true,
+                    updated_at: new Date().toISOString(),
+                  }, { onConflict: 'user_id' });
+                }
+              } catch {}
+            })();
           }}
         />
       );

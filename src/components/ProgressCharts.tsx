@@ -139,6 +139,7 @@ export const ProgressChartsAnalytics: React.FC<ProgressChartsAnalyticsProps & { 
     setTimeout(() => setIsLoading(false), 300);
   };
 
+  // Prefer prop, then user_profiles value via custom event/localStorage fallback
   const currentCurrency = currency || (typeof window !== 'undefined' ? (localStorage.getItem('finance_currency') as any) : 'UZS') || 'UZS';
   const formatCurrency = (value: number) => {
     if (currentCurrency === 'UZS') return 'UZS ' + new Intl.NumberFormat('uz-UZ').format(value);

@@ -129,31 +129,82 @@ export default function AppShell({
     // In a real app, this would send to analytics service
   }, []);
 
-  // Save currency to localStorage and trigger update in finance section
-  const handleCurrencyChange = useCallback((newCurrency: string) => {
+  // Save currency and trigger update in finance section; persist to user_profiles when signed in
+  const handleCurrencyChange = useCallback(async (newCurrency: string) => {
     setCurrency(newCurrency);
     if (typeof window !== 'undefined') {
       localStorage.setItem('finance_currency', newCurrency);
-      // Trigger a custom event to notify FinanceSection
-      window.dispatchEvent(new CustomEvent('currency-changed', { 
-        detail: { currency: newCurrency } 
-      }));
+      window.dispatchEvent(new CustomEvent('currency-changed', { detail: { currency: newCurrency } }));
     }
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (uid) {
+        await supabase.from('user_profiles').upsert({
+          user_id: uid,
+          currency: newCurrency,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      }
+    } catch {}
     toast.success(t('toasts.currency.changed', { currency: newCurrency }));
   }, [t]);
 
-  // Load settings from localStorage
+  // Load settings from Supabase user_profiles when signed in; fallback to localStorage for guests
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedCurrency = localStorage.getItem('finance_currency');
-      const savedTheme = localStorage.getItem('app_theme');
-      const savedTimezone = localStorage.getItem('app_timezone');
-      
-      if (savedCurrency) setCurrency(savedCurrency);
-      if (savedTheme) setTheme(savedTheme as 'dark' | 'light');
-  // timezone/currency handled here; language handled by i18n provider
-      if (savedTimezone) setTimezone(savedTimezone);
-    }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (uid) {
+          const { data } = await supabase
+            .from('user_profiles')
+            .select('app_theme, app_timezone, currency')
+            .eq('user_id', uid)
+            .single();
+          if (!cancelled) {
+            if (data) {
+              if (data.app_theme) setTheme((data.app_theme as 'dark' | 'light') || 'dark');
+              if (data.app_timezone) setTimezone(data.app_timezone || 'UTC');
+              if (data.currency) setCurrency(data.currency || 'USD');
+            } else {
+              // Create a default row using any locally saved preferences
+              const savedCurrency = typeof window !== 'undefined' ? localStorage.getItem('finance_currency') : null;
+              const savedTheme = typeof window !== 'undefined' ? localStorage.getItem('app_theme') : null;
+              const savedTimezone = typeof window !== 'undefined' ? localStorage.getItem('app_timezone') : null;
+              const app_theme = (savedTheme as 'dark' | 'light') || 'dark';
+              const app_timezone = savedTimezone || 'UTC';
+              const currency = savedCurrency || 'USD';
+              if (!cancelled) {
+                setTheme(app_theme);
+                setTimezone(app_timezone);
+                setCurrency(currency);
+              }
+              await supabase.from('user_profiles').upsert({
+                user_id: uid,
+                app_theme,
+                app_timezone,
+                currency,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'user_id' });
+            }
+          }
+          return;
+        }
+      } catch {}
+      // Guest fallback
+      if (typeof window !== 'undefined' && !cancelled) {
+        const savedCurrency = localStorage.getItem('finance_currency');
+        const savedTheme = localStorage.getItem('app_theme');
+        const savedTimezone = localStorage.getItem('app_timezone');
+        if (savedCurrency) setCurrency(savedCurrency);
+        if (savedTheme) setTheme(savedTheme as 'dark' | 'light');
+        if (savedTimezone) setTimezone(savedTimezone);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   // Update profile data when userData changes
@@ -168,12 +219,26 @@ export default function AppShell({
     }
   }, [userData]);
 
-  // Save settings to localStorage
+  // Persist settings: keep localStorage for offline, and upsert to Supabase when signed in
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('app_theme', theme);
       localStorage.setItem('app_timezone', timezone);
     }
+    (async () => {
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (uid) {
+          await supabase.from('user_profiles').upsert({
+            user_id: uid,
+            app_theme: theme,
+            app_timezone: timezone,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' });
+        }
+      } catch {}
+    })();
   }, [theme, timezone]);
 
   // Ensure inner content scrolls and page doesn’t overscroll

@@ -17,9 +17,21 @@ create table if not exists public.user_profiles (
   onboarding_completed_at timestamptz,
   finance_setup_completed boolean not null default false,
   workout_setup_completed boolean not null default false,
+  -- User preferences moved from localStorage
+  app_theme text not null default 'dark',
+  app_timezone text not null default 'UTC',
+  currency text not null default 'USD',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- If the table already existed, ensure new preference columns are present
+alter table if exists public.user_profiles 
+  add column if not exists app_theme text not null default 'dark';
+alter table if exists public.user_profiles 
+  add column if not exists app_timezone text not null default 'UTC';
+alter table if exists public.user_profiles 
+  add column if not exists currency text not null default 'USD';
 
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
@@ -91,6 +103,32 @@ create table if not exists public.finance_transactions (
   created_at timestamptz not null default now()
 );
 
+-- Budgets (previously in localStorage)
+create table if not exists public.finance_budgets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  category text not null,
+  limit_amount numeric not null,
+  spent numeric not null default 0,
+  currency text not null default 'UZS',
+  period text not null check (period in ('daily','weekly','monthly','quarterly','yearly')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Financial goals (previously in localStorage)
+create table if not exists public.finance_goals (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  name text not null,
+  target_amount numeric not null,
+  current_amount numeric not null default 0,
+  deadline timestamptz not null,
+  category text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.workout_programs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null,
@@ -134,6 +172,8 @@ alter table public.user_profiles enable row level security;
 alter table public.finance_accounts enable row level security;
 alter table public.finance_categories enable row level security;
 alter table public.finance_transactions enable row level security;
+alter table public.finance_budgets enable row level security;
+alter table public.finance_goals enable row level security;
 alter table public.workout_programs enable row level security;
 alter table public.workout_sessions enable row level security;
 alter table public.subscriptions enable row level security;
@@ -163,6 +203,16 @@ create policy ft_select on public.finance_transactions for select using (auth.ui
 create policy ft_insert on public.finance_transactions for insert with check (auth.uid() = user_id);
 create policy ft_update on public.finance_transactions for update using (auth.uid() = user_id);
 create policy ft_delete on public.finance_transactions for delete using (auth.uid() = user_id);
+
+create policy fb_select on public.finance_budgets for select using (auth.uid() = user_id);
+create policy fb_insert on public.finance_budgets for insert with check (auth.uid() = user_id);
+create policy fb_update on public.finance_budgets for update using (auth.uid() = user_id);
+create policy fb_delete on public.finance_budgets for delete using (auth.uid() = user_id);
+
+create policy fg_select on public.finance_goals for select using (auth.uid() = user_id);
+create policy fg_insert on public.finance_goals for insert with check (auth.uid() = user_id);
+create policy fg_update on public.finance_goals for update using (auth.uid() = user_id);
+create policy fg_delete on public.finance_goals for delete using (auth.uid() = user_id);
 
 create policy wp_select on public.workout_programs for select using (auth.uid() = user_id);
 create policy wp_insert on public.workout_programs for insert with check (auth.uid() = user_id);
