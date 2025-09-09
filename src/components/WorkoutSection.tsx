@@ -739,35 +739,28 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
           onSkip={() => setShowWorkoutOnboarding(false)}
         />
       )}
-      {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-heading font-bold">{t('workout.section.header')}</h1>
-          <Badge variant="outline" className="text-xs">
-            {subscriptionPlan.charAt(0).toUpperCase() + subscriptionPlan.slice(1)}
-          </Badge>
-        </div>
-      </div>
+  {/* Header removed per design: no title or plan badge */}
 
       {/* Tabs */}
       <div className="flex-1 flex flex-col">
         <Tabs value={activeTab} onValueChange={(value) => {
           setActiveTab(value as typeof activeTab);
         }} className="flex-1 flex flex-col">
-          <TabsList className="grid grid-cols-5 mx-4 mt-4">
-            <TabsTrigger value="overview" className="text-xs">
+          {/* Full-width tab bar like Planner (daily/weekly/monthly/yearly) */}
+          <TabsList className="grid w-full grid-cols-5 bg-surface-1 mx-4 mt-4 mb-2 h-12 rounded-full">
+            <TabsTrigger value="overview" className="text-xs flex items-center justify-center">
               <BarChart3 className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="programs" className="text-xs">
+            <TabsTrigger value="programs" className="text-xs flex items-center justify-center">
               <LayoutTemplate className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="session" className="text-xs">
+            <TabsTrigger value="session" className="text-xs flex items-center justify-center">
               <Play className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="history" className="text-xs">
+            <TabsTrigger value="history" className="text-xs flex items-center justify-center">
               <Logs className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="trackers" className="text-xs">
+            <TabsTrigger value="trackers" className="text-xs flex items-center justify-center">
               <Timer className="w-4 h-4" />
             </TabsTrigger>
           </TabsList>

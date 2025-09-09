@@ -157,12 +157,15 @@ export const SlideUpModal = ({
   children,
   title,
   className = "",
+  height = 'auto',
 }: {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
   title?: string;
   className?: string;
+  /** Controls the sheet height; 'half' opens ~60vh, 'large' ~80vh, 'full' ~95vh, 'auto' keeps previous max height behavior */
+  height?: 'auto' | 'half' | 'large' | 'full';
 }) => {
   const { triggerHaptic } = useHaptic();
   useEffect(() => {
@@ -189,6 +192,10 @@ export const SlideUpModal = ({
     };
   }, [isOpen, onClose]);
 
+  // Determine target heights for body/container
+  const containerHeight = height === 'half' ? '60vh' : height === 'large' ? '80vh' : height === 'full' ? '95vh' : undefined;
+  const bodyMaxHeight = containerHeight ? `calc(${containerHeight} - 56px)` : 'calc(95vh - 56px)';
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -204,12 +211,20 @@ export const SlideUpModal = ({
           <motion.div
             role="dialog"
             aria-modal="true"
-            className={`fixed bottom-0 left-0 right-0 z-[100] max-h-[95vh] md:max-w-md md:left-1/2 md:-translate-x-1/2 bg-card rounded-t-3xl overflow-hidden ${className}`}
+            className={`fixed bottom-0 left-0 right-0 z-[100] md:max-w-md md:left-1/2 md:-translate-x-1/2 bg-card rounded-t-3xl overflow-hidden ${className}`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={iosSpring.default}
-            style={{ paddingBottom: `calc(${SAFE_BOTTOM} + 20px)` }}
+            style={{ paddingBottom: `calc(${SAFE_BOTTOM} + 20px)`, height: containerHeight, maxHeight: containerHeight ? undefined : '95vh' }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(_e, info) => {
+              if (info.offset.y > 80 || info.velocity.y > 500) {
+                onClose();
+              }
+            }}
           >
             <div className="w-12 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-3 mb-3" />
             {title && (
@@ -218,7 +233,7 @@ export const SlideUpModal = ({
               </div>
             )}
             {/* Scroll the body ONLY */}
-            <div className="px-5 pb-20 overflow-y-auto overscroll-contain scrollbar-none max-h-[calc(95vh-56px)]">
+            <div className="px-5 pb-20 overflow-y-auto overscroll-contain scrollbar-none" style={{ maxHeight: bodyMaxHeight }}>
               {children}
               <div className="h-2" />
             </div>

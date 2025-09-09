@@ -805,11 +805,12 @@ export default function AppShell({
           </div>
         </SlideUpModal>
 
-        {/* Enhanced Settings Modal */}
+        {/* Enhanced Settings Modal - half-screen, dismiss on backdrop tap or swipe down */}
         <SlideUpModal
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}
           title={t('nav.settings')}
+          height="half"
         >
           <div className="space-y-6 max-h-[70vh] overflow-y-auto">
             {/* Appearance Section */}

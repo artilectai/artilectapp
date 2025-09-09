@@ -3,75 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import { pushBackAction, popBackAction } from '@/lib/telegram-backstack';
+import { motion } from 'framer-motion';
 import { X, Check, Star, Crown, Zap, Shield, TrendingUp, PiggyBank, FileText, Users, Calendar, BarChart3, Lock, Unlock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTelegramBack } from '@/hooks/useTelegramBack';
+import { SlideUpModal, ScaleButton } from '@/components/iOSAnimations';
 
-// Local fallback implementations for ios-like animations
-const ScaleButton = ({ onPress, children }: { onPress: () => void; children: React.ReactNode }) => (
-  <motion.div
-    whileTap={{ scale: 0.96 }}
-    onClick={onPress}
-    role="button"
-    tabIndex={0}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onPress();
-      }
-    }}
-  >
-    {children}
-  </motion.div>
-);
-
-const SlideUpModal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) => {
-  // Register a back action with Telegram so the top-right Close becomes Back while open
-  useEffect(() => {
-    if (!isOpen) return;
-    const action = () => onClose();
-    pushBackAction(action);
-    return () => {
-      popBackAction(action);
-    };
-  }, [isOpen, onClose]);
-
-  // Support Escape key to close (desktop/Telegram web)
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isOpen, onClose]);
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-          <motion.div
-            className="absolute inset-x-0 bottom-0"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          >
-            {children}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
+// Use shared iOS-like components
 
 interface PaywallSheetProps {
   isOpen: boolean;
@@ -251,8 +191,8 @@ export const PaywallSheet = ({
   };
 
   return (
-    <SlideUpModal isOpen={isOpen} onClose={onClose}>
-  <div className="relative bg-card rounded-t-3xl min-h-[85lvh] max-h-[90lvh] overflow-hidden">
+    <SlideUpModal isOpen={isOpen} onClose={onClose} height="half">
+  <div className="relative bg-card rounded-t-3xl max-h-[90lvh] overflow-hidden">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b border-border/50">
           <div className="flex items-center justify-between p-6 pb-4">
@@ -277,7 +217,7 @@ export const PaywallSheet = ({
                 </div>
               )}
             </div>
-            <ScaleButton onPress={onClose}>
+            <ScaleButton onClick={onClose}>
               <div className="p-2 rounded-full bg-muted/50 hover:bg-muted/70 transition-colors">
                 <X className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -319,7 +259,7 @@ export const PaywallSheet = ({
         </div>
 
         {/* Content */}
-        <div className="px-6 pb-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+  <div className="px-6 pb-6 overflow-y-auto" style={{ maxHeight: 'calc(60vh - 140px)' }}>
           {/* Plans */}
           <div className="space-y-4 mb-8">
             {plans.map((plan, index) => {
@@ -392,7 +332,7 @@ export const PaywallSheet = ({
                     </div>
 
                     {/* CTA Button */}
-                    <ScaleButton onPress={() => handleSelectPlan(plan.id)}>
+                    <ScaleButton onClick={() => handleSelectPlan(plan.id)}>
                       <Button
                         className={`w-full ${
                           plan.popular || isHighlighted
