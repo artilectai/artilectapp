@@ -747,20 +747,20 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
           setActiveTab(value as typeof activeTab);
         }} className="flex-1 flex flex-col">
           {/* Full-width tab bar like Planner (daily/weekly/monthly/yearly) */}
-          <TabsList className="grid w-full grid-cols-5 bg-surface-1 mx-4 mt-4 mb-2 h-12 rounded-full">
-            <TabsTrigger value="overview" className="text-xs flex items-center justify-center">
+          <TabsList className="grid w-full grid-cols-5 gap-2 bg-surface-1 mx-4 mt-4 mb-2 h-12 rounded-full px-2">
+            <TabsTrigger value="overview" className="text-xs flex items-center justify-center rounded-full h-9">
               <BarChart3 className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="programs" className="text-xs flex items-center justify-center">
+            <TabsTrigger value="programs" className="text-xs flex items-center justify-center rounded-full h-9">
               <LayoutTemplate className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="session" className="text-xs flex items-center justify-center">
+            <TabsTrigger value="session" className="text-xs flex items-center justify-center rounded-full h-9">
               <Play className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="history" className="text-xs flex items-center justify-center">
+            <TabsTrigger value="history" className="text-xs flex items-center justify-center rounded-full h-9">
               <Logs className="w-4 h-4" />
             </TabsTrigger>
-            <TabsTrigger value="trackers" className="text-xs flex items-center justify-center">
+            <TabsTrigger value="trackers" className="text-xs flex items-center justify-center rounded-full h-9">
               <Timer className="w-4 h-4" />
             </TabsTrigger>
           </TabsList>
@@ -1002,9 +1002,9 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="session" className="h-full mt-0">
+      <TabsContent value="session" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+        <div className="p-4 space-y-4 pb-4">
                   {!currentSession ? (
                     <Card className="glass-card p-6">
                       <div className="flex items-center gap-3 mb-2">
@@ -1071,9 +1071,9 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="history" className="h-full mt-0">
+      <TabsContent value="history" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+        <div className="p-4 space-y-4 pb-4">
                   <Card className="glass-card p-4">
                     <h3 className="font-semibold mb-3">{t('workout.section.history.title')}</h3>
                     {history.length === 0 ? (
@@ -1100,9 +1100,9 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="trackers" className="h-full mt-0">
+      <TabsContent value="trackers" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 relative pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+        <div className="p-4 space-y-4 relative pb-4">
                   {(() => {
                     return (
           !limits.trackersAllowed && (
