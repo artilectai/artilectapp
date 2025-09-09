@@ -29,6 +29,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import i18nInstance from '@/i18n/config';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useTelegramBack } from '@/hooks/useTelegramBack';
 
 type AppMode = 'planner' | 'finance' | 'workout';
 
@@ -100,6 +101,9 @@ export default function AppShell({
   const [notifications, setNotifications] = useState(true);
   // Search removed from header
   const [notificationCount, setNotificationCount] = useState(2);
+
+  // Enable Telegram Back/Close button to dismiss Settings when open
+  useTelegramBack(!!showSettingsModal, () => setShowSettingsModal(false));
 
   // Profile editing states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -805,12 +809,12 @@ export default function AppShell({
           </div>
         </SlideUpModal>
 
-        {/* Enhanced Settings Modal - half-screen, dismiss on backdrop tap or swipe down */}
+        {/* Enhanced Settings Modal - full-screen, dismiss on Telegram Back/Close, backdrop tap or swipe down */}
         <SlideUpModal
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}
           title={t('nav.settings')}
-          height="half"
+          height="full"
         >
           <div className="space-y-6 max-h-[70vh] overflow-y-auto">
             {/* Appearance Section */}
