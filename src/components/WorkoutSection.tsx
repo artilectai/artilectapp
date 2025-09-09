@@ -773,9 +773,10 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
           </TabsList>
 
           <div className="flex-1 overflow-hidden">
-            <TabsContent value="overview" className="h-full mt-0">
+      <TabsContent value="overview" className="h-full mt-0">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
+        {/* Reduce bottom padding to avoid large gap before the analytics section below */}
+        <div className="p-4 space-y-4 pb-4">
                   {programs.length === 0 ? (
                     <Card className="glass-card p-8 text-center">
                       <Dumbbell className="w-12 h-12 mx-auto mb-4 text-money-green" />
@@ -1266,8 +1267,9 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
         </Tabs>
       </div>
 
-      {/* Analytics Section (Planner/Finance style) */}
-      <div className="flex-shrink-0 p-4">
+  {/* Analytics Section (Planner/Finance style) */}
+  {/* Add extra bottom padding so last cards aren't hidden behind bottom nav/FAB */}
+  <div className="flex-shrink-0 p-4 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
         <div className="relative">
           {!limits.analyticsAllowed && (
             <div className="absolute inset-0 z-10 bg-black/20 backdrop-blur-[2px] flex items-center justify-center rounded-xl">
