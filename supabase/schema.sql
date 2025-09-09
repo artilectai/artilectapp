@@ -1,4 +1,3 @@
--- Supabase schema for ArtiLect Dashboard
 -- Create tables matching the app usage (public schema)
 
 -- Users come from Supabase Auth, but we’ll store per-user rows by user_id (UUID)
@@ -33,18 +32,38 @@ alter table if exists public.user_profiles
 alter table if exists public.user_profiles 
   add column if not exists currency text not null default 'USD';
 
-create table if not exists public.tasks (
+-- Unified planner_items replaces prior tasks and planner_goals tables
+-- Safe to re-run: drops old tables if they still exist, then defines the unified table
+drop table if exists public.planner_goals cascade;
+drop table if exists public.tasks cascade;
+
+create table if not exists public.planner_items (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null,
+  -- Common
   title text not null,
   description text,
-  status text default 'todo' not null,
-  priority text default 'medium' not null,
+  status text not null default 'todo' check (
+    status in (
+      'todo','doing','done','skipped',      -- task-like
+      'planning','in_progress','completed','paused' -- goal-like
+    )
+  ),
+  priority text not null default 'medium' check (priority in ('low','medium','high')),
+  -- Period type for both tasks and goals
+  type text not null check (type in ('daily','weekly','monthly','yearly')),
+  -- Dates
   start_date timestamptz,
   due_date timestamptz,
+  target_date timestamptz, -- used by weekly/monthly/yearly items
+  completed_at timestamptz,
+  -- Task-like fields
   estimate_hours int,
   tags text[],
-  completed_at timestamptz,
+  -- Goal-like fields
+  milestones jsonb not null default '[]'::jsonb,
+  progress int not null default 0,
+  -- Audit
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -151,23 +170,13 @@ create table if not exists public.workout_sessions (
 );
 
 -- Planner goals (weekly/monthly/yearly)
-create table if not exists public.planner_goals (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
-  title text not null,
-  description text,
-  status text not null default 'planning' check (status in ('planning','in_progress','completed','paused')),
-  priority text not null default 'medium' check (priority in ('low','medium','high')),
-  type text not null check (type in ('weekly','monthly','yearly')),
-  target_date timestamptz not null,
-  milestones jsonb not null default '[]'::jsonb,
-  progress int not null default 0,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
+-- Optional indexes for performance
+create index if not exists planner_items_user_idx on public.planner_items(user_id);
+create index if not exists planner_items_type_idx on public.planner_items(type);
+create index if not exists planner_items_created_idx on public.planner_items(created_at desc);
 
 -- RLS
-alter table public.tasks enable row level security;
+alter table public.planner_items enable row level security;
 alter table public.user_profiles enable row level security;
 alter table public.finance_accounts enable row level security;
 alter table public.finance_categories enable row level security;
@@ -177,17 +186,18 @@ alter table public.finance_goals enable row level security;
 alter table public.workout_programs enable row level security;
 alter table public.workout_sessions enable row level security;
 alter table public.subscriptions enable row level security;
-alter table public.planner_goals enable row level security;
+-- Old tables were dropped above; ensure no lingering RLS from previous runs
 
 -- Policies: users can CRUD own rows
-create policy tasks_select on public.tasks for select using (auth.uid() = user_id);
+-- Unified planner_items policies: CRUD own rows
+create policy if not exists pi_select on public.planner_items for select using (auth.uid() = user_id);
 -- user_profiles: each user can read and upsert their own row
 create policy up_select on public.user_profiles for select using (auth.uid() = user_id);
 create policy up_insert on public.user_profiles for insert with check (auth.uid() = user_id);
 create policy up_update on public.user_profiles for update using (auth.uid() = user_id);
-create policy tasks_insert on public.tasks for insert with check (auth.uid() = user_id);
-create policy tasks_update on public.tasks for update using (auth.uid() = user_id);
-create policy tasks_delete on public.tasks for delete using (auth.uid() = user_id);
+create policy if not exists pi_insert on public.planner_items for insert with check (auth.uid() = user_id);
+create policy if not exists pi_update on public.planner_items for update using (auth.uid() = user_id);
+create policy if not exists pi_delete on public.planner_items for delete using (auth.uid() = user_id);
 
 create policy fa_select on public.finance_accounts for select using (auth.uid() = user_id);
 create policy fa_insert on public.finance_accounts for insert with check (auth.uid() = user_id);
@@ -225,10 +235,15 @@ create policy ws_update on public.workout_sessions for update using (auth.uid() 
 create policy ws_delete on public.workout_sessions for delete using (auth.uid() = user_id);
 
 -- Planner goals policies: CRUD own rows
-create policy pg_select on public.planner_goals for select using (auth.uid() = user_id);
-create policy pg_insert on public.planner_goals for insert with check (auth.uid() = user_id);
-create policy pg_update on public.planner_goals for update using (auth.uid() = user_id);
-create policy pg_delete on public.planner_goals for delete using (auth.uid() = user_id);
+-- Remove legacy policies if present (safe no-op if they don't exist)
+drop policy if exists tasks_select on public.tasks;
+drop policy if exists tasks_insert on public.tasks;
+drop policy if exists tasks_update on public.tasks;
+drop policy if exists tasks_delete on public.tasks;
+drop policy if exists pg_select on public.planner_goals;
+drop policy if exists pg_insert on public.planner_goals;
+drop policy if exists pg_update on public.planner_goals;
+drop policy if exists pg_delete on public.planner_goals;
 
 -- Subscriptions: users can only access and manage their own subscription
 create policy subs_select on public.subscriptions for select using (auth.uid() = user_id);

@@ -19,8 +19,9 @@ export async function createTask(input: {
   } = await supabase.auth.getUser();
   if (uErr || !user) throw new Error('Not signed in');
 
-  const { error } = await supabase.from('tasks').insert({
+  const { error } = await supabase.from('planner_items').insert({
     user_id: user.id,
+    type: 'daily',
     ...input,
   });
   if (error) throw error;
@@ -57,7 +58,7 @@ export async function updateTask(input: {
   if (typeof input.completed_at !== 'undefined') updateBody.completed_at = input.completed_at;
 
   const { error } = await supabase
-    .from('tasks')
+    .from('planner_items')
     .update(updateBody)
     .eq('id', input.id)
     .eq('user_id', user.id);

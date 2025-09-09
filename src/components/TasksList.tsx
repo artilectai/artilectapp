@@ -12,8 +12,9 @@ export default function TasksList() {
   const load = useCallback(async () => {
     setError(null);
     const { data, error } = await supabase
-      .from("tasks")
+      .from("planner_items")
       .select("*")
+      .eq('type', 'daily')
       .order("created_at", { ascending: false });
     if (error) {
       setError(error.message);
@@ -27,10 +28,10 @@ export default function TasksList() {
     load();
     // realtime updates (optional)
     const ch = supabase
-      .channel("tasks-realtime")
+      .channel("planner-items-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "tasks" },
+        { event: "*", schema: "public", table: "planner_items" },
         () => {
           // Re-fetch on any change
           load();

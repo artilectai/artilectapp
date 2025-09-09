@@ -249,8 +249,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         return;
       }
       const { data, error } = await supabase
-        .from('planner_goals')
+        .from('planner_items')
         .select('*')
+        .in('type', ['weekly','monthly','yearly'])
         .order('created_at', { ascending: false });
       if (error) throw error;
       const rows = (data || []) as any[];
@@ -273,7 +274,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       setMonthlyGoals(allGoals.filter(g => g.type === 'monthly'));
       setYearlyGoals(allGoals.filter(g => g.type === 'yearly'));
     } catch (e) {
-      console.error('Failed to load planner_goals:', e);
+  console.error('Failed to load planner goals/items:', e);
     }
   }, []);
 
@@ -281,7 +282,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     loadGoals();
     const ch = supabase
       .channel('planner-goals-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'planner_goals' }, () => loadGoals())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'planner_items' }, () => loadGoals())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [loadGoals]);
@@ -295,8 +296,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         if (!userId) return; // only migrate for signed-in users
 
         const { count, error: cntErr } = await supabase
-          .from('planner_goals')
-          .select('id', { count: 'exact', head: true });
+          .from('planner_items')
+          .select('id', { count: 'exact', head: true })
+          .in('type', ['weekly','monthly','yearly']);
         if (cntErr) throw cntErr;
         if ((count ?? 0) > 0) return; // already in DB, skip migration
 
@@ -331,7 +333,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         pushGoals(parsed.yearly, 'yearly');
         if (toRows.length === 0) return;
 
-        const { error: insErr } = await supabase.from('planner_goals').insert(toRows);
+  const { error: insErr } = await supabase.from('planner_items').insert(toRows);
         if (insErr) throw insErr;
         // Clear legacy and reload
         localStorage.removeItem(legacyKey);
@@ -940,8 +942,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   const loadTasks = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('planner_items')
         .select('*')
+        .eq('type', 'daily')
         .order('created_at', { ascending: false });
       if (error) throw error;
       const mapped = (data || []).map((row: any) => ({
@@ -971,7 +974,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     loadTasks();
     const ch = supabase
       .channel('planner-tasks-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => loadTasks())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'planner_items' }, () => loadTasks())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [loadTasks]);
@@ -1068,7 +1071,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 
         // Use browser Supabase client; also filter by user_id to be explicit
         const { error } = await supabase
-          .from('tasks')
+          .from('planner_items')
           .update({
             status: nextStatus as any,
             completed_at: completedISO,
@@ -1113,7 +1116,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       }));
       try {
         if (next) {
-          await supabase.from('planner_goals').update({
+          await supabase.from('planner_items').update({
             status: next.status,
             progress: next.progress,
             updated_at: new Date().toISOString(),
@@ -1134,7 +1137,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       }));
       try {
         if (next) {
-          await supabase.from('planner_goals').update({
+          await supabase.from('planner_items').update({
             status: next.status,
             progress: next.progress,
             updated_at: new Date().toISOString(),
@@ -1155,7 +1158,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       }));
       try {
         if (next) {
-          await supabase.from('planner_goals').update({
+          await supabase.from('planner_items').update({
             status: next.status,
             progress: next.progress,
             updated_at: new Date().toISOString(),
@@ -1185,7 +1188,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           progress: typeof goalData.progress === 'number' ? goalData.progress : undefined,
           updated_at: new Date().toISOString(),
         } as any;
-        await supabase.from('planner_goals').update(payload).eq('id', goalData.id);
+  await supabase.from('planner_items').update(payload).eq('id', goalData.id);
       } else {
         const toInsert = {
           user_id: userId,
@@ -1198,7 +1201,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           milestones: goalData.milestones || [],
           progress: typeof goalData.progress === 'number' ? goalData.progress : 0,
         } as any;
-        await supabase.from('planner_goals').insert(toInsert);
+  await supabase.from('planner_items').insert(toInsert);
       }
       
       setIsGoalEditorOpen(false);
@@ -1236,7 +1239,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     // Persist deletion
     (async () => {
       try {
-        await supabase.from('planner_goals').delete().eq('id', goalId);
+  await supabase.from('planner_items').delete().eq('id', goalId);
       } catch (e) {
         toast.error(t('toasts.planner.goalSaveFailed'));
         await loadGoals();
@@ -1252,7 +1255,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               const { data: auth } = await supabase.auth.getUser();
               const userId = auth?.user?.id;
               if (!userId) return;
-              await supabase.from('planner_goals').insert({
+              await supabase.from('planner_items').insert({
                 user_id: userId,
                 title: goalToDelete.title,
                 description: goalToDelete.description || null,

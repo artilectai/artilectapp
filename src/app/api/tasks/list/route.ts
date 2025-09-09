@@ -17,7 +17,14 @@ export async function GET(request: NextRequest) {
 
     // Single record fetch
     if (id) {
-      const { data, error } = await sb.from('tasks').select('*').eq('id', id).eq('user_id', user.id).limit(1).maybeSingle();
+      const { data, error } = await sb
+        .from('planner_items')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .eq('type', 'daily')
+        .limit(1)
+        .maybeSingle();
       if (error) return NextResponse.json({ error: error.message }, { status: 400 });
       if (!data) {
         return NextResponse.json({ 
@@ -37,7 +44,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get('sort') || 'created_at';
     const order = (searchParams.get('order') || 'desc').toLowerCase() === 'asc' ? { ascending: true } : { ascending: false };
 
-    let q = sb.from('tasks').select('*').eq('user_id', user.id);
+  let q = sb.from('planner_items').select('*').eq('user_id', user.id).eq('type', 'daily');
     if (status) q = q.eq('status', status);
     if (priority) q = q.eq('priority', priority);
     if (search) q = q.ilike('title', `%${search}%`);
@@ -84,7 +91,7 @@ export async function POST(request: NextRequest) {
       created_at: now,
       updated_at: now,
     };
-    const { data, error } = await sb.from('tasks').insert(insert).select('*').single();
+  const { data, error } = await sb.from('planner_items').insert({ ...insert, type: 'daily' }).select('*').single();
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json(data, { status: 201 });
 
@@ -117,7 +124,13 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { data: exists, error: e1 } = await sb.from('tasks').select('id').eq('id', id).eq('user_id', user.id).maybeSingle();
+    const { data: exists, error: e1 } = await sb
+      .from('planner_items')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .eq('type', 'daily')
+      .maybeSingle();
     if (e1) return NextResponse.json({ error: e1.message }, { status: 400 });
     if (!exists) {
       return NextResponse.json({ 
@@ -160,7 +173,14 @@ export async function PUT(request: NextRequest) {
       updateData.completed_at = requestBody.completedAt;
     }
 
-    const { data, error } = await sb.from('tasks').update(updateData).eq('id', id).eq('user_id', user.id).select('*').single();
+    const { data, error } = await sb
+      .from('planner_items')
+      .update(updateData)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .eq('type', 'daily')
+      .select('*')
+      .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json(data, { status: 200 });
 
@@ -195,10 +215,11 @@ export async function DELETE(request: NextRequest) {
 
     // Ensure the task belongs to the user and delete
     const { data: existing, error: e1 } = await sb
-      .from('tasks')
+      .from('planner_items')
       .select('id')
       .eq('id', id)
       .eq('user_id', user.id)
+      .eq('type', 'daily')
       .maybeSingle();
 
     if (e1) return NextResponse.json({ error: e1.message }, { status: 400 });
@@ -210,10 +231,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { error } = await sb
-      .from('tasks')
+      .from('planner_items')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .eq('type', 'daily');
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
