@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
+import { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { 
   Plus, 
@@ -172,6 +172,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   const userId = (session as any)?.user?.id as string | undefined;
   const userKey = (session as any)?.user?.id || (session as any)?.user?.email || 'anon';
   const keyWithUser = (key: string) => `${key}_${userKey}`;
+  // Avoid duplicate health-check toasts across re-renders
+  const backendWarnedRef = useRef(false);
     // State
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -561,6 +563,30 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     useEffect(() => {
       loadRemote();
       if (!userId) return;
+      // One-time backend health check: ensure finance tables exist and are accessible
+      (async () => {
+        try {
+          // Try lightweight head selects; capture structural/RLS errors
+          const [b, g] = await Promise.all([
+            supabase.from('finance_budgets').select('id', { head: true, count: 'exact' }).limit(1),
+            supabase.from('finance_goals').select('id', { head: true, count: 'exact' }).limit(1)
+          ] as any);
+          const bErr = (b as any)?.error;
+          const gErr = (g as any)?.error;
+          if ((bErr || gErr) && !backendWarnedRef.current) {
+            backendWarnedRef.current = true;
+            const details = [bErr?.message, gErr?.message].filter(Boolean).join(' | ');
+            toast.error('Finance backend not initialized', {
+              description: details || 'Please apply the SQL in supabase/schema.sql for finance_budgets and finance_goals, and ensure RLS policies exist.'
+            });
+            // Extra hint in console with quick pointers
+            console.warn('[Finance] Backend check failed:', { budgetsError: bErr, goalsError: gErr },
+              '\nAction: Run the SQL from supabase/schema.sql in your Supabase project (Tables: finance_budgets, finance_goals + RLS policies).');
+          }
+        } catch (e) {
+          // Non-fatal
+        }
+      })();
       const ch1 = supabase
         .channel('finance-accounts-rt-internal')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_accounts', filter: `user_id=eq.${userId}` }, () => loadRemote())
@@ -1478,10 +1504,14 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         setNewBudget({ category: '', limit: '', period: 'monthly' });
         setShowBudgetDialog(false);
         toast.success(t('toasts.finance.budgetCreated'));
-      } catch (e) {
+      } catch (e: any) {
         // rollback
         setBudgets(prev => prev.filter(b => b.id !== optimistic.id));
-        toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }));
+        const msg = e?.message || e?.error_description || String(e);
+        toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }), {
+          description: msg
+        });
+        console.error('Failed to save budget:', e);
       }
     };
 
@@ -1529,9 +1559,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         setNewGoal({ name: '', targetAmount: '', deadline: '', category: '' });
         setShowGoalDialog(false);
         toast.success(t('toasts.finance.goalCreated'));
-      } catch (e) {
+      } catch (e: any) {
         setGoals(prev => prev.filter(g => g.id !== optimistic.id));
-        toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }));
+        const msg = e?.message || e?.error_description || String(e);
+        toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }), {
+          description: msg
+        });
+        console.error('Failed to save goal:', e);
       }
     };
 
