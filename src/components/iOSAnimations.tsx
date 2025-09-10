@@ -7,6 +7,7 @@ import {
   AnimatePresence,
   useMotionValue,
   useTransform,
+  useDragControls,
   type PanInfo,
   type HTMLMotionProps,
 } from "framer-motion";
@@ -195,6 +196,7 @@ export const SlideUpModal = ({
   // Determine target heights for body/container
   const containerHeight = height === 'half' ? '60vh' : height === 'large' ? '80vh' : height === 'full' ? '95vh' : undefined;
   const bodyMaxHeight = containerHeight ? `calc(${containerHeight} - 56px)` : 'calc(95vh - 56px)';
+  const dragControls = useDragControls();
 
   return (
     <AnimatePresence>
@@ -218,6 +220,8 @@ export const SlideUpModal = ({
             transition={iosSpring.default}
             style={{ paddingBottom: `calc(${SAFE_BOTTOM} + 20px)`, height: containerHeight, maxHeight: containerHeight ? undefined : '95vh' }}
             drag="y"
+            dragControls={dragControls}
+            dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={0.2}
             onDragEnd={(_e, info) => {
@@ -226,7 +230,10 @@ export const SlideUpModal = ({
               }
             }}
           >
-            <div className="w-12 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-3 mb-3" />
+            <div
+              className="w-12 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-3 mb-3"
+              onPointerDown={(e) => dragControls.start(e)}
+            />
             {title && (
               <div className="px-5 pb-3 sticky top-0 bg-card z-10">
                 <h2 className="text-lg sm:text-xl font-semibold">{title}</h2>
