@@ -97,7 +97,8 @@ export default function AppShell({
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   // remove local language state; use global i18n
   const [timezone, setTimezone] = useState('UTC');
-  const [currency, setCurrency] = useState('USD');
+  // No default currency until user selects one during setup
+  const [currency, setCurrency] = useState('');
   const [notifications, setNotifications] = useState(true);
   // Search removed from header
   const [notificationCount, setNotificationCount] = useState(2);
@@ -167,7 +168,7 @@ export default function AppShell({
             if (data) {
               if (data.app_theme) setTheme((data.app_theme as 'dark' | 'light') || 'dark');
               if (data.app_timezone) setTimezone(data.app_timezone || 'UTC');
-              if (data.currency) setCurrency(data.currency || 'USD');
+              if (data.currency) setCurrency(data.currency || '');
             } else {
               // Create a default row using any locally saved preferences
               const savedCurrency = typeof window !== 'undefined' ? localStorage.getItem('finance_currency') : null;
@@ -175,7 +176,7 @@ export default function AppShell({
               const savedTimezone = typeof window !== 'undefined' ? localStorage.getItem('app_timezone') : null;
               const app_theme = (savedTheme as 'dark' | 'light') || 'dark';
               const app_timezone = savedTimezone || 'UTC';
-              const currency = savedCurrency || 'USD';
+              const currency = savedCurrency || '';
               if (!cancelled) {
                 setTheme(app_theme);
                 setTimezone(app_timezone);
@@ -205,6 +206,20 @@ export default function AppShell({
     };
     load();
     return () => { cancelled = true; };
+  }, []);
+
+  // Reflect global currency changes (e.g., from finance onboarding)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { currency?: string } | undefined;
+      if (detail?.currency) {
+        setCurrency(detail.currency);
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('currency-changed', handler as EventListener);
+      return () => window.removeEventListener('currency-changed', handler as EventListener);
+    }
   }, []);
 
   // Update profile data when userData changes
@@ -961,9 +976,9 @@ export default function AppShell({
                   <CreditCard className="w-4 h-4" />
                   {t('finance.accounts.currency')}
                 </Label>
-                <Select value={currency} onValueChange={handleCurrencyChange}>
+        <Select value={(currency || undefined) as any} onValueChange={handleCurrencyChange}>
                   <SelectTrigger>
-                    <SelectValue />
+          <SelectValue placeholder={t('finance.onboarding.steps.errors.selectCurrency')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="USD">🇺🇸 {t('appShell.currencyOptions.USD')}</SelectItem>

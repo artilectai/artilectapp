@@ -66,7 +66,8 @@ class FinanceDataManager {
   private static getFinanceData(): FinanceData {
     const defaultData: FinanceData = {
       accounts: [],
-      currency: 'USD',
+      // No default currency until user selects one during setup
+      currency: '',
       setupComplete: false
     };
 
@@ -79,7 +80,7 @@ class FinanceDataManager {
       const parsed = JSON.parse(stored);
       return {
         accounts: Array.isArray(parsed.accounts) ? parsed.accounts : [],
-        currency: typeof parsed.currency === 'string' ? parsed.currency : 'USD',
+  currency: typeof parsed.currency === 'string' ? parsed.currency : '',
         setupComplete: Boolean(parsed.setupComplete)
       };
     } catch (error) {
@@ -224,7 +225,7 @@ class FinanceDataManager {
 
     // Check legacy currency storage for backwards compatibility
     const legacyCurrency = this.getStorageItem(this.CURRENCY_KEY);
-    return legacyCurrency || 'USD';
+    return legacyCurrency || '';
   }
 
   /**
@@ -320,7 +321,7 @@ class FinanceDataManager {
 
       const data: FinanceData = {
         accounts: Array.isArray(imported.accounts) ? imported.accounts : [],
-        currency: typeof imported.currency === 'string' ? imported.currency : 'USD',
+        currency: typeof imported.currency === 'string' ? imported.currency : '',
         setupComplete: Boolean(imported.setupComplete)
       };
 

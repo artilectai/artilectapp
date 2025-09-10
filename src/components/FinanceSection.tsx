@@ -420,7 +420,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               const savedTransactions = dataManager.loadData('transactions', []) as any[];
               const savedBudgets = dataManager.loadData('budgets', []) as any[];
               const savedGoals = dataManager.loadData('goals', []) as any[];
-              const savedCurrency = dataManager.loadData('currency', 'UZS');
+              const savedCurrency = dataManager.loadData('currency', '') || (typeof window !== 'undefined' ? localStorage.getItem('finance_currency') : '') || '';
 
               if (Array.isArray(savedAccounts)) {
                 setAccounts(
@@ -450,7 +450,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                 );
               }
 
-              setCurrency(savedCurrency);
+              if (savedCurrency) setCurrency(savedCurrency as any);
               setIsInitialized(true);
             } catch (error) {
               console.error('Error loading finance data:', error);
@@ -615,7 +615,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     useEffect(() => {
       const handler = (e: Event) => {
         const detail = (e as CustomEvent).detail as { currency?: string } | undefined;
-        if (detail?.currency && ["UZS","USD","EUR","RUB"].includes(detail.currency)) {
+        if (detail?.currency) {
           setCurrency(detail.currency as any);
         }
       };
@@ -623,10 +623,11 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       return () => window.removeEventListener('currency-changed', handler as EventListener);
     }, []);
 
-    // Broadcast when local currency changes so other widgets listening can update
+  // Broadcast when local currency changes so other widgets listening can update
     useEffect(() => {
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('currency-changed', { detail: { currency } }));
+    try { localStorage.setItem('finance_currency', currency); } catch {}
+    window.dispatchEvent(new CustomEvent('currency-changed', { detail: { currency } }));
       }
     }, [currency]);
 

@@ -105,7 +105,8 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
   const [currentStep, setCurrentStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
-    currency: 'USD',
+  // No default currency; user must choose explicitly during setup
+  currency: '',
     accountName: '',
     accountType: 'cash',
     initialBalance: 0
@@ -317,21 +318,7 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
           }}
         >
           <SelectTrigger className="h-12 w-full">
-            {/* Closed-state: avoid duplicate UZS UZS */}
-            <div className="flex items-center gap-2">
-              {onboardingData.currency === 'UZS' ? (
-                <span className="font-medium">UZS</span>
-              ) : (
-                <>
-                  <span className="font-mono text-base w-5 text-center">
-                    {CURRENCIES.find(c => c.code === onboardingData.currency)?.symbol}
-                  </span>
-                  <span className="font-medium">
-                    {CURRENCIES.find(c => c.code === onboardingData.currency)?.code}
-                  </span>
-                </>
-              )}
-            </div>
+            <SelectValue placeholder={t('finance.onboarding.steps.errors.selectCurrency')} />
           </SelectTrigger>
           <SelectContent className="w-[--radix-select-trigger-width] min-w-[--radix-select-trigger-width] max-h-64 overflow-y-auto z-[10000]">
             {CURRENCIES.map((currency) => (
@@ -363,6 +350,16 @@ export const FinanceOnboardingWizard: React.FC<FinanceOnboardingWizardProps> = (
     </div>
   );
 
+        // Persist selected currency and broadcast so Settings reflects immediately
+        if (onboardingData.currency) {
+          try {
+            FinanceDataManager.setCurrency(onboardingData.currency);
+          } catch {}
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('finance_currency', onboardingData.currency); } catch {}
+            try { window.dispatchEvent(new CustomEvent('currency-changed', { detail: { currency: onboardingData.currency } })); } catch {}
+          }
+        }
   const renderAccountStep = () => (
     <div className="space-y-6">
       <div className="text-center space-y-3">
