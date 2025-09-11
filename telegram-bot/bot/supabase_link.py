@@ -1,11 +1,21 @@
 import os, time, hmac, hashlib, urllib.parse
+from dotenv import load_dotenv
 from supabase import create_client, Client
 
-SUPABASE_URL = os.environ["NEXT_PUBLIC_SUPABASE_URL"]
-SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+# Ensure .env is loaded for local runs
+load_dotenv()
+
+SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+# Prefer ANON key if you don't want to use the service role. Note: RLS must permit the operations the bot performs.
+SUPABASE_KEY = (
+    os.environ.get("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+    or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+)
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in environment.")
 
 def sb() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # --- Linking helpers ---
 def get_user_by_telegram(telegram_user_id: int):

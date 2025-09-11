@@ -61,3 +61,28 @@ def insert_transaction(user_id: str, text: str) -> dict:
         "description": text,
     }).execute()
     return {"ok": True, "id": ins.data[0]["id"], "type": tx_type, "amount": amount, "category": cat_mapped}
+
+def insert_transaction_structured(user_id: str, data: dict) -> dict:
+    tx_type = data.get("type") or ("income" if data.get("source") else "expense")
+    amount = data.get("amount")
+    if amount is None:
+        return {"ok": False, "reason": "amount_not_found"}
+    currency = data.get("currency") or DEFAULT_CURRENCY
+    description = data.get("description") or data.get("note") or ""
+    occurred_at = data.get("occurredAt") or None
+    cat_name = map_category_name(data.get("category")) if data.get("category") else None
+    cat_id = find_or_create_category(user_id, cat_name, tx_type) if cat_name else None
+
+    s = sb()
+    account_id = ensure_default_account(user_id)
+    ins = s.table("finance_transactions").insert({
+        "user_id": user_id,
+        "account_id": account_id,
+        "category_id": cat_id,
+        "type": tx_type,
+        "amount": amount,
+        "currency": currency,
+        "description": description,
+        "occurred_at": occurred_at,
+    }).execute()
+    return {"ok": True, "id": ins.data[0]["id"], "type": tx_type, "amount": amount, "currency": currency, "category": cat_name}

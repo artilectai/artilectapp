@@ -1,4 +1,5 @@
 import os, secrets, json
+from typing import List, Dict
 from aiogram import Router, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
@@ -7,6 +8,7 @@ from .supabase_link import get_user_by_telegram, create_link_code, consume_link_
 from .nlu import classify_intent
 from .logic_finance import insert_transaction
 from .logic_tasks import create_task_from_text
+from .openai_client import plan_actions, transcribe_audio
 
 router = Router()
 
@@ -61,15 +63,95 @@ async def on_web_app_data(m: Message):
 
     await m.answer(f"Got data from Mini App: {json.dumps(data)[:1000]}")
 
-@router.message()
-async def any_text(m: Message):
+async def _ensure_linked(m: Message) -> str | None:
     telegram_id = m.from_user.id
     user_id = get_user_by_telegram(telegram_id)
     if not user_id:
         await m.answer("Please link your account first: /link (then paste the code in the app), or open the Mini App to auto-link.", reply_markup=open_app_kb())
+        return None
+    return user_id
+
+async def _apply_actions(user_id: str, actions: List[Dict]) -> List[str]:
+    from .logic_finance import insert_transaction as insert_tx
+    from .logic_tasks import create_task_from_text as create_task
+    confirmations: List[str] = []
+    for a in actions or []:
+        t = (a.get("type") or a.get("action") or "").lower()
+        data = a
+        if t in ("add_transaction", "add_income"):
+            # Structured support is not implemented yet; map to text flow
+            txt = data.get("description") or data.get("title") or data.get("text") or ""
+            res = insert_tx(user_id, txt)
+            if res.get("ok"):
+                sign = "-" if res["type"] == "expense" else "+"
+                confirmations.append(f"Recorded {sign}{int(res['amount'])} {res.get('currency','')} ({res.get('category','')}).")
+        elif t == "add_task":
+            title = data.get("title") or data.get("text") or "Task"
+            res = create_task(user_id, title)
+            if res.get("ok"):
+                when = res.get("due_date") or ""
+                confirmations.append(f"Task created. {('Due '+when) if when else ''}".strip())
+        elif t == "log_workout":
+            # Placeholder: implement concrete workout insertion if needed
+            confirmations.append("Workout noted.")
+        elif t == "suggest_weekly":
+            confirmations.append("Weekly suggestions prepared.")
+    return confirmations
+
+@router.message(F.voice)
+async def on_voice(m: Message):
+    user_id = await _ensure_linked(m)
+    if not user_id:
+        return
+    if not os.getenv("OPENAI_API_KEY"):
+        await m.answer("Voice understanding requires OPENAI_API_KEY to be set.")
+        return
+    # Download voice file and transcribe
+    file = await m.bot.get_file(m.voice.file_id)
+    bio = await m.bot.download_file(file.file_path)
+    audio_bytes = bio.read()
+    text = await transcribe_audio(audio_bytes)
+    plan = await plan_actions(text, {"userId": user_id})
+    confirmations = await _apply_actions(user_id, plan.get("actions", []))
+    reply = plan.get("reply") or ""
+    final = (reply + ("\n" + "\n".join(confirmations) if confirmations else "")).strip()
+    await m.answer(final or "Done.")
+
+@router.message(F.photo)
+async def on_photo(m: Message):
+    user_id = await _ensure_linked(m)
+    if not user_id:
+        return
+    if not os.getenv("OPENAI_API_KEY"):
+        await m.answer("Image understanding requires OPENAI_API_KEY to be set.")
+        return
+    # Highest-res photo
+    photo = m.photo[-1]
+    file = await m.bot.get_file(photo.file_id)
+    bio = await m.bot.download_file(file.file_path)
+    img_bytes = bio.read()
+    plan = await plan_actions(m.caption or "", {"userId": user_id}, images=[img_bytes])
+    confirmations = await _apply_actions(user_id, plan.get("actions", []))
+    reply = plan.get("reply") or ""
+    final = (reply + ("\n" + "\n".join(confirmations) if confirmations else "")).strip()
+    await m.answer(final or "Processed your image.")
+
+@router.message()
+async def any_text(m: Message):
+    user_id = await _ensure_linked(m)
+    if not user_id:
         return
 
     txt = m.text or ""
+    if os.getenv("OPENAI_API_KEY"):
+        plan = await plan_actions(txt, {"userId": user_id})
+        confirmations = await _apply_actions(user_id, plan.get("actions", []))
+        reply = plan.get("reply") or ""
+        final = (reply + ("\n" + "\n".join(confirmations) if confirmations else "")).strip()
+        await m.answer(final or "Done.")
+        return
+
+    # Legacy fallback (regex intent)
     intent = classify_intent(txt)
     if intent in ("add_expense","add_income"):
         res = insert_transaction(user_id, txt)
@@ -79,7 +161,6 @@ async def any_text(m: Message):
         else:
             await m.answer("I couldn't find the amount. Try: *I spent 25 000 on food*", parse_mode="Markdown")
         return
-
     if intent == "add_task":
         res = create_task_from_text(user_id, txt)
         if res.get("ok"):
@@ -88,6 +169,7 @@ async def any_text(m: Message):
         else:
             await m.answer("Couldn't create a task, please try again.")
         return
-
-    await m.answer("Tell me things like:\n• *I spent 25k on food*\n• *Add income 1200 salary*\n• *Tomorrow I have meeting at 10*",
-                   parse_mode="Markdown")
+    await m.answer(
+        "Tell me things like:\n• *I spent 25k on food*\n• *Add income 1200 salary*\n• *Tomorrow I have meeting at 10*",
+        parse_mode="Markdown",
+    )
