@@ -54,10 +54,27 @@ python -m bot.main
 ```
 
 ## Run (prod / webhook)
+Vercel does not run Python processes. Deploy this folder to a Python-friendly host:
+
+Option A: Docker
 ```bash
+docker build -t artilect-bot:latest telegram-bot
+docker run -p 8080:8080 \
+  -e BOT_TOKEN=$BOT_TOKEN \
+  -e NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+  -e NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+  -e WEBHOOK_URL=$WEBHOOK_URL -e WEBHOOK_PATH=$WEBHOOK_PATH -e WEBHOOK_SECRET=$WEBHOOK_SECRET \
+  -e OPENAI_API_KEY=$OPENAI_API_KEY \
+  artilect-bot:latest
+```
+
+Option B: Uvicorn directly (VM/host)
+```bash
+pip install -r requirements.txt
 uvicorn bot.server:app --host 0.0.0.0 --port 8080
 ```
-Ensure `WEBHOOK_URL` is public `https://.../webhook`. On startup the app sets the webhook.
+
+On startup the app sets the webhook to `WEBHOOK_URL`. Verify with @BotFather → getWebhookInfo or via Telegram API.
 
 ## Mini App handshake
 - The bot sends a button that opens `WEBAPP_URL`.

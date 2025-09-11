@@ -19,42 +19,58 @@ def sb() -> Client:
 
 # --- Linking helpers ---
 def get_user_by_telegram(telegram_user_id: int):
-    s = sb()
-    res = s.table("telegram_links").select("user_id").eq("telegram_user_id", telegram_user_id).limit(1).execute()
-    if res.data:
-        return res.data[0]["user_id"]
+    try:
+        s = sb()
+        res = s.table("telegram_links").select("user_id").eq("telegram_user_id", telegram_user_id).limit(1).execute()
+        if getattr(res, "error", None):
+            # RLS or table missing: treat as not linked
+            return None
+        if res.data:
+            return res.data[0]["user_id"]
+    except Exception:
+        # Misconfig or network: treat as not linked so /start still replies
+        return None
     return None
 
 def ensure_default_account(user_id: str) -> str:
     s = sb()
     res = s.table("finance_accounts").select("id").eq("user_id", user_id).eq("is_default", True).limit(1).execute()
+    if getattr(res, "error", None):
+        raise RuntimeError(f"RLS blocked reading finance_accounts: {res.error}")
     if res.data:
         return res.data[0]["id"]
-    # create a default Cash account
     ins = s.table("finance_accounts").insert({
         "user_id": user_id,
         "name": "Cash",
         "type": "cash",
         "is_default": True
     }).execute()
+    if getattr(ins, "error", None):
+        raise RuntimeError(f"RLS blocked creating default account: {ins.error}")
     return ins.data[0]["id"]
 
 def create_link_code(code: str, telegram_user_id: int):
     s = sb()
-    s.table("telegram_link_codes").upsert({
+    res = s.table("telegram_link_codes").upsert({
         "code": code,
         "telegram_user_id": telegram_user_id,
     }).execute()
+    if getattr(res, "error", None):
+        # Not fatal for /link UX, just ignore
+        return False
+    return True
 
 def consume_link_code(code: str, user_id: str) -> bool:
     s = sb()
     res = s.table("telegram_link_codes").select("*").eq("code", code).limit(1).execute()
-    if not res.data:
+    if getattr(res, "error", None) or not res.data:
         return False
-    s.table("telegram_links").upsert({
+    up = s.table("telegram_links").upsert({
         "user_id": user_id,
         "telegram_user_id": res.data[0]["telegram_user_id"]
     }).execute()
+    if getattr(up, "error", None):
+        return False
     s.table("telegram_link_codes").update({"consumed_by": user_id}).eq("code", code).execute()
     return True
 
