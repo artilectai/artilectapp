@@ -7,10 +7,49 @@ from .keyboards import open_app_kb
 from .supabase_link import get_user_by_telegram, create_link_code, consume_link_code, validate_init_data
 from .nlu import classify_intent
 from .logic_finance import insert_transaction
-from .logic_tasks import create_task_from_text
+from .logic_finance import insert_transaction_structured
+from .logic_tasks import create_task_from_text, create_task_structured
 from .openai_client import plan_actions, transcribe_audio
 
 router = Router()
+
+@router.message(Command("whoami"))
+async def whoami(m: Message):
+    from .supabase_link import sb
+    user_id = get_user_by_telegram(m.from_user.id)
+    if not user_id:
+        await m.answer("Not linked. Use /link, then paste the code in the app profile.")
+        return
+    s = sb()
+    try:
+        # Count a few rows per table for this user
+        tasks = s.table("planner_items").select("id", count="exact").eq("user_id", user_id).execute()
+        txs = s.table("finance_transactions").select("id", count="exact").eq("user_id", user_id).execute()
+        await m.answer(f"Linked user_id: {user_id}\nplanner_items: {(tasks.count or 0)} rows\nfinance_transactions: {(txs.count or 0)} rows")
+    except Exception:
+        await m.answer(f"Linked user_id: {user_id}\n(Could not query counts; check bot DB env)")
+
+@router.message(Command("latest"))
+async def latest(m: Message):
+    from .supabase_link import sb
+    user_id = get_user_by_telegram(m.from_user.id)
+    if not user_id:
+        await m.answer("Not linked. Use /link, then paste the code in the app profile.")
+        return
+    s = sb()
+    try:
+        pi = s.table("planner_items").select("id,title,type,due_date,created_at").eq("user_id", user_id).order("created_at", desc=True).limit(3).execute()
+        ft = s.table("finance_transactions").select("id,amount,type,currency,description,created_at").eq("user_id", user_id).order("created_at", desc=True).limit(3).execute()
+        lines = ["Latest planner_items:"]
+        for r in (pi.data or []):
+            lines.append(f"• {r.get('id')} | {r.get('title')} | {r.get('type')} | due={r.get('due_date')}")
+        lines.append("\nLatest finance_transactions:")
+        for r in (ft.data or []):
+            sign = '-' if r.get('type')=='expense' else '+'
+            lines.append(f"• {r.get('id')} | {sign}{int(r.get('amount',0))} {r.get('currency','')} | {r.get('description','')}")
+        await m.answer("\n".join(lines) or "No data yet.")
+    except Exception as e:
+        await m.answer(f"Failed to fetch latest rows: {e}")
 
 @router.message(Command("diag"))
 async def diag(m: Message):
@@ -110,22 +149,41 @@ async def _apply_actions(user_id: str, actions: List[Dict]) -> List[str]:
     from .logic_finance import insert_transaction as insert_tx
     from .logic_tasks import create_task_from_text as create_task
     confirmations: List[str] = []
+    debug = bool(os.getenv("BOT_DEBUG"))
     for a in actions or []:
         t = (a.get("type") or a.get("action") or "").lower()
         data = a
         if t in ("add_transaction", "add_income"):
-            # Structured support is not implemented yet; map to text flow
-            txt = data.get("description") or data.get("title") or data.get("text") or ""
-            res = insert_tx(user_id, txt)
+            # Prefer structured when amount provided; fallback to text parsing
+            if isinstance(data, dict) and (data.get("amount") is not None):
+                payload = dict(data)
+                if t == "add_income":
+                    payload["type"] = "income"
+                else:
+                    payload["type"] = payload.get("type") or "expense"
+                res = insert_transaction_structured(user_id, payload)
+            else:
+                txt = data.get("description") or data.get("title") or data.get("text") or ""
+                res = insert_tx(user_id, txt)
             if res.get("ok"):
                 sign = "-" if res["type"] == "expense" else "+"
-                confirmations.append(f"Recorded {sign}{int(res['amount'])} {res.get('currency','')} ({res.get('category','')}).")
+                msg = f"Recorded {sign}{int(res['amount'])} {res.get('currency','')} ({res.get('category','')})."
+                if debug:
+                    msg += f" [tx:{res.get('id')}]"
+                confirmations.append(msg)
         elif t == "add_task":
-            title = data.get("title") or data.get("text") or "Task"
-            res = create_task(user_id, title)
+            # Prefer structured if title present
+            if isinstance(data, dict) and data.get("title"):
+                res = create_task_structured(user_id, data)
+            else:
+                title = data.get("title") or data.get("text") or "Task"
+                res = create_task(user_id, title)
             if res.get("ok"):
                 when = res.get("due_date") or ""
-                confirmations.append(f"Task created. {('Due '+when) if when else ''}".strip())
+                msg = f"Task created. {('Due '+when) if when else ''}".strip()
+                if debug:
+                    msg += f" [task:{res.get('id')}]"
+                confirmations.append(msg)
         elif t == "log_workout":
             # Placeholder: implement concrete workout insertion if needed
             confirmations.append("Workout noted.")
