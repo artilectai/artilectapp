@@ -25,7 +25,6 @@ def ensure_default_account(user_id: str) -> str:
         "user_id": user_id,
         "name": "Cash",
         "type": "cash",
-        "currency": os.getenv("DEFAULT_CURRENCY","UZS"),
         "is_default": True
     }).execute()
     return ins.data[0]["id"]

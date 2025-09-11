@@ -73,7 +73,6 @@ create table if not exists public.finance_accounts (
   user_id uuid not null,
   name text not null,
   type text not null,
-  currency text not null default 'UZS',
   balance numeric not null default 0,
   color text not null default '#10B981',
   is_default boolean not null default false,

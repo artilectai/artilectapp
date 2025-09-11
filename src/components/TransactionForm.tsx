@@ -19,7 +19,6 @@ interface Account {
   name: string;
   type: 'checking' | 'savings' | 'credit' | 'cash';
   balance: number;
-  currency: string;
   color?: string;
   icon?: string;
 }
@@ -51,7 +50,7 @@ interface TransactionFormProps {
   onCancel: () => void;
   defaultDate: Date;
   initialTransaction?: Partial<Transaction>;
-  currency?: 'UZS' | 'USD' | 'EUR' | 'RUB';
+  currency?: string;
 }
 
 // Outgoing payload shape expected by FinanceSection (category as string)
@@ -117,9 +116,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const lang = (i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
   const intlLocale = lang === 'ru' ? 'ru-RU' : lang === 'uz' ? 'uz-UZ' : 'en-US';
   const fmtDate = new Intl.DateTimeFormat(intlLocale);
-  const currentCurrency: 'UZS' | 'USD' | 'EUR' | 'RUB' = propCurrency || 'UZS';
+  const currentCurrency: string = propCurrency || 'UZS';
 
-  const getCurrencySymbol = useCallback((curr: 'UZS' | 'USD' | 'EUR' | 'RUB') => {
+  const getCurrencySymbol = useCallback((curr: string) => {
     switch (curr) {
       case 'UZS':
         return 'UZS';
@@ -130,11 +129,11 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       case 'RUB':
         return '₽';
       default:
-        return '';
+    return curr ? curr + ' ' : '';
     }
   }, []);
 
-  const formatCurrency = useCallback((amount: number, curr: 'UZS' | 'USD' | 'EUR' | 'RUB' = currentCurrency): string => {
+  const formatCurrency = useCallback((amount: number, curr: string = currentCurrency): string => {
     if (curr === 'UZS') return 'UZS ' + new Intl.NumberFormat('uz-UZ').format(amount);
     const symbol = getCurrencySymbol(curr);
     return symbol + new Intl.NumberFormat('en-US').format(amount);
@@ -507,11 +506,11 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
+        <SelectItem key={account.id} value={account.id}>
                       <div className="flex items-center justify-between w-full">
                         <span className="font-medium">{account.name}</span>
                         <span className="text-sm text-muted-foreground ml-4">
-                          {formatCurrency(account.balance, (account.currency as any) || currentCurrency)}
+          {formatCurrency(account.balance, currentCurrency)}
                         </span>
                       </div>
                     </SelectItem>

@@ -70,7 +70,6 @@ interface Account {
   name: string;
   // Allow custom account types in addition to the defaults
   type: "cash" | "card" | "bank" | "crypto" | string;
-  currency: string;
   balance: number;
   color: string;
   isDefault: boolean;
@@ -183,7 +182,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     const [balanceVisible, setBalanceVisible] = useState(true);
     const [activeTab, setActiveTab] = useState("dashboard");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("weekly");
-    const [currency, setCurrency] = useState<"UZS" | "USD" | "EUR" | "RUB">("UZS");
+  const [currency, setCurrency] = useState<string>("");
     const [isInitialized, setIsInitialized] = useState(false);
     const [showFinanceOnboarding, setShowFinanceOnboarding] = useState(false);
 
@@ -391,6 +390,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
       const initializeFinance = async () => {
         try {
+          let serverCurrency: string | null = null;
           // Check if financial setup is complete (prefer server profile when signed in)
           let setupComplete = FinanceStore.isSetupComplete();
           try {
@@ -402,7 +402,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                 .maybeSingle();
               if (profile) {
                 setupComplete = !!profile.finance_setup_completed || setupComplete;
-                if (profile.currency) setCurrency(profile.currency);
+                if (profile.currency) {
+                  serverCurrency = profile.currency;
+                  setCurrency(profile.currency);
+                  // Sync local cache with server preference
+                  try { localStorage.setItem('finance_currency', profile.currency); } catch {}
+                  try { dataManager.saveData('currency', profile.currency as any); } catch {}
+                }
               }
             }
           } catch {}
@@ -450,7 +456,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                 );
               }
 
-              if (savedCurrency) setCurrency(savedCurrency as any);
+              // Only apply local saved currency if we didn't get a server value
+              if (!serverCurrency && savedCurrency) setCurrency(savedCurrency as any);
               setIsInitialized(true);
             } catch (error) {
               console.error('Error loading finance data:', error);
@@ -512,7 +519,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             id: String(a.id),
             name: a.name,
             type: a.type,
-            currency: a.currency || 'UZS',
             balance: Number(a.balance ?? 0),
             color: a.color || '#10B981',
             isDefault: !!a.is_default,
@@ -526,7 +532,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               accountId: String(t.account_id),
               type: t.type,
               amount: Number(t.amount),
-              currency: t.currency || 'UZS',
+              currency: t.currency,
               // Prefer joined category name; fallback to previous text; if nothing, mark as Uncategorized
               category: (t.category && (t.category.name || t.category)) || t.category_name || t.category_id || 'Uncategorized',
               description: t.description || '',
@@ -541,7 +547,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             category: b.category,
             limit: Number(b.limit_amount),
             spent: Number(b.spent ?? 0),
-            currency: b.currency || 'UZS',
+            currency: b.currency,
             period: b.period
           })) as Budget[]);
         }
@@ -634,11 +640,10 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     // Handle financial onboarding completion
     const handleFinanceOnboardingComplete = useCallback(async (accountData: any) => {
       // Add the account to state
-      const newAccount: Account = {
+  const newAccount: Account = {
         id: accountData.id,
         name: accountData.name,
         type: accountData.type,
-        currency: accountData.currency,
         balance: accountData.balance,
         color: '#10B981',
         isDefault: true,
@@ -672,11 +677,10 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     // Create default account if none exist
     useEffect(() => {
       if (isInitialized && !showFinanceOnboarding && accounts.length === 0) {
-        const defaultAccount: Account = {
+  const defaultAccount: Account = {
           id: `account_${Date.now()}`,
           name: 'Main Account',
           type: 'cash',
-          currency: currency,
           balance: 0,
           color: '#10B981',
           isDefault: true,
@@ -1008,9 +1012,11 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     }), [isTransactionLimitReached, limits.maxTransactionsPerMonth, onUpgrade]);
 
     const formatCurrency = useCallback((amount: number, curr: string = currency) => {
+      if (!curr) return new Intl.NumberFormat('en-US').format(amount);
       if (curr === 'UZS') return 'UZS ' + new Intl.NumberFormat('uz-UZ').format(amount);
       const symbol = curr === 'USD' ? '$' : curr === 'EUR' ? '€' : curr === 'RUB' ? '₽' : '';
-      return symbol + new Intl.NumberFormat('en-US').format(amount);
+      const formatted = new Intl.NumberFormat('en-US').format(amount);
+      return symbol ? symbol + formatted : `${curr} ${formatted}`;
     }, [currency]);
 
     const getAccountTypeIcon = (type: 'cash' | 'card' | 'bank' | 'crypto' | 'all' | string) => {
@@ -1150,7 +1156,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               user_id: userRes.user.id,
               name: selected.name,
               type: selected.type,
-              currency: selected.currency || currency,
               color: selected.color || '#10B981',
               is_default: !!selected.isDefault,
             })
@@ -1166,13 +1171,12 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
         // Last resort: create a default remote account
         const fallbackName = 'Main Account';
-        const { data, error } = await supabase
+  const { data, error } = await supabase
           .from('finance_accounts')
           .insert({
             user_id: userRes.user.id,
             name: fallbackName,
             type: 'cash',
-            currency,
             color: '#10B981',
             is_default: true,
           })
@@ -1334,7 +1338,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       await createAccountAction({
         name: newAccount.name,
         type: newAccount.type as any,
-        currency,
         color: '#10B981',
         is_default: accounts.length === 0,
   balance: Number(newAccount.balance || '0'),
@@ -1390,7 +1393,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
       // Optimistic local update
       setAccounts(prev => prev.map(acc => acc.id === editAccount.id
-        ? { ...acc, name: editAccount.name, type: editAccount.type, currency: currency, balance: nextBalance }
+        ? { ...acc, name: editAccount.name, type: editAccount.type, balance: nextBalance }
         : acc
       ));
       setShowEditAccountDialog(false);
@@ -1408,7 +1411,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             .update({
               name: editAccount.name,
               type: editAccount.type as any,
-              currency,
               balance: nextBalance,
             })
             .eq('id', editAccount.id)
@@ -1422,7 +1424,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               user_id: userId,
               name: editAccount.name,
               type: editAccount.type as any,
-              currency,
               balance: nextBalance,
               color: '#10B981',
               is_default: accounts.length === 0,
@@ -1695,7 +1696,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                 category: b.category,
                 limit_amount: b.limit,
                 spent: b.spent ?? 0,
-                currency: b.currency || 'UZS',
+                currency: b.currency,
                 period: b.period || 'monthly',
               }))
             );
@@ -1744,7 +1745,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               id: `account_${Date.now()}`,
               name: 'Main Account',
               type: 'cash',
-              currency: currency,
               balance: 0,
               color: '#10B981',
               isDefault: true,
@@ -2822,7 +2822,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               name: account.name,
               type: account.type as 'checking' | 'savings' | 'credit' | 'cash',
               balance: account.balance,
-              currency: account.currency,
               color: account.color,
               icon: getAccountTypeIcon(account.type)
             }))}

@@ -139,12 +139,13 @@ export const ProgressChartsAnalytics: React.FC<ProgressChartsAnalyticsProps & { 
     setTimeout(() => setIsLoading(false), 300);
   };
 
-  // Prefer prop, then user_profiles value via custom event/localStorage fallback
-  const currentCurrency = currency || (typeof window !== 'undefined' ? (localStorage.getItem('finance_currency') as any) : 'UZS') || 'UZS';
+  // Prefer prop, then localStorage; no hard-coded default
+  const currentCurrency = currency || (typeof window !== 'undefined' ? (localStorage.getItem('finance_currency') as any) : '') || '';
   const formatCurrency = (value: number) => {
+    if (!currentCurrency) return new Intl.NumberFormat('en-US').format(value);
     if (currentCurrency === 'UZS') return 'UZS ' + new Intl.NumberFormat('uz-UZ').format(value);
     const symbol = currentCurrency === 'USD' ? '$' : currentCurrency === 'EUR' ? '€' : currentCurrency === 'RUB' ? '₽' : '';
-    return symbol + new Intl.NumberFormat('en-US').format(value);
+    return (symbol || currentCurrency + ' ') + new Intl.NumberFormat('en-US').format(value);
   };
 
   const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {

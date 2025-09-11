@@ -7,7 +7,6 @@ export type AccountType = 'cash' | 'card' | 'bank' | 'crypto' | 'custom';
 export async function createAccount(input: {
   name: string;
   type: AccountType;
-  currency?: string;
   color?: string;
   is_default?: boolean;
   balance?: number;
@@ -18,7 +17,6 @@ export async function createAccount(input: {
 
   const { error } = await supabase.from('finance_accounts').insert({
     user_id: user.id,
-    currency: 'UZS',
     ...input,
   });
   if (error) throw error;

@@ -8,7 +8,6 @@ type Account = {
   id: string;
   name: string;
   type: 'cash' | 'card' | 'bank' | 'crypto' | 'custom';
-  currency?: string | null;
   color?: string | null;
   is_default?: boolean | null;
   created_at?: string;
@@ -75,7 +74,7 @@ export default function AccountsPage() {
           <li key={a.id} className="flex items-center gap-2">
             <span className="inline-block size-3 rounded-full" style={{ background: a.color || '#9ca3af' }} />
             <span className="font-medium">{a.name}</span>
-            <span className="text-xs text-muted-foreground">({a.type} • {a.currency || 'UZS'})</span>
+            <span className="text-xs text-muted-foreground">({a.type})</span>
             {a.is_default ? <span className="ml-2 text-xs text-emerald-600">default</span> : null}
           </li>
         ))}

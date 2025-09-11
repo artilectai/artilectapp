@@ -37,7 +37,7 @@ create table if not exists public.telegram_link_codes (
 create index if not exists idx_tlc_created_at on public.telegram_link_codes(created_at);
 
 -- Finance & tasks tables are already in your app:
--- finance_accounts(user_id uuid, name text, type text, currency text default 'UZS', color text, is_default bool, created_at timestamptz default now())
+-- finance_accounts(user_id uuid, name text, type text, color text, is_default bool, created_at timestamptz default now())
 -- finance_transactions(user_id uuid, account_id uuid, category_id uuid null, type text, amount numeric, currency text default 'UZS', description text, tags text[], occurred_at timestamptz default now(), created_at timestamptz default now())
 -- finance_categories(user_id uuid, name text, type text, color text)
 -- tasks(id uuid default gen_random_uuid() primary key, user_id uuid, title text, status text, priority text, start_date date, due_date timestamptz, estimate_hours numeric, tags text[], completed_at timestamptz, created_at timestamptz default now())
