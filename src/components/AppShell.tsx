@@ -894,7 +894,7 @@ export default function AppShell({
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}
           title={t('nav.settings')}
-          height="full"
+          height="half"
         >
           <div className="space-y-6 max-h-[70vh] overflow-y-auto">
             {/* Appearance Section */}
