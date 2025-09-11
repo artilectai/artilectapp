@@ -80,3 +80,29 @@ def normalize_category_hint(text: str):
     # try simple nouns like 'food', 'transport', 'salary'
     m2 = re.search(r'\b(food|grocer|transport|bus|taxi|dining|meal|salary|bonus)\w*', text, re.IGNORECASE)
     return m2.group(1).title() if m2 else None
+
+def summarize_task_title(text: str) -> str:
+    """Produce a short task title from a free-form request.
+    Examples:
+    - "Today I have a meeting at 9pm with Amir" -> "Meeting with Amir"
+    - "Call mom at 7" -> "Call mom"
+    Fallback: first 60 chars, capitalized.
+    """
+    s = (text or '').strip()
+    # meeting with <name>
+    m = re.search(r'meeting\s+with\s+([\w\- ]{2,40})', s, re.IGNORECASE)
+    if m:
+        who = re.sub(r'\s+at\b.*$', '', m.group(1).strip(), flags=re.IGNORECASE)
+        return f"Meeting with {who.title()}".strip()
+    # call <someone>
+    m = re.search(r'\bcall\s+([\w\- ]{2,40})', s, re.IGNORECASE)
+    if m:
+        who = re.sub(r'\s+at\b.*$', '', m.group(1).strip(), flags=re.IGNORECASE)
+        return f"Call {who.title()}"
+    # pay / send / email
+    m = re.search(r'\b(email|pay|send)\s+([\w\- ]{2,40})', s, re.IGNORECASE)
+    if m:
+        return f"{m.group(1).title()} {m.group(2).title()}"
+    # Default
+    s = s[0:60]
+    return s[:1].upper() + s[1:]
