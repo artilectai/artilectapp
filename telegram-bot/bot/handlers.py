@@ -236,7 +236,9 @@ async def _apply_actions(user_id: str, actions: List[Dict]) -> List[str]:
                 res = insert_tx(user_id, txt)
             if res.get("ok"):
                 sign = "-" if res["type"] == "expense" else "+"
-                msg = f"Recorded {sign}{int(res['amount'])} {res.get('currency','')} ({res.get('category','')})."
+                amt = int(res['amount']) if isinstance(res.get('amount'), (int,float)) else res.get('amount')
+                cat = res.get('category','')
+                msg = f"{sign}{amt} {res.get('currency','')} {f'· {cat}' if cat else ''}".strip()
                 if debug:
                     msg += f" [tx:{res.get('id')}]"
                 confirmations.append(msg)
@@ -249,7 +251,14 @@ async def _apply_actions(user_id: str, actions: List[Dict]) -> List[str]:
                 res = create_task(user_id, title)
             if res.get("ok"):
                 when = res.get("due_date") or ""
-                msg = f"Task created. {('Due '+when) if when else ''}".strip()
+                title = (res.get('title') or '').strip()
+                # Very short, tidy confirmation
+                if title and when:
+                    msg = f"Added: {title} · due {when[:16]}"
+                elif title:
+                    msg = f"Added: {title}"
+                else:
+                    msg = f"Task added."
                 if debug:
                     msg += f" [task:{res.get('id')}]"
                 confirmations.append(msg)
@@ -340,7 +349,7 @@ async def any_text(m: Message):
         plan = await plan_actions(txt, {"userId": user_id})
         confirmations = await _apply_actions(user_id, plan.get("actions", []))
         if confirmations:
-            reply = plan.get("reply") or ""
+            reply = ""  # keep concise
             final = (reply + ("\n" + "\n".join(confirmations) if confirmations else "")).strip()
             await m.answer(final or "Done.")
             return
@@ -362,7 +371,9 @@ async def any_text(m: Message):
         res = insert_transaction(user_id, txt)
         if res.get("ok"):
             sign = "-" if res["type"] == "expense" else "+"
-            await m.answer(f"Recorded {sign}{int(res['amount'])} {res.get('currency','')} ({res.get('category','')}).")
+            amt = int(res['amount']) if isinstance(res.get('amount'), (int,float)) else res.get('amount')
+            cat = res.get('category','')
+            await m.answer(f"{sign}{amt} {res.get('currency','')} {f'· {cat}' if cat else ''}".strip())
         else:
             if res.get("reason") == "amount_not_found":
                 await m.answer("I couldn't find the amount. Try: *I spent 25 000 on food*", parse_mode="Markdown")
@@ -373,7 +384,13 @@ async def any_text(m: Message):
         res = create_task_from_text(user_id, txt)
         if res.get("ok"):
             when = res.get("due_date","")
-            await m.answer(f"Task created. {('Due '+when) if when else ''}".strip())
+            title = (res.get('title') or '').strip()
+            if title and when:
+                await m.answer(f"Added: {title} · due {when[:16]}")
+            elif title:
+                await m.answer(f"Added: {title}")
+            else:
+                await m.answer("Task added.")
         else:
             if res.get("reason") == "db_error":
                 await m.answer("Couldn't save the task (DB). Please set SUPABASE_SERVICE_ROLE_KEY for the bot or check RLS.")

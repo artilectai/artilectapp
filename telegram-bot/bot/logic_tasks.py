@@ -9,6 +9,8 @@ def create_task_from_text(user_id: str, text: str) -> dict:
         # Default to today to ensure it appears in Daily view
         due = datetime.now(timezone.utc)
     title = summarize_task_title(text)
+    # enforce concise title
+    title = (title or "Task").strip()[:60]
     s = sb()
     ins = s.table("planner_items").insert({
         "user_id": user_id,
@@ -20,10 +22,12 @@ def create_task_from_text(user_id: str, text: str) -> dict:
     }).execute()
     if getattr(ins, "error", None) or not getattr(ins, "data", None):
         return {"ok": False, "reason": "db_error", "error": str(getattr(ins, "error", None) or "unknown")}
-    return {"ok": True, "id": ins.data[0]["id"], "due_date": due.isoformat() if due else None}
+    return {"ok": True, "id": ins.data[0]["id"], "due_date": due.isoformat() if due else None, "title": title}
 
 def create_task_structured(user_id: str, data: dict) -> dict:
-    title = (data.get("title") or "Task").strip()
+    # Always summarize/shorten whatever was provided
+    raw_title = (data.get("title") or data.get("text") or "Task").strip()
+    title = summarize_task_title(raw_title).strip()[:60]
     due = data.get("dueAt") or data.get("due_date")
     start = data.get("startAt") or data.get("start_date")
     priority = data.get("priority") or "medium"
@@ -42,4 +46,4 @@ def create_task_structured(user_id: str, data: dict) -> dict:
     }).execute()
     if getattr(ins, "error", None) or not getattr(ins, "data", None):
         return {"ok": False, "reason": "db_error", "error": str(getattr(ins, "error", None) or "unknown")}
-    return {"ok": True, "id": ins.data[0]["id"], "due_date": due}
+    return {"ok": True, "id": ins.data[0]["id"], "due_date": due, "title": title}
