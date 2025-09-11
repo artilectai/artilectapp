@@ -1,4 +1,5 @@
 import os, secrets, json
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict
 from aiogram import Router, F
 from aiogram.filters import CommandStart, Command
@@ -12,6 +13,63 @@ from .logic_tasks import create_task_from_text, create_task_structured
 from .openai_client import plan_actions, transcribe_audio
 
 router = Router()
+
+def _iso(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).isoformat()
+
+def _last_week_range():
+    now = datetime.now(timezone.utc)
+    start = now - timedelta(days=7)
+    return start, now
+
+def _fmt_amount(v):
+    try:
+        return str(int(v))
+    except Exception:
+        return str(v)
+
+async def _weekly_summary_text(user_id: str) -> str:
+    from .supabase_link import sb
+    s = sb()
+    start, end = _last_week_range()
+    # Finance: fetch transactions and categories to map names
+    tx = s.table("finance_transactions").select("id,amount,type,currency,category_id,description,occurred_at").eq("user_id", user_id).gte("occurred_at", _iso(start)).lte("occurred_at", _iso(end)).order("occurred_at", desc=True).execute()
+    cats = s.table("finance_categories").select("id,name").eq("user_id", user_id).execute()
+    cat_map = {c["id"]: c.get("name") for c in (cats.data or [])}
+    total_expense = 0
+    total_income = 0
+    by_cat: dict[str, float] = {}
+    currency = None
+    for r in (tx.data or []):
+        currency = currency or r.get("currency") or ""
+        amt = float(r.get("amount") or 0)
+        if r.get("type") == "income":
+            total_income += amt
+        else:
+            total_expense += amt
+            cname = cat_map.get(r.get("category_id")) or "Other"
+            by_cat[cname] = by_cat.get(cname, 0) + amt
+    top_cats = sorted(by_cat.items(), key=lambda kv: kv[1], reverse=True)[:3]
+
+    # Tasks: created/done in last week
+    tasks = s.table("planner_items").select("id,status,created_at,due_date").eq("user_id", user_id).or_(
+        f"created_at.gte.{_iso(start)},due_date.gte.{_iso(start)}"
+    ).lte("created_at", _iso(end)).execute()
+    created = len(tasks.data or [])
+    done = sum(1 for r in (tasks.data or []) if (r.get("status") or "").lower() in ("done","completed"))
+
+    lines = [
+        "Last 7 days:",
+        f"• Expenses: {_fmt_amount(total_expense)} {currency or ''}",
+        f"• Income: {_fmt_amount(total_income)} {currency or ''}",
+    ]
+    if top_cats:
+        lines.append("• Top categories:")
+        for name, amt in top_cats:
+            lines.append(f"   - {name}: {_fmt_amount(amt)} {currency or ''}")
+    lines.append(f"• Tasks created: {created}")
+    lines.append(f"• Tasks done: {done}")
+    return "\n".join(lines)
 
 @router.message(Command("whoami"))
 async def whoami(m: Message):
@@ -50,6 +108,17 @@ async def latest(m: Message):
         await m.answer("\n".join(lines) or "No data yet.")
     except Exception as e:
         await m.answer(f"Failed to fetch latest rows: {e}")
+
+@router.message(Command("week"))
+async def week(m: Message):
+    user_id = await _ensure_linked(m)
+    if not user_id:
+        return
+    try:
+        text = await _weekly_summary_text(user_id)
+        await m.answer(text)
+    except Exception as e:
+        await m.answer("Couldn't fetch weekly summary. Ensure the bot has SUPABASE_SERVICE_ROLE_KEY configured.")
 
 @router.message(Command("diag"))
 async def diag(m: Message):
@@ -206,6 +275,22 @@ async def on_voice(m: Message):
     text = await transcribe_audio(audio_bytes)
     plan = await plan_actions(text, {"userId": user_id})
     confirmations = await _apply_actions(user_id, plan.get("actions", []))
+    # Fallback to legacy parsing if no actions were executed
+    if not confirmations:
+        from .nlu import classify_intent
+        intent = classify_intent(text)
+        if intent in ("add_expense","add_income"):
+            from .logic_finance import insert_transaction
+            res = insert_transaction(user_id, text)
+            if res.get("ok"):
+                sign = "-" if res["type"] == "expense" else "+"
+                confirmations.append(f"Recorded {sign}{int(res['amount'])} {res.get('currency','')} ({res.get('category','')}).")
+        elif intent == "add_task":
+            from .logic_tasks import create_task_from_text
+            res = create_task_from_text(user_id, text)
+            if res.get("ok"):
+                when = res.get("due_date") or ""
+                confirmations.append(f"Task created. {('Due '+when) if when else ''}".strip())
     reply = plan.get("reply") or ""
     final = (reply + ("\n" + "\n".join(confirmations) if confirmations else "")).strip()
     await m.answer(final or "Done.")
@@ -225,6 +310,21 @@ async def on_photo(m: Message):
     img_bytes = bio.read()
     plan = await plan_actions(m.caption or "", {"userId": user_id}, images=[img_bytes])
     confirmations = await _apply_actions(user_id, plan.get("actions", []))
+    if not confirmations and m.caption:
+        from .nlu import classify_intent
+        intent = classify_intent(m.caption)
+        if intent in ("add_expense","add_income"):
+            from .logic_finance import insert_transaction
+            res = insert_transaction(user_id, m.caption)
+            if res.get("ok"):
+                sign = "-" if res["type"] == "expense" else "+"
+                confirmations.append(f"Recorded {sign}{int(res['amount'])} {res.get('currency','')} ({res.get('category','')}).")
+        elif intent == "add_task":
+            from .logic_tasks import create_task_from_text
+            res = create_task_from_text(user_id, m.caption)
+            if res.get("ok"):
+                when = res.get("due_date") or ""
+                confirmations.append(f"Task created. {('Due '+when) if when else ''}".strip())
     reply = plan.get("reply") or ""
     final = (reply + ("\n" + "\n".join(confirmations) if confirmations else "")).strip()
     await m.answer(final or "Processed your image.")
@@ -239,12 +339,24 @@ async def any_text(m: Message):
     if os.getenv("OPENAI_API_KEY"):
         plan = await plan_actions(txt, {"userId": user_id})
         confirmations = await _apply_actions(user_id, plan.get("actions", []))
-        reply = plan.get("reply") or ""
-        final = (reply + ("\n" + "\n".join(confirmations) if confirmations else "")).strip()
-        await m.answer(final or "Done.")
-        return
+        if confirmations:
+            reply = plan.get("reply") or ""
+            final = (reply + ("\n" + "\n".join(confirmations) if confirmations else "")).strip()
+            await m.answer(final or "Done.")
+            return
+        # Fallback to legacy intent if no actions were executed
+        # Continues below to legacy branch
 
     # Legacy fallback (regex intent)
+    low = txt.lower()
+    if any(k in low for k in ["last week","past week","last 7 days","past 7 days","за прошлую неделю","прошлой неделе","за неделю"]):
+        try:
+            weekly = await _weekly_summary_text(user_id)
+            await m.answer(weekly)
+            return
+        except Exception:
+            await m.answer("Couldn't fetch weekly summary. Ensure SUPABASE_SERVICE_ROLE_KEY is set for the bot.")
+            return
     intent = classify_intent(txt)
     if intent in ("add_expense","add_income"):
         res = insert_transaction(user_id, txt)
