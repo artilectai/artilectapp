@@ -15,6 +15,8 @@ def create_task_from_text(user_id: str, text: str) -> dict:
         "due_date": due.isoformat() if due else None,
         "type": "daily",
     }).execute()
+    if getattr(ins, "error", None) or not getattr(ins, "data", None):
+        return {"ok": False, "reason": "db_error", "error": str(getattr(ins, "error", None) or "unknown")}
     return {"ok": True, "id": ins.data[0]["id"], "due_date": due.isoformat() if due else None}
 
 def create_task_structured(user_id: str, data: dict) -> dict:
@@ -32,4 +34,6 @@ def create_task_structured(user_id: str, data: dict) -> dict:
         "start_date": start,
         "type": "daily",
     }).execute()
+    if getattr(ins, "error", None) or not getattr(ins, "data", None):
+        return {"ok": False, "reason": "db_error", "error": str(getattr(ins, "error", None) or "unknown")}
     return {"ok": True, "id": ins.data[0]["id"], "due_date": due}

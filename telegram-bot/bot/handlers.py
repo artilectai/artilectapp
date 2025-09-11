@@ -12,6 +12,41 @@ from .openai_client import plan_actions, transcribe_audio
 
 router = Router()
 
+@router.message(Command("diag"))
+async def diag(m: Message):
+    from .supabase_link import sb, ensure_default_account
+    user_id = get_user_by_telegram(m.from_user.id)
+    if not user_id:
+        await m.answer("Not linked. Use /link, paste code in the app, then try again.")
+        return
+    s = sb()
+    # Check select
+    try:
+        sel = s.table("planner_items").select("id").eq("user_id", user_id).limit(1).execute()
+        sel_ok = not getattr(sel, "error", None)
+    except Exception as e:
+        sel_ok = False
+    # Check insert
+    try:
+        test = s.table("planner_items").insert({
+            "user_id": user_id,
+            "title": "_diag",
+            "status": "todo",
+            "priority": "medium",
+            "type": "daily"
+        }).execute()
+        ins_ok = not getattr(test, "error", None)
+        if ins_ok:
+            # cleanup
+            try:
+                tid = test.data[0]["id"]
+                s.table("planner_items").delete().eq("id", tid).execute()
+            except Exception:
+                pass
+    except Exception as e:
+        ins_ok = False
+    await m.answer(f"DB access: select={'ok' if sel_ok else 'fail'}, insert={'ok' if ins_ok else 'fail'}\nIf insert=fail, set SUPABASE_SERVICE_ROLE_KEY for the bot or fix RLS policies.")
+
 @router.message(CommandStart())
 async def start(m: Message):
     uid = m.from_user.id
@@ -170,7 +205,10 @@ async def any_text(m: Message):
             when = res.get("due_date","")
             await m.answer(f"Task created. {('Due '+when) if when else ''}".strip())
         else:
-            await m.answer("Couldn't create a task, please try again.")
+            if res.get("reason") == "db_error":
+                await m.answer("Couldn't save the task (DB). Please set SUPABASE_SERVICE_ROLE_KEY for the bot or check RLS.")
+            else:
+                await m.answer("Couldn't create a task, please try again.")
         return
     await m.answer(
         "Tell me things like:\n• *I spent 25k on food*\n• *Add income 1200 salary*\n• *Tomorrow I have meeting at 10*",
