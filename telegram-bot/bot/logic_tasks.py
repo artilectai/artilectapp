@@ -6,12 +6,13 @@ def create_task_from_text(user_id: str, text: str) -> dict:
     due = parse_time_tomorrow(text)
     title = text.strip().capitalize()
     s = sb()
-    ins = s.table("tasks").insert({
+    ins = s.table("planner_items").insert({
         "user_id": user_id,
         "title": title,
         "status": "todo",
         "priority": "medium",
         "due_date": due.isoformat() if due else None,
+        "type": "daily",
     }).execute()
     return {"ok": True, "id": ins.data[0]["id"], "due_date": due.isoformat() if due else None}
 
@@ -21,12 +22,13 @@ def create_task_structured(user_id: str, data: dict) -> dict:
     start = data.get("startAt") or data.get("start_date")
     priority = data.get("priority") or "medium"
     s = sb()
-    ins = s.table("tasks").insert({
+    ins = s.table("planner_items").insert({
         "user_id": user_id,
         "title": title,
         "status": "todo",
         "priority": priority,
         "due_date": due,
         "start_date": start,
+        "type": "daily",
     }).execute()
     return {"ok": True, "id": ins.data[0]["id"], "due_date": due}

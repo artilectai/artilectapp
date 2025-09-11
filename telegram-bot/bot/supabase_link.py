@@ -5,11 +5,12 @@ from supabase import create_client, Client
 # Ensure .env is loaded for local runs
 load_dotenv()
 
+# URL comes from public env to keep single source
 SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
-# Prefer ANON key if you don't want to use the service role. Note: RLS must permit the operations the bot performs.
+# Prefer service role for server-side bot to bypass RLS; fallback to anon if not set
 SUPABASE_KEY = (
-    os.environ.get("NEXT_PUBLIC_SUPABASE_ANON_KEY")
-    or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    or os.environ.get("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 )
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in environment.")
