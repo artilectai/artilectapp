@@ -22,6 +22,8 @@ try:
 except Exception:
     _derived_path = ""
 WEBHOOK_PATH = os.getenv("WEBHOOK_PATH", _derived_path or "/webhook")
+_WEBHOOK_SLASHED = WEBHOOK_PATH.rstrip("/") + "/"
+_WEBHOOK_TOKEN_SEGMENT = (WEBHOOK_PATH.rstrip("/").split("/")[-1] if "/" in WEBHOOK_PATH else WEBHOOK_PATH.strip("/"))
 if not WEBHOOK_URL:
     raise RuntimeError("WEBHOOK_URL is not set. Set it to your public https URL (e.g., https://host/telegram/webhook/secret).")
 
@@ -60,6 +62,7 @@ async def root_head():
     return {}
 
 @app.post(path=WEBHOOK_PATH)
+@app.post(path=_WEBHOOK_SLASHED)
 async def webhook(request: Request, x_telegram_bot_api_secret_token: str | None = Header(default=None)):
     # Optional header check for Telegram secret token
     logging.info("Webhook hit: validating secret header")
@@ -69,6 +72,22 @@ async def webhook(request: Request, x_telegram_bot_api_secret_token: str | None 
     logging.info("Webhook update received; forwarding to dispatcher")
     await dp.feed_update(bot, Update.model_validate(data))
     return {"ok": True}
+
+# Guarded catch-all to avoid 404 when minor path differences occur (e.g., missing secret segment or trailing slash)
+@app.post("/tg/webhook/{tail:path}")
+async def webhook_catch_all(tail: str, request: Request, x_telegram_bot_api_secret_token: str | None = Header(default=None)):
+    # Validate secret header if configured
+    if WEBHOOK_SECRET:
+        if (x_telegram_bot_api_secret_token or "") != WEBHOOK_SECRET:
+            raise HTTPException(status_code=401, detail="invalid token")
+    else:
+        # If no secret, require last segment to match configured token segment to prevent random posts
+        if _WEBHOOK_TOKEN_SEGMENT and not request.url.path.rstrip("/").endswith("/" + _WEBHOOK_TOKEN_SEGMENT):
+            raise HTTPException(status_code=404, detail="not found")
+    data = await request.json()
+    logging.info("Webhook catch-all matched: %s", request.url.path)
+    await dp.feed_update(bot, Update.model_validate(data))
+    return {"ok": True, "alias": True}
 
 @app.get("/healthz")
 async def healthz():
