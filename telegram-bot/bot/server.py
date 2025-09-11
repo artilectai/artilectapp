@@ -24,6 +24,14 @@ except Exception:
 WEBHOOK_PATH = os.getenv("WEBHOOK_PATH", _derived_path or "/webhook")
 _WEBHOOK_SLASHED = WEBHOOK_PATH.rstrip("/") + "/"
 _WEBHOOK_TOKEN_SEGMENT = (WEBHOOK_PATH.rstrip("/").split("/")[-1] if "/" in WEBHOOK_PATH else WEBHOOK_PATH.strip("/"))
+DEBUG_ADMIN_TOKEN = os.getenv("DEBUG_ADMIN_TOKEN", "")
+
+def _truthy(v: str | None, default: bool = False) -> bool:
+    if v is None:
+        return default
+    return str(v).strip().lower() in {"1", "true", "yes", "on"}
+
+DELETE_WEBHOOK_ON_SHUTDOWN = _truthy(os.getenv("DELETE_WEBHOOK_ON_SHUTDOWN"), False)
 if not WEBHOOK_URL:
     raise RuntimeError("WEBHOOK_URL is not set. Set it to your public https URL (e.g., https://host/telegram/webhook/secret).")
 
@@ -37,7 +45,8 @@ app = FastAPI()
 async def _startup():
     logging.info(f"Setting Telegram webhook to: {WEBHOOK_URL}")
     logging.info(f"Webhook path configured: {WEBHOOK_PATH} (derived from URL if not set explicitly)")
-    await bot.set_webhook(WEBHOOK_URL, secret_token=WEBHOOK_SECRET or None, drop_pending_updates=True)
+    ok = await bot.set_webhook(WEBHOOK_URL, secret_token=WEBHOOK_SECRET or None, drop_pending_updates=True)
+    logging.info("set_webhook result: %s", ok)
     try:
         info = await bot.get_webhook_info()
         logging.info(
@@ -50,7 +59,9 @@ async def _startup():
 
 @app.on_event("shutdown")
 async def _shutdown():
-    await bot.delete_webhook()
+    if DELETE_WEBHOOK_ON_SHUTDOWN:
+        logging.info("Deleting webhook on shutdown per configuration")
+        await bot.delete_webhook()
 
 @app.get("/")
 async def root():
@@ -110,3 +121,23 @@ async def debug_webhook():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+def _check_admin_token(token: str | None) -> None:
+    if not DEBUG_ADMIN_TOKEN:
+        raise HTTPException(status_code=403, detail="admin endpoints disabled")
+    if (token or "") != DEBUG_ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="invalid admin token")
+
+@app.get("/debug/set-webhook")
+async def debug_set_webhook(token: str | None = None):
+    _check_admin_token(token)
+    ok = await bot.set_webhook(WEBHOOK_URL, secret_token=WEBHOOK_SECRET or None, drop_pending_updates=False)
+    info = await bot.get_webhook_info()
+    return {"ok": bool(ok), "url": getattr(info, "url", None), "pending_update_count": getattr(info, "pending_update_count", None)}
+
+@app.get("/debug/delete-webhook")
+async def debug_delete_webhook(token: str | None = None):
+    _check_admin_token(token)
+    ok = await bot.delete_webhook()
+    info = await bot.get_webhook_info()
+    return {"ok": bool(ok), "url": getattr(info, "url", None), "pending_update_count": getattr(info, "pending_update_count", None)}
