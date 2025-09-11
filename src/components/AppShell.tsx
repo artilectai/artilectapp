@@ -896,7 +896,7 @@ export default function AppShell({
           title={t('nav.settings')}
           height="half"
         >
-          <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+          <div className="space-y-6">
             {/* Appearance Section */}
             <div className="space-y-4">
               <h4 className="font-semibold text-lg">{t('appShell.appearance')}</h4>
