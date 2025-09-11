@@ -1,10 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from .supabase_link import sb
 from .utils import parse_time_tomorrow, parse_time_today_or_tomorrow, summarize_task_title
 
 def create_task_from_text(user_id: str, text: str) -> dict:
     # Try robust parser first; fallback to legacy 'tomorrow ... at' matcher
     due = parse_time_today_or_tomorrow(text) or parse_time_tomorrow(text)
+    if not due:
+        # Default to today to ensure it appears in Daily view
+        due = datetime.now(timezone.utc)
     title = summarize_task_title(text)
     s = sb()
     ins = s.table("planner_items").insert({
@@ -25,6 +28,9 @@ def create_task_structured(user_id: str, data: dict) -> dict:
     start = data.get("startAt") or data.get("start_date")
     priority = data.get("priority") or "medium"
     s = sb()
+    if not due:
+        # Default to today to ensure it appears in Daily view when due not provided
+        due = datetime.now(timezone.utc).isoformat()
     ins = s.table("planner_items").insert({
         "user_id": user_id,
         "title": title,

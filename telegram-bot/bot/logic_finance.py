@@ -1,4 +1,5 @@
 import os, re
+from datetime import datetime, timezone
 from .supabase_link import sb, ensure_default_account
 from .utils import parse_money, normalize_category_hint
 
@@ -51,6 +52,8 @@ def insert_transaction(user_id: str, text: str) -> dict:
     s = sb()
     account_id = ensure_default_account(user_id)
 
+    # Ensure occurred_at for UI visibility
+    occurred_at = datetime.now(timezone.utc).isoformat()
     ins = s.table("finance_transactions").insert({
         "user_id": user_id,
         "account_id": account_id,
@@ -59,10 +62,11 @@ def insert_transaction(user_id: str, text: str) -> dict:
         "amount": amount,
         "currency": DEFAULT_CURRENCY,
         "description": text,
+        "occurred_at": occurred_at,
     }).execute()
     if getattr(ins, "error", None) or not getattr(ins, "data", None):
         return {"ok": False, "reason": "db_error", "error": str(getattr(ins, "error", None) or "unknown")}
-    return {"ok": True, "id": ins.data[0]["id"], "type": tx_type, "amount": amount, "category": cat_mapped}
+    return {"ok": True, "id": ins.data[0]["id"], "type": tx_type, "amount": amount, "category": cat_mapped, "occurred_at": occurred_at}
 
 def insert_transaction_structured(user_id: str, data: dict) -> dict:
     tx_type = data.get("type") or ("income" if data.get("source") else "expense")
@@ -71,7 +75,7 @@ def insert_transaction_structured(user_id: str, data: dict) -> dict:
         return {"ok": False, "reason": "amount_not_found"}
     currency = data.get("currency") or DEFAULT_CURRENCY
     description = data.get("description") or data.get("note") or ""
-    occurred_at = data.get("occurredAt") or None
+    occurred_at = data.get("occurredAt") or data.get("occurred_at") or datetime.now(timezone.utc).isoformat()
     cat_name = map_category_name(data.get("category")) if data.get("category") else None
     cat_id = find_or_create_category(user_id, cat_name, tx_type) if cat_name else None
 
