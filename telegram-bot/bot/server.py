@@ -1,4 +1,4 @@
-import os
+import os, logging
 from fastapi import FastAPI, Request, Header, HTTPException
 from aiogram import Bot, Dispatcher
 from aiogram.types import Update
@@ -25,18 +25,25 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def _startup():
+    logging.info(f"Setting Telegram webhook to: {WEBHOOK_URL}")
     await bot.set_webhook(WEBHOOK_URL, secret_token=WEBHOOK_SECRET or None, drop_pending_updates=True)
 
 @app.on_event("shutdown")
 async def _shutdown():
     await bot.delete_webhook()
 
+@app.get("/")
+async def root():
+    return {"ok": True, "service": "artilect-bot", "webhook_path": WEBHOOK_PATH}
+
 @app.post(path=WEBHOOK_PATH)
 async def webhook(request: Request, x_telegram_bot_api_secret_token: str | None = Header(default=None)):
     # Optional header check for Telegram secret token
+    logging.info("Webhook hit: validating secret header")
     if WEBHOOK_SECRET and (x_telegram_bot_api_secret_token or "") != WEBHOOK_SECRET:
         raise HTTPException(status_code=401, detail="invalid token")
     data = await request.json()
+    logging.info("Webhook update received; forwarding to dispatcher")
     await dp.feed_update(bot, Update.model_validate(data))
     return {"ok": True}
 
