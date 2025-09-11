@@ -1,9 +1,10 @@
 from datetime import datetime
 from .supabase_link import sb
-from .utils import parse_time_tomorrow
+from .utils import parse_time_tomorrow, parse_time_today_or_tomorrow
 
 def create_task_from_text(user_id: str, text: str) -> dict:
-    due = parse_time_tomorrow(text)
+    # Try robust parser first; fallback to legacy 'tomorrow ... at' matcher
+    due = parse_time_today_or_tomorrow(text) or parse_time_tomorrow(text)
     title = text.strip().capitalize()
     s = sb()
     ins = s.table("planner_items").insert({

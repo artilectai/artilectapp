@@ -252,6 +252,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         .from('planner_items')
         .select('*')
         .in('type', ['weekly','monthly','yearly'])
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       const rows = (data || []) as any[];
@@ -279,12 +280,16 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   }, []);
 
   useEffect(() => {
-    loadGoals();
-    const ch = supabase
-      .channel('planner-goals-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'planner_items' }, () => loadGoals())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    (async () => {
+      await loadGoals();
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+      const ch = supabase
+        .channel('planner-goals-rt')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'planner_items', filter: userId ? `user_id=eq.${userId}` : undefined as any }, () => loadGoals())
+        .subscribe();
+      return () => { supabase.removeChannel(ch); };
+    })();
   }, [loadGoals]);
 
   // One-time migration: import localStorage goals into Supabase if user is signed-in and no rows exist yet
@@ -941,13 +946,35 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   // Load tasks from Supabase and subscribe to realtime
   const loadTasks = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = (auth as any)?.user?.id as string | undefined;
+      if (!userId) { setTasks([]); return; }
+      let { data, error } = await supabase
         .from('planner_items')
         .select('*')
         .eq('type', 'daily')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      const mapped = (data || []).map((row: any) => ({
+      // If the column 'type' is missing in DB or query fails, fallback to fetching all and filtering client-side
+      if (error) {
+        const msg = (error as any)?.message || '';
+        const missingType = /column .*type.* does not exist/i.test(msg);
+        if (missingType) {
+          const fb = await supabase
+            .from('planner_items')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+          data = (fb as any).data || [];
+        } else {
+          throw error;
+        }
+      }
+      // Filter rows to 'daily' if the 'type' column exists; otherwise include all
+      const rowsToUse = Array.isArray(data)
+        ? (data as any[]).filter((row: any) => (typeof row?.type === 'undefined') || row?.type === 'daily')
+        : [];
+      const mapped = rowsToUse.map((row: any) => ({
         id: String(row.id),
         title: row.title || '',
         description: row.description || undefined,
@@ -963,20 +990,24 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         createdAt: row.created_at ? new Date(row.created_at) : new Date(),
         updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
         completedAt: row.completed_at ? new Date(row.completed_at) : null,
-      })) as Task[];
-      setTasks(mapped);
+  })) as Task[];
+  setTasks(mapped);
     } catch (e) {
       console.error('Failed to load tasks:', e);
     }
   }, []);
 
   useEffect(() => {
-    loadTasks();
-    const ch = supabase
-      .channel('planner-tasks-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'planner_items' }, () => loadTasks())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    (async () => {
+      await loadTasks();
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = (auth as any)?.user?.id as string | undefined;
+      const ch = supabase
+        .channel('planner-tasks-rt')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'planner_items', filter: userId ? `user_id=eq.${userId}` : undefined as any }, () => loadTasks())
+        .subscribe();
+      return () => { supabase.removeChannel(ch); };
+    })();
   }, [loadTasks]);
 
   const handleSaveTask = useCallback(async (taskData: Partial<Task>) => {

@@ -159,7 +159,10 @@ async def any_text(m: Message):
             sign = "-" if res["type"] == "expense" else "+"
             await m.answer(f"Recorded {sign}{int(res['amount'])} {res.get('currency','')} ({res.get('category','')}).")
         else:
-            await m.answer("I couldn't find the amount. Try: *I spent 25 000 on food*", parse_mode="Markdown")
+            if res.get("reason") == "amount_not_found":
+                await m.answer("I couldn't find the amount. Try: *I spent 25 000 on food*", parse_mode="Markdown")
+            else:
+                await m.answer("Couldn't save the transaction. Please try again later.")
         return
     if intent == "add_task":
         res = create_task_from_text(user_id, txt)

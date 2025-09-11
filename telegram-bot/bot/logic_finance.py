@@ -60,6 +60,8 @@ def insert_transaction(user_id: str, text: str) -> dict:
         "currency": DEFAULT_CURRENCY,
         "description": text,
     }).execute()
+    if getattr(ins, "error", None) or not getattr(ins, "data", None):
+        return {"ok": False, "reason": "db_error", "error": str(getattr(ins, "error", None) or "unknown")}
     return {"ok": True, "id": ins.data[0]["id"], "type": tx_type, "amount": amount, "category": cat_mapped}
 
 def insert_transaction_structured(user_id: str, data: dict) -> dict:
@@ -85,4 +87,6 @@ def insert_transaction_structured(user_id: str, data: dict) -> dict:
         "description": description,
         "occurred_at": occurred_at,
     }).execute()
+    if getattr(ins, "error", None) or not getattr(ins, "data", None):
+        return {"ok": False, "reason": "db_error", "error": str(getattr(ins, "error", None) or "unknown")}
     return {"ok": True, "id": ins.data[0]["id"], "type": tx_type, "amount": amount, "currency": currency, "category": cat_name}
