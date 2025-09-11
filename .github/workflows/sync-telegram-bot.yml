@@ -1,0 +1,45 @@
+name: Sync telegram-bot to artilectbot
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'telegram-bot/**'
+      - '.github/workflows/sync-telegram-bot.yml'
+
+concurrency:
+  group: sync-telegram-bot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # required for git subtree split
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create subtree split branch
+        run: |
+          # delete if exists locally to avoid stale refs
+          git branch -D bot-split 2>/dev/null || true
+          git subtree split --prefix=telegram-bot -b bot-split
+
+      - name: Push to artilectbot/main
+        env:
+          BOT_REPO_TOKEN: ${{ secrets.BOT_REPO_TOKEN }}
+          BOT_REPO_SLUG: ${{ secrets.BOT_REPO_SLUG }} # e.g. artilectai/artilectbot
+        run: |
+          if [ -z "${BOT_REPO_TOKEN}" ] || [ -z "${BOT_REPO_SLUG}" ]; then
+            echo "Missing BOT_REPO_TOKEN or BOT_REPO_SLUG secret. Please add them in repo settings." >&2
+            exit 1
+          fi
+          REMOTE_URL="https://x-access-token:${BOT_REPO_TOKEN}@github.com/${BOT_REPO_SLUG}.git"
+          # push subtree branch to main of bot repo
+          git push --force "${REMOTE_URL}" bot-split:main
