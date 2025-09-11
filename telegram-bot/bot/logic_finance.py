@@ -69,7 +69,12 @@ def insert_transaction(user_id: str, text: str) -> dict:
     return {"ok": True, "id": ins.data[0]["id"], "type": tx_type, "amount": amount, "category": cat_mapped, "occurred_at": occurred_at}
 
 def insert_transaction_structured(user_id: str, data: dict) -> dict:
-    tx_type = data.get("type") or ("income" if data.get("source") else "expense")
+    # Normalize type to satisfy DB constraint (only 'income' or 'expense')
+    raw_type = (data.get("type") or "").lower()
+    if raw_type in ("income", "add_income", "credit") or data.get("source"):
+        tx_type = "income"
+    else:
+        tx_type = "expense"
     amount = data.get("amount")
     if amount is None:
         return {"ok": False, "reason": "amount_not_found"}
