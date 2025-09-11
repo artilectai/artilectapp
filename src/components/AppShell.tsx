@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Settings, Plus, Calendar, DollarSign, Dumbbell, User, Globe, Clock, CreditCard, Download, Trash2, Moon, Sun, Menu, X, TrendingUp, Crown, Star, Brain, ChevronRight, Shield, HelpCircle, LogOut, Palette, Volume2, Camera, Edit3, Check } from 'lucide-react';
+import { Bell, Settings, Plus, Calendar, DollarSign, Dumbbell, User, Globe, Clock, CreditCard, Download, Trash2, Moon, Sun, Menu, X, TrendingUp, Crown, Star, Brain, ChevronRight, Shield, HelpCircle, LogOut, Palette, Volume2, Camera, Edit3, Check, Send } from 'lucide-react';
 import { useSession, signOut } from '@/lib/supabase/useSession';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -114,6 +114,10 @@ export default function AppShell({
     bio: '',
     location: ''
   });
+  // Telegram link code
+  const [linkCode, setLinkCode] = useState('');
+  const [linking, setLinking] = useState(false);
+  const [linkStatus, setLinkStatus] = useState<string | null>(null);
 
   // Settings states
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -854,6 +858,51 @@ export default function AppShell({
                   {t('nav.upgrade')}
                 </Button>
               )}
+              {/* Telegram Link */}
+              <div className="rounded-xl border p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Send className="w-4 h-4" />
+                    <span className="font-medium">Link Telegram</span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Paste 6-char code from /link"
+                    value={linkCode}
+                    onChange={(e) => setLinkCode(e.target.value)}
+                  />
+                  <Button
+                    disabled={!linkCode || linking}
+                    onClick={async () => {
+                      setLinking(true);
+                      setLinkStatus(null);
+                      try {
+                        const res = await fetch('/api/telegram/link', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ code: linkCode.trim() })
+                        });
+                        const j = await res.json();
+                        if (j.ok) {
+                          setLinkStatus('Linked successfully.');
+                          setLinkCode('');
+                          toast.success('Telegram linked');
+                        } else {
+                          setLinkStatus(j.error || 'Failed to link.');
+                          toast.error(j.error || 'Failed to link');
+                        }
+                      } catch (e) {
+                        setLinkStatus('Network error');
+                        toast.error('Network error');
+                      } finally {
+                        setLinking(false);
+                      }
+                    }}
+                  >Link</Button>
+                </div>
+                {linkStatus && <p className="text-xs text-muted-foreground mt-2">{linkStatus}</p>}
+              </div>
             </div>
 
             <Separator />
