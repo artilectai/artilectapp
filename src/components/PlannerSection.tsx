@@ -2253,47 +2253,94 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     onChange({ ...goal, milestones: next });
   };
 
+  const completed = rows.filter(r => r.completed).length;
+  const pct = rows.length ? Math.round((completed / rows.length) * 100) : 0;
+
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">{goal.title}</h3>
-          {goal.description && <p className="text-sm text-muted-foreground clamp-2">{goal.description}</p>}
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-surface-1/60 backdrop-blur rounded-t-2xl">
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold truncate">{goal.title}</h3>
+          {goal.description && <p className="text-sm text-muted-foreground clamp-2 ">{goal.description}</p>}
         </div>
-        <ScaleButton className="h-9" variant="outline" onClick={addRow}>{t('planner.editor.addItem')}</ScaleButton>
+        <ScaleButton className="h-9 px-4 rounded-lg bg-[#00d563] text-black hover:bg-[#00d563]/90" onClick={addRow}>
+          {t('planner.editor.addItem', { defaultValue: 'Add Item' })}
+        </ScaleButton>
       </div>
       <div className="flex-1 overflow-auto">
-        <div className="min-w-[720px]">
-          <div className="grid grid-cols-[28px_1fr_140px_160px_1fr_36px] items-center px-4 py-2 text-xs text-muted-foreground border-b border-border sticky top-0 bg-surface-1/80 backdrop-blur">
+        <div className="min-w-[860px] p-4">
+          <div className="grid grid-cols-[36px_1fr_160px_180px_1.2fr_40px] items-center px-3 py-2 text-xs text-muted-foreground sticky top-0 bg-surface-1/70 backdrop-blur rounded-xl border border-border">
             <span></span>
-            <span>{t('planner.table.task', { defaultValue: 'Task' })}</span>
-            <span>{t('planner.table.status', { defaultValue: 'Status' })}</span>
-            <span>{t('planner.table.due', { defaultValue: 'Due date' })}</span>
-            <span>{t('planner.table.notes', { defaultValue: 'Notes' })}</span>
+            <span className="uppercase tracking-wide">{t('planner.table.task', { defaultValue: 'Task' })}</span>
+            <span className="uppercase tracking-wide">{t('planner.table.status', { defaultValue: 'Status' })}</span>
+            <span className="uppercase tracking-wide">{t('planner.table.due', { defaultValue: 'Due date' })}</span>
+            <span className="uppercase tracking-wide">{t('planner.table.notes', { defaultValue: 'Notes' })}</span>
             <span></span>
           </div>
-          {rows.map((r) => (
-            <div key={r.id} className="grid grid-cols-[28px_1fr_140px_160px_1fr_36px] items-center px-4 py-2 border-b border-border">
-              <Checkbox checked={r.completed} onCheckedChange={(c) => updateRow(r.id, { completed: !!c })} />
-              <Input value={r.title} onChange={(e)=>updateRow(r.id, { title: e.target.value })} placeholder={t('planner.table.taskPlaceholder', { defaultValue: 'Write a step' }) as string} className="h-9" />
-              <Select value={r.status || 'todo'} onValueChange={(v)=>updateRow(r.id, { status: v as any })}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todo">{t('planner.filters.status.todo')}</SelectItem>
-                  <SelectItem value="doing">{t('planner.filters.status.doing')}</SelectItem>
-                  <SelectItem value="done">{t('planner.filters.status.done')}</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input type="date" value={r.dueDate ? new Date(r.dueDate).toISOString().slice(0,10) : ''} onChange={(e)=>updateRow(r.id, { dueDate: e.target.value ? new Date(e.target.value) : undefined })} className="h-9" />
-              <Input value={r.notes || ''} onChange={(e)=>updateRow(r.id, { notes: e.target.value })} placeholder={t('planner.table.notesPlaceholder', { defaultValue: 'Notes' }) as string} className="h-9" />
-              <ScaleButton variant="ghost" onClick={()=>removeRow(r.id)}>×</ScaleButton>
-            </div>
-          ))}
+
+          <div className="mt-2 space-y-2">
+            <AnimatePresence initial={false}>
+              {rows.map((r) => (
+                <motion.div
+                  key={r.id}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="grid grid-cols-[36px_1fr_160px_180px_1.2fr_40px] items-center gap-2 px-3 py-2 rounded-xl bg-surface-1/60 hover:bg-surface-1 transition-colors border border-border"
+                >
+                  <div className="flex items-center justify-center">
+                    <Checkbox checked={r.completed} onCheckedChange={(c) => updateRow(r.id, { completed: !!c })} />
+                  </div>
+                  <Input
+                    value={r.title}
+                    onChange={(e)=>updateRow(r.id, { title: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') addRow();
+                    }}
+                    placeholder={t('planner.table.taskPlaceholder', { defaultValue: 'Write a step' }) as string}
+                    className="h-10 rounded-lg bg-surface-2/60 border-input"
+                  />
+                  <Select value={r.status || 'todo'} onValueChange={(v)=>updateRow(r.id, { status: v as any })}>
+                    <SelectTrigger className="h-10 rounded-lg bg-surface-2/60 border-input"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todo">{t('planner.filters.status.todo')}</SelectItem>
+                      <SelectItem value="doing">{t('planner.filters.status.doing')}</SelectItem>
+                      <SelectItem value="done">{t('planner.filters.status.done')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="date"
+                    value={r.dueDate ? new Date(r.dueDate).toISOString().slice(0,10) : ''}
+                    onChange={(e)=>updateRow(r.id, { dueDate: e.target.value ? new Date(e.target.value) : undefined })}
+                    className="h-10 rounded-lg bg-surface-2/60 border-input"
+                  />
+                  <Input
+                    value={r.notes || ''}
+                    onChange={(e)=>updateRow(r.id, { notes: e.target.value })}
+                    placeholder={t('planner.table.notesPlaceholder', { defaultValue: 'Notes' }) as string}
+                    className="h-10 rounded-lg bg-surface-2/60 border-input"
+                  />
+                  <ScaleButton variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={()=>removeRow(r.id)}>×</ScaleButton>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
           {rows.length === 0 && (
             <div className="p-6 text-center text-muted-foreground">
               {t('planner.table.empty', { defaultValue: 'Add steps to your project' })}
             </div>
           )}
+
+          {/* Progress summary */}
+          <div className="mt-6 p-4 rounded-xl border border-border bg-surface-1/60">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground">{t('planner.detail.progress', { defaultValue: 'Progress' })}</span>
+              <span className="text-sm font-medium">{pct}%</span>
+            </div>
+            <Progress value={pct} />
+          </div>
         </div>
       </div>
     </div>
