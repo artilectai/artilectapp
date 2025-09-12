@@ -2583,6 +2583,13 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
   const completed = rows.filter(r => r.completed).length;
   const pct = rows.length ? Math.round((completed / rows.length) * 100) : 0;
 
+  const formatDMY = (date: Date) => {
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-surface-1/60 backdrop-blur rounded-t-2xl">
@@ -2644,12 +2651,26 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                       <SelectItem value="done">{t('planner.filters.status.done')}</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input
-                    type="date"
-                    value={r.dueDate ? new Date(r.dueDate).toISOString().slice(0,10) : ''}
-                    onChange={(e)=>updateRow(r.id, { dueDate: e.target.value ? new Date(e.target.value) : undefined })}
-                    className="h-10 w-full rounded-lg bg-surface-2/60 border-input"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="h-10 w-full justify-start text-left font-normal rounded-lg bg-surface-2/60 border-input"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {r.dueDate ? formatDMY(new Date(r.dueDate)) : 'dd/mm/yyyy'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="p-0 w-auto z-[120]" onOpenAutoFocus={(e)=>e.preventDefault()}>
+                      <DateStepper
+                        value={r.dueDate ? new Date(r.dueDate) : undefined}
+                        onChange={(d) => updateRow(r.id, { dueDate: d })}
+                        onDone={() => {
+                          (document.activeElement as HTMLElement | null)?.blur?.();
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <Textarea
                     value={r.notes || ''}
                     onChange={(e)=>{ updateRow(r.id, { notes: e.target.value }); const el = e.currentTarget; requestAnimationFrame(()=>{ el.style.height='0px'; el.style.height=el.scrollHeight+'px'; }); }}
@@ -2865,6 +2886,13 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
   const [formData, setFormData] = useState(task);
   const { t } = useTranslation('app');
 
+  const formatDMY = (date: Date) => {
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title?.trim()) return;
@@ -3026,7 +3054,7 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
                 id="startDate"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.startDate ? formData.startDate.toLocaleDateString() : t('planner.editor.pickDate')}
+                {formData.startDate ? formatDMY(formData.startDate) : t('planner.editor.pickDate')}
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" className="p-0 w-auto z-[120]" onOpenAutoFocus={(e)=>e.preventDefault()}>
@@ -3052,7 +3080,7 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
                 id="dueDate"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.dueDate ? formData.dueDate.toLocaleDateString() : t('planner.editor.pickDate')}
+                {formData.dueDate ? formatDMY(formData.dueDate) : t('planner.editor.pickDate')}
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" className="p-0 w-auto z-[120]" onOpenAutoFocus={(e)=>e.preventDefault()}>
@@ -3137,6 +3165,13 @@ function GoalEditor({ goal, onSave, onCancel, onDelete, isLoading }: {
 }) {
   const [formData, setFormData] = useState(goal);
   const { t } = useTranslation('app');
+
+  const formatDMY = (date: Date) => {
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -3327,7 +3362,7 @@ function GoalEditor({ goal, onSave, onCancel, onDelete, isLoading }: {
                 id="targetDate"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.targetDate ? formData.targetDate.toLocaleDateString() : t('planner.editor.pickDate')}
+                {formData.targetDate ? formatDMY(formData.targetDate) : t('planner.editor.pickDate')}
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" className="p-0 w-auto z-[60]" onOpenAutoFocus={(e)=>e.preventDefault()}>
