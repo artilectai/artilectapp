@@ -1336,6 +1336,50 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     })();
   }, [viewMode, weeklyGoals, monthlyGoals, yearlyGoals, t, loadGoals]);
 
+  // Toggle milestone completion for a goal in the details pane
+  const handleToggleMilestone = useCallback(async (goalId: string, milestoneId: string) => {
+    let updated: Goal | null = null;
+    if (viewMode === 'weekly') {
+      setWeeklyGoals(prev => prev.map(g => {
+        if (g.id !== goalId) return g;
+        const nextMilestones = (g.milestones || []).map(m => m.id === milestoneId ? { ...m, completed: !m.completed } : m);
+        const nextProgress = nextMilestones.length > 0 ? Math.round((nextMilestones.filter(m => m.completed).length / nextMilestones.length) * 100) : g.progress;
+        updated = { ...g, milestones: nextMilestones, progress: nextProgress, updatedAt: new Date() };
+        return updated;
+      }));
+    } else if (viewMode === 'monthly') {
+      setMonthlyGoals(prev => prev.map(g => {
+        if (g.id !== goalId) return g;
+        const nextMilestones = (g.milestones || []).map(m => m.id === milestoneId ? { ...m, completed: !m.completed } : m);
+        const nextProgress = nextMilestones.length > 0 ? Math.round((nextMilestones.filter(m => m.completed).length / nextMilestones.length) * 100) : g.progress;
+        updated = { ...g, milestones: nextMilestones, progress: nextProgress, updatedAt: new Date() };
+        return updated;
+      }));
+    } else {
+      setYearlyGoals(prev => prev.map(g => {
+        if (g.id !== goalId) return g;
+        const nextMilestones = (g.milestones || []).map(m => m.id === milestoneId ? { ...m, completed: !m.completed } : m);
+        const nextProgress = nextMilestones.length > 0 ? Math.round((nextMilestones.filter(m => m.completed).length / nextMilestones.length) * 100) : g.progress;
+        updated = { ...g, milestones: nextMilestones, progress: nextProgress, updatedAt: new Date() };
+        return updated;
+      }));
+    }
+    if (selectedGoal?.id === goalId && updated) {
+      setSelectedGoal(updated);
+    }
+    // Persist progress only (milestones kept client-side for now)
+    try {
+      if (!updated) return;
+      const prog = (updated as Goal).progress;
+      await supabase
+        .from('planner_items')
+        .update({ progress: prog, updated_at: new Date().toISOString() })
+        .eq('id', goalId);
+    } catch (e) {
+      console.warn('Failed to persist goal progress:', e);
+    }
+  }, [viewMode, selectedGoal]);
+
   const formatDate = (date: Date) => {
     const today = new Date();
     if (date.toDateString() === today.toDateString()) return t('planner.labels.today');
@@ -1809,7 +1853,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   {/* Main Content Area */}
   <motion.div className="flex-1 flex">
         {/* Task List */}
-  <div className="flex-1 md:w-2/5 overflow-y-auto overflow-x-hidden min-h-0">
+  <div className="flex-1 md:flex-none md:w-1/2 overflow-y-auto overflow-x-hidden min-h-0">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">
@@ -1841,7 +1885,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                       exit={{ opacity: 0, y: -20 }}
                     >
                       {(() => {
-                        const isActive = (isEditorOpen && editingTask?.id === item.id) || (selectedTask?.id === (item as any)?.id);
+                        const isActive = (isEditorOpen && editingTask?.id === item.id) || (selectedTask?.id === (item as any)?.id) || (viewMode !== 'daily' && selectedGoal?.id === (item as any)?.id);
                         return (
                       <Card
                         role="button"
@@ -1869,12 +1913,19 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                             }
                           } else {
                             const g = item as Goal;
-                            setEditingGoal?.({
-                              ...g,
-                              targetDate: g.targetDate ? new Date(g.targetDate) : undefined,
-                              milestones: g.milestones ? g.milestones.map(m => ({ ...m })) : [],
-                            });
-                            setIsGoalEditorOpen?.(true);
+                            const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
+                            if (isDesktop) {
+                              setSelectedGoal(g);
+                              setIsGoalEditorOpen(false);
+                              setEditingGoal(null);
+                            } else {
+                              setEditingGoal?.({
+                                ...g,
+                                targetDate: g.targetDate ? new Date(g.targetDate) : undefined,
+                                milestones: g.milestones ? g.milestones.map(m => ({ ...m })) : [],
+                              });
+                              setIsGoalEditorOpen?.(true);
+                            }
                           }
                         }}
                       >
@@ -1944,25 +1995,40 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           </div>
         </div>
 
-        {/* Detail Panel - Desktop */}
-        <div className="hidden md:block md:w-3/5 border-l border-border bg-surface-1/50">
-          {selectedTask ? (
-            <TaskDetailPanel 
-              task={selectedTask} 
-              onEdit={(task) => {
-                setEditingTask(task);
-                setIsEditorOpen(true);
-              }}
-              onDelete={() => handleDeleteTask(selectedTask.id)}
-              onToggleChecklist={handleToggleChecklistItem}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-center p-8">
-              <div>
-                <PanelsLeftBottom className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">{t('planner.detail.selectPrompt', { itemTypeSingle: viewMode === 'daily' ? t('planner.nouns.task') : t('planner.nouns.goal') })}</p>
+  {/* Detail Panel - Desktop */}
+  <div className="hidden md:block md:flex-none md:w-1/2 border-l border-border bg-surface-1/50">
+          {viewMode === 'daily' ? (
+            selectedTask ? (
+              <TaskDetailPanel 
+                task={selectedTask} 
+                onEdit={(task) => { setEditingTask(task); setIsEditorOpen(true); }}
+                onDelete={() => handleDeleteTask(selectedTask.id)}
+                onToggleChecklist={handleToggleChecklistItem}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-center p-8">
+                <div>
+                  <PanelsLeftBottom className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">{t('planner.detail.selectPrompt', { itemTypeSingle: t('planner.nouns.task') })}</p>
+                </div>
               </div>
-            </div>
+            )
+          ) : (
+            selectedGoal ? (
+              <GoalDetailPanel
+                goal={selectedGoal}
+                onEdit={(goal) => { setEditingGoal(goal); setIsGoalEditorOpen(true); }}
+                onDelete={() => handleDeleteGoal(selectedGoal.id)}
+                onToggleMilestone={handleToggleMilestone}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-center p-8">
+                <div>
+                  <PanelsLeftBottom className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">{t('planner.detail.selectPrompt', { itemTypeSingle: t('planner.nouns.goal') })}</p>
+                </div>
+              </div>
+            )
           )}
         </div>
       </motion.div>
@@ -2039,6 +2105,77 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 PlannerSection.displayName = 'PlannerSection';
 
 export default PlannerSection;
+
+function GoalDetailPanel({ goal, onEdit, onDelete, onToggleMilestone }: {
+  goal: Goal;
+  onEdit: (goal: Goal) => void;
+  onDelete: () => void;
+  onToggleMilestone?: (goalId: string, milestoneId: string) => void;
+}) {
+  const { t } = useTranslation('app');
+  return (
+    <div className="p-6 h-full overflow-y-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground mb-2">{goal.title}</h1>
+          <div className="flex items-center gap-2">
+            <Badge className={`${getPriorityColor(goal.priority)}`}>
+              {t(`planner.priority.${goal.priority}`)}
+            </Badge>
+            <Badge className={`${getStatusColor(goal.status)}`}>
+              {t(`planner.status.${goal.status}`)}
+            </Badge>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <ScaleButton variant="outline" size="sm" onClick={() => onEdit(goal)}>
+            {t('common.edit')}
+          </ScaleButton>
+          <ScaleButton variant="destructive" size="sm" onClick={onDelete}>
+            {t('buttons.delete')}
+          </ScaleButton>
+        </div>
+      </div>
+
+      {goal.description && (
+        <div className="mb-6">
+          <h3 className="font-medium mb-2">{t('planner.detail.description')}</h3>
+          <p className="text-muted-foreground">{goal.description}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div>
+          <h4 className="font-medium mb-1">{t('planner.detail.targetDate')}</h4>
+          <p className="text-sm text-muted-foreground">
+            {goal.targetDate?.toLocaleDateString() || t('planner.detail.notSet')}
+          </p>
+        </div>
+        <div>
+          <h4 className="font-medium mb-1">{t('planner.detail.progress')}</h4>
+          <div className="flex items-center gap-2">
+            <Progress value={goal.progress} className="flex-1" />
+            <span className="text-sm text-muted-foreground">{goal.progress}%</span>
+          </div>
+        </div>
+      </div>
+
+      {goal.milestones && goal.milestones.length > 0 && (
+        <div className="mb-6">
+          <h3 className="font-medium mb-2">{t('planner.editor.milestonesLabel')}</h3>
+          <div className="space-y-2">
+            {goal.milestones.map(m => (
+              <div key={m.id} className="flex items-center gap-2">
+                <Checkbox checked={m.completed} onCheckedChange={() => onToggleMilestone?.(goal.id, m.id)} />
+                <span className={m.completed ? 'line-through text-muted-foreground' : ''}>{m.title}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function TaskDetailPanel({ task, onEdit, onDelete, onToggleChecklist }: {
   task: Task;
