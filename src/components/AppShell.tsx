@@ -677,7 +677,7 @@ export default function AppShell({
           onTouchStart={handleNavTouchStart}
           onTouchEnd={handleNavTouchEnd}
         >
-          <div className="flex items-center justify-center h-[86px] px-4 pb-[calc(env(safe-area-inset-bottom,0px)/2)] shadow-[0_-6px_20px_rgba(0,0,0,0.25)]">
+          <div className="flex items-center justify-center h-[88px] px-4 pb-[calc(env(safe-area-inset-bottom,0px)/2)] shadow-[0_-6px_20px_rgba(0,0,0,0.25)]">
             <div className="flex items-center justify-around w-full max-w-md mx-auto gap-2">
               {navItemsBase.map((item) => {
                 const isActive = currentMode === item.id;
