@@ -1812,7 +1812,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                       exit={{ opacity: 0, y: -20 }}
                     >
                       {(() => {
-                        const isActive = isEditorOpen && editingTask?.id === item.id;
+                        const isActive = (isEditorOpen && editingTask?.id === item.id) || (selectedTask?.id === (item as any)?.id);
                         return (
                       <Card
                         role="button"
@@ -1822,13 +1822,22 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                         onClick={() => {
                           if (viewMode === "daily") {
                             const t = item as Task;
-                            setEditingTask({
-                              ...t,
-                              startDate: t.startDate ? new Date(t.startDate) : undefined,
-                              dueDate: t.dueDate ? new Date(t.dueDate) : undefined,
-                              checklist: t.checklist ? t.checklist.map(ci => ({ ...ci })) : [],
-                            });
-                            setIsEditorOpen(true);
+                            const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
+                            if (isDesktop) {
+                              // On desktop/web: show details in the right pane
+                              setSelectedTask(t);
+                              setIsEditorOpen(false);
+                              setEditingTask(null);
+                            } else {
+                              // On mobile: open the editor modal
+                              setEditingTask({
+                                ...t,
+                                startDate: t.startDate ? new Date(t.startDate) : undefined,
+                                dueDate: t.dueDate ? new Date(t.dueDate) : undefined,
+                                checklist: t.checklist ? t.checklist.map(ci => ({ ...ci })) : [],
+                              });
+                              setIsEditorOpen(true);
+                            }
                           } else {
                             const g = item as Goal;
                             setEditingGoal?.({
