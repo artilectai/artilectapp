@@ -1910,33 +1910,33 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             <div className="hidden md:flex items-center gap-2 ml-auto">
               {(viewMode === 'monthly' || viewMode === 'yearly') && (
                 <div className="inline-flex items-center gap-2">
-                  <div className="inline-flex rounded-md border border-input bg-surface-1 p-1">
-                  <Button
-                    variant={projectMode ? 'ghost' : 'default'}
-                    className={`${projectMode ? 'text-muted-foreground' : 'bg-[#00d563] text-black hover:bg-[#00d563]/90'} h-8 px-3 py-1 rounded-md`}
-                    onClick={() => setProjectMode(false)}
-                  >
-                    {t('planner.views.list', { defaultValue: 'List' })}
-                  </Button>
-                  <Button
-                    variant={projectMode ? 'default' : 'ghost'}
-                    className={`${projectMode ? 'bg-[#00d563] text-black hover:bg-[#00d563]/90' : 'text-muted-foreground'} h-8 px-3 py-1 rounded-md`}
-                    onClick={() => setProjectMode(true)}
-                  >
-                    {t('planner.views.projects', { defaultValue: 'Projects' })}
-                  </Button>
-                  </div>
                   {projectMode && (
                     <>
                       <input ref={headerFileInputRef} type="file" accept=".json,application/json" className="sr-only" onChange={headerImportFile} />
-                      <ScaleButton variant="outline" className="h-8 px-3 rounded-md" onClick={headerExport} disabled={(viewMode==='monthly'||viewMode==='yearly') && !selectedGoal && (filteredItems as any[])?.length===0}>
-                        {t('planner.actions.export', { defaultValue: 'Export' })}
-                      </ScaleButton>
                       <ScaleButton variant="outline" className="h-8 px-3 rounded-md" onClick={triggerHeaderImport}>
                         {t('planner.actions.import', { defaultValue: 'Import' })}
                       </ScaleButton>
+                      <ScaleButton variant="outline" className="h-8 px-3 rounded-md" onClick={headerExport} disabled={(viewMode==='monthly'||viewMode==='yearly') && !selectedGoal && (filteredItems as any[])?.length===0}>
+                        {t('planner.actions.export', { defaultValue: 'Export' })}
+                      </ScaleButton>
                     </>
                   )}
+                  <div className="inline-flex rounded-md border border-input bg-surface-1 p-1">
+                    <Button
+                      variant={projectMode ? 'ghost' : 'default'}
+                      className={`${projectMode ? 'text-muted-foreground' : 'bg-[#00d563] text-black hover:bg-[#00d563]/90'} h-8 px-3 py-1 rounded-md`}
+                      onClick={() => setProjectMode(false)}
+                    >
+                      {t('planner.views.list', { defaultValue: 'List' })}
+                    </Button>
+                    <Button
+                      variant={projectMode ? 'default' : 'ghost'}
+                      className={`${projectMode ? 'bg-[#00d563] text-black hover:bg-[#00d563]/90' : 'text-muted-foreground'} h-8 px-3 py-1 rounded-md`}
+                      onClick={() => setProjectMode(true)}
+                    >
+                      {t('planner.views.projects', { defaultValue: 'Projects' })}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -2578,14 +2578,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
           <h3 className="text-lg font-semibold truncate">{goal.title}</h3>
           {goal.description && <p className="text-sm text-muted-foreground clamp-2 ">{goal.description}</p>}
         </div>
-        <div className="flex items-center gap-2">
-          <input id="project-import-file" ref={fileInputRef} type="file" accept=".json,application/json" className="sr-only" onChange={handleImportFile} />
-          <ScaleButton variant="outline" className="h-9 px-3 rounded-lg" onClick={handleExport}>
-            {t('planner.actions.export', { defaultValue: 'Export' })}
-          </ScaleButton>
-          <ScaleButton variant="outline" className="h-9 px-3 rounded-lg" onClick={triggerImport}>
-            {t('planner.actions.import', { defaultValue: 'Import' })}
-          </ScaleButton>
+  <div className="flex items-center gap-2">
           <ScaleButton className="h-9 px-4 rounded-lg bg-[#00d563] text-black hover:bg-[#00d563]/90" onClick={addRow}>
             {t('planner.editor.addItem', { defaultValue: 'Add Item' })}
           </ScaleButton>
