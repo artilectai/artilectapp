@@ -676,6 +676,10 @@
     }
   },
   "planner": {
+    "actions": {
+      "export": "Экспорт",
+      "import": "Импорт"
+    },
     "task": {
       "newTask": "Новая задача"
     },
@@ -770,6 +774,15 @@
       "checklist": "Чек-лист",
       "notSet": "Не задано",
       "prioritySuffix": "приоритет"
+    },
+    "table": {
+      "task": "Задача",
+      "status": "Статус",
+      "due": "Срок",
+      "notes": "Заметки",
+      "taskPlaceholder": "Напишите шаг",
+      "notesPlaceholder": "Заметки",
+      "empty": "Добавьте шаги в проект"
     },
     "editor": {
       "task": {
@@ -1557,7 +1570,11 @@
       "goalSaveFailed": "Не удалось сохранить цель",
       "goalDeleted": "Цель удалена",
       "filtersReset": "Фильтры сброшены",
-      "subscriptionRequired": "{{mode}}-планирование доступно по подписке {{tier}}"
+  "subscriptionRequired": "{{mode}}-планирование доступно по подписке {{tier}}",
+  "exported": "Проект экспортирован",
+  "exportFailed": "Не удалось экспортировать проект",
+  "imported": "Проект импортирован",
+  "importFailed": "Не удалось импортировать проект"
     },
     "finance": {
       "setupCompleted": "Настройка финансов завершена!",

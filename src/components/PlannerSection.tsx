@@ -2234,6 +2234,7 @@ export default PlannerSection;
 function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) => void }) {
   const { t } = useTranslation('app');
   const [rows, setRows] = useState<Milestone[]>(goal.milestones || []);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setRows(goal.milestones || []);
@@ -2256,6 +2257,123 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     onChange({ ...goal, milestones: next });
   };
 
+  // Helpers for export/import
+  const slug = (s: string) => (s || 'project')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+
+  const serializeGoal = (g: Goal) => {
+    // Convert Dates to ISO strings for portability
+    return {
+      version: 1,
+      exported_at: new Date().toISOString(),
+      title: g.title,
+      description: g.description || null,
+      status: g.status,
+      priority: g.priority,
+      type: g.type,
+      target_date: g.targetDate ? new Date(g.targetDate).toISOString() : null,
+      progress: typeof g.progress === 'number' ? g.progress : 0,
+      checklist: Array.isArray(g.checklist) ? g.checklist : [],
+      tags: Array.isArray(g.tags) ? g.tags : [],
+      estimate_hours: typeof g.estimateHours === 'number' ? g.estimateHours : null,
+      milestones: Array.isArray(g.milestones)
+        ? g.milestones.map(m => ({
+            id: m.id,
+            title: m.title,
+            completed: !!m.completed,
+            status: m.status || 'todo',
+            notes: m.notes || '',
+            dueDate: m.dueDate ? new Date(m.dueDate).toISOString() : null
+          }))
+        : []
+    };
+  };
+
+  const handleExport = () => {
+    try {
+      const data = serializeGoal({ ...goal, milestones: rows });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const ts = new Date().toISOString().replace(/[:.]/g, '-');
+      a.download = `artilect-project-${slug(goal.title)}-${ts}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast.success(t('toasts.planner.exported', { defaultValue: 'Project exported' }) as string);
+    } catch (e) {
+      toast.error(t('toasts.planner.exportFailed', { defaultValue: 'Failed to export project' }) as string);
+    }
+  };
+
+  const normalizeImportedProject = (obj: any) => {
+    const title = typeof obj?.title === 'string' && obj.title.trim() ? obj.title.trim() : (t('planner.default.untitledGoal') as string);
+    const description = typeof obj?.description === 'string' ? obj.description : null;
+    const status = (obj?.status === 'planning' || obj?.status === 'in_progress' || obj?.status === 'completed' || obj?.status === 'paused')
+      ? obj.status : 'planning';
+    const priority = (obj?.priority === 'low' || obj?.priority === 'medium' || obj?.priority === 'high') ? obj.priority : 'medium';
+    const type = (obj?.type === 'weekly' || obj?.type === 'monthly' || obj?.type === 'yearly') ? obj.type : goal.type;
+    const target_date = obj?.target_date ? new Date(obj.target_date).toISOString() : (goal.targetDate ? new Date(goal.targetDate).toISOString() : new Date().toISOString());
+    const tags = Array.isArray(obj?.tags) ? obj.tags.filter((x: any) => typeof x === 'string') : [];
+    const checklist = Array.isArray(obj?.checklist) ? obj.checklist : [];
+    const estimate_hours = typeof obj?.estimate_hours === 'number' ? obj.estimate_hours : null;
+    const milestones = Array.isArray(obj?.milestones) ? obj.milestones.map((m: any) => ({
+      id: typeof m?.id === 'string' && m.id ? m.id : String(Date.now() + Math.random()),
+      title: typeof m?.title === 'string' ? m.title : '',
+      completed: !!m?.completed,
+      status: (m?.status === 'todo' || m?.status === 'doing' || m?.status === 'done') ? m.status : 'todo',
+      notes: typeof m?.notes === 'string' ? m.notes : '',
+      dueDate: m?.dueDate ? m.dueDate : null
+    })) : [];
+    const progress = typeof obj?.progress === 'number'
+      ? obj.progress
+      : (milestones.length ? Math.round((milestones.filter((m: any) => m.completed).length / milestones.length) * 100) : 0);
+
+    return { title, description, status, priority, type, target_date, milestones, progress, checklist, tags, estimate_hours } as any;
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const text = await f.text();
+      const json = JSON.parse(text);
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+      if (!userId) throw new Error('Not signed in');
+
+      const records = Array.isArray(json) ? json.map(normalizeImportedProject) : [normalizeImportedProject(json)];
+      const payload = records.map(r => ({
+        user_id: userId,
+        title: r.title,
+        description: r.description,
+        status: r.status,
+        priority: r.priority,
+        type: r.type,
+        target_date: r.target_date,
+        milestones: r.milestones,
+        progress: r.progress,
+        checklist: r.checklist,
+        tags: r.tags,
+        estimate_hours: r.estimate_hours,
+        // updated_at/created_at handled by DB defaults if present
+      }));
+      const { error } = await supabase.from('planner_items').insert(payload);
+      if (error) throw error;
+      toast.success(t('toasts.planner.imported', { defaultValue: 'Project imported' }) as string);
+      // Clear the input to allow re-importing the same file if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (err) {
+      console.warn('Import failed:', err);
+      toast.error(t('toasts.planner.importFailed', { defaultValue: 'Failed to import project' }) as string);
+    }
+  };
+
+  const triggerImport = () => fileInputRef.current?.click();
+
   const completed = rows.filter(r => r.completed).length;
   const pct = rows.length ? Math.round((completed / rows.length) * 100) : 0;
 
@@ -2266,9 +2384,18 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
           <h3 className="text-lg font-semibold truncate">{goal.title}</h3>
           {goal.description && <p className="text-sm text-muted-foreground clamp-2 ">{goal.description}</p>}
         </div>
-        <ScaleButton className="h-9 px-4 rounded-lg bg-[#00d563] text-black hover:bg-[#00d563]/90" onClick={addRow}>
-          {t('planner.editor.addItem', { defaultValue: 'Add Item' })}
-        </ScaleButton>
+        <div className="flex items-center gap-2">
+          <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleImportFile} />
+          <ScaleButton variant="outline" className="h-9 px-3 rounded-lg" onClick={handleExport}>
+            {t('planner.actions.export', { defaultValue: 'Export' })}
+          </ScaleButton>
+          <ScaleButton variant="outline" className="h-9 px-3 rounded-lg" onClick={triggerImport}>
+            {t('planner.actions.import', { defaultValue: 'Import' })}
+          </ScaleButton>
+          <ScaleButton className="h-9 px-4 rounded-lg bg-[#00d563] text-black hover:bg-[#00d563]/90" onClick={addRow}>
+            {t('planner.editor.addItem', { defaultValue: 'Add Item' })}
+          </ScaleButton>
+        </div>
       </div>
       <div className="flex-1 overflow-auto">
         <div className="min-w-[860px] p-4">

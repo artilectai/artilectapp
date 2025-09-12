@@ -676,6 +676,10 @@
     }
   },
   "planner": {
+    "actions": {
+      "export": "Eksport",
+      "import": "Import"
+    },
     "task": {
       "newTask": "Yangi vazifa"
     },
@@ -757,7 +761,7 @@
       "empty": "{{date}} uchun {{itemType}} yo‘q",
       "createFirst": "Birinchi {{itemTypeSingle}} ni yarating"
     },
-    "detail": {
+  "detail": {
       "selectPrompt": "{{itemTypeSingle}} ni tanlab tafsilotlarni ko‘ring",
       "description": "Tavsif",
       "startDate": "Boshlanish sanasi",
@@ -770,6 +774,15 @@
       "checklist": "Ro‘yxat",
       "notSet": "Belgilanmagan",
       "prioritySuffix": "ustuvorlik"
+    },
+    "table": {
+      "task": "Vazifa",
+      "status": "Holat",
+      "due": "Muddat",
+      "notes": "Izohlar",
+      "taskPlaceholder": "Qadam yozing",
+      "notesPlaceholder": "Izohlar",
+      "empty": "Loyihangizga qadamlar qo‘shing"
     },
     "editor": {
       "task": {
@@ -1555,7 +1568,11 @@
       "goalSaveFailed": "Maqsadni saqlab bo‘lmadi",
       "goalDeleted": "Maqsad o‘chirildi",
       "filtersReset": "Filtrlar tiklandi",
-      "subscriptionRequired": "{{mode}} rejalashtirish uchun {{tier}} obunasi kerak"
+  "subscriptionRequired": "{{mode}} rejalashtirish uchun {{tier}} obunasi kerak",
+  "exported": "Loyiha eksport qilindi",
+  "exportFailed": "Loyihani eksport qilib bo‘lmadi",
+  "imported": "Loyiha import qilindi",
+  "importFailed": "Loyihani import qilib bo‘lmadi"
     },
     "finance": {
       "setupCompleted": "Moliyani sozlash yakunlandi!",

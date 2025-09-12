@@ -676,6 +676,10 @@
     }
   },
   "planner": {
+    "actions": {
+      "export": "Export",
+      "import": "Import"
+    },
     "task": {
       "newTask": "New Task"
     },
@@ -770,6 +774,15 @@
       "checklist": "Checklist",
       "notSet": "Not set",
       "prioritySuffix": "priority"
+    },
+    "table": {
+      "task": "Task",
+      "status": "Status",
+      "due": "Due date",
+      "notes": "Notes",
+      "taskPlaceholder": "Write a step",
+      "notesPlaceholder": "Notes",
+      "empty": "Add steps to your project"
     },
     "editor": {
       "task": {
@@ -1555,7 +1568,11 @@
       "goalSaveFailed": "Failed to save goal",
       "goalDeleted": "Goal deleted",
       "filtersReset": "Filters reset",
-      "subscriptionRequired": "{{mode}} planning requires {{tier}} subscription"
+  "subscriptionRequired": "{{mode}} planning requires {{tier}} subscription",
+  "exported": "Project exported",
+  "exportFailed": "Failed to export project",
+  "imported": "Project imported",
+  "importFailed": "Failed to import project"
     },
     "finance": {
       "setupCompleted": "Finance setup completed!",
