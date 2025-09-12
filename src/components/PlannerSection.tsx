@@ -892,29 +892,41 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     }
   }, [viewMode]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (do not fire while typing or when dialogs are open)
   useEffect(() => {
+    const isTypingContext = () => {
+      const ae = (document.activeElement as HTMLElement | null);
+      if (!ae) return false;
+      if (ae instanceof HTMLInputElement || ae instanceof HTMLTextAreaElement) return true;
+      if (ae.tagName === 'SELECT') return true;
+      if (ae.isContentEditable || !!ae.closest('[contenteditable="true"]')) return true;
+      const role = ae.getAttribute('role');
+      if (role === 'textbox' || role === 'combobox') return true;
+      return false;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        if (e.key === "Escape") {
+      // If user is typing or any editor/calendar is open, ignore shortcuts
+      if (isTypingContext() || isEditorOpen || isGoalEditorOpen || showCalendarPicker) {
+        if ((e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) && e.key === 'Escape') {
           (e.target as HTMLElement).blur();
         }
         return;
       }
 
       switch (e.key) {
-        case "n":
-        case "N":
-          if (!e.ctrlKey && !e.metaKey) {
+        case 'n':
+        case 'N':
+          if (!e.ctrlKey && !e.metaKey && !e.altKey) {
             e.preventDefault();
-            if (viewMode === "daily") {
+            if (viewMode === 'daily') {
               handleNewTask();
             } else {
               handleNewGoal();
             }
           }
           break;
-        case "Escape":
+        case 'Escape':
           setIsEditorOpen(false);
           setIsGoalEditorOpen(false);
           setSelectedTask(null);
@@ -923,9 +935,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [viewMode]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewMode, isEditorOpen, isGoalEditorOpen, showCalendarPicker]);
 
   const handleNewTask = useCallback(() => {
     const newTask: Partial<Task> = {
