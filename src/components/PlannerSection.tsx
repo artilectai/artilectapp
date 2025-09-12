@@ -11,7 +11,6 @@ import {
   ChartGantt,
   PanelsLeftBottom,
   ListFilterPlus,
-  GripVertical,
   ChevronLeft,
   ChevronRight,
   Plus,
@@ -2054,7 +2053,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                               </div>
                             </div>
                             
-                            <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                            {/* removed grip icon */}
                           </div>
                         </CardContent>
                       </Card>
@@ -2345,7 +2344,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (!f) return;
+    if (!f) { return; }
     try {
       const text = await f.text();
       const json = JSON.parse(text);
@@ -2372,15 +2371,28 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
       const { error } = await supabase.from('planner_items').insert(payload);
       if (error) throw error;
       toast.success(t('toasts.planner.imported', { defaultValue: 'Project imported' }) as string);
-      // Clear the input to allow re-importing the same file if needed
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Import failed:', err);
-      toast.error(t('toasts.planner.importFailed', { defaultValue: 'Failed to import project' }) as string);
+      const msg = err?.message || err?.error_description || String(err);
+      toast.error(`${t('toasts.planner.importFailed', { defaultValue: 'Failed to import project' })}: ${msg}` as string);
+    } finally {
+      // Always clear so selecting the same file again triggers onChange
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const triggerImport = () => fileInputRef.current?.click();
+  const triggerImport = () => {
+    const el = fileInputRef.current;
+    if (!el) return;
+    // Prefer showPicker when available (better on iOS Safari)
+    // @ts-ignore
+    if (typeof el.showPicker === 'function') {
+      // @ts-ignore
+      el.showPicker();
+    } else {
+      el.click();
+    }
+  };
 
   const completed = rows.filter(r => r.completed).length;
   const pct = rows.length ? Math.round((completed / rows.length) * 100) : 0;
@@ -2393,7 +2405,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
           {goal.description && <p className="text-sm text-muted-foreground clamp-2 ">{goal.description}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleImportFile} />
+          <input id="project-import-file" ref={fileInputRef} type="file" accept=".json,application/json" className="sr-only" onChange={handleImportFile} />
           <ScaleButton variant="outline" className="h-9 px-3 rounded-lg" onClick={handleExport}>
             {t('planner.actions.export', { defaultValue: 'Export' })}
           </ScaleButton>
