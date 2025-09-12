@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import i18nInstance from '@/i18n/config';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTelegramBack } from '@/hooks/useTelegramBack';
+import { openTelegramSupport } from '@/lib/telegram';
 
 type AppMode = 'planner' | 'finance' | 'workout';
 
@@ -726,6 +727,8 @@ export default function AppShell({
             handleCancelProfileEdit();
           }}
           title={isEditingProfile ? t('common.edit') + ' ' + t('nav.profile') : t('nav.profile')}
+          bodyClassName="pb-0"
+          hideEndSpacer
         >
           <div className="space-y-6">
             {/* Profile Header */}
@@ -837,11 +840,11 @@ export default function AppShell({
                 <ChevronRight className="w-4 h-4" />
               </Button>
               
-        <Button
-                variant="ghost"
-                className="w-full justify-between h-12"
-                onClick={() => toast.info('Help center coming soon')}
-              >
+  <Button
+    variant="ghost"
+    className="w-full justify-between h-12"
+    onClick={() => openTelegramSupport('artilectsupport')}
+        >
                 <div className="flex items-center gap-3">
                   <HelpCircle className="w-5 h-5" />
           <span>{t('profile.support')}</span>

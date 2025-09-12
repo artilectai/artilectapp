@@ -159,6 +159,10 @@ export const SlideUpModal = ({
   title,
   className = "",
   height = 'auto',
+  /** Optional className to control padding/spacing of the scrollable body; defaults to 'pb-20' */
+  bodyClassName,
+  /** Hide the tiny spacer div at the end of the body */
+  hideEndSpacer,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -167,6 +171,8 @@ export const SlideUpModal = ({
   className?: string;
   /** Controls the sheet height; 'half' opens ~60vh, 'large' ~80vh, 'full' ~95vh, 'auto' keeps previous max height behavior */
   height?: 'auto' | 'half' | 'large' | 'full';
+  bodyClassName?: string;
+  hideEndSpacer?: boolean;
 }) => {
   const { triggerHaptic } = useHaptic();
   useEffect(() => {
@@ -240,9 +246,9 @@ export const SlideUpModal = ({
               </div>
             )}
             {/* Scroll the body ONLY */}
-            <div className="px-5 pb-20 overflow-y-auto overscroll-contain scrollbar-none" style={{ maxHeight: bodyMaxHeight }}>
+            <div className={`px-5 overflow-y-auto overscroll-contain scrollbar-none ${bodyClassName ?? 'pb-20'}`} style={{ maxHeight: bodyMaxHeight }}>
               {children}
-              <div className="h-2" />
+              {!hideEndSpacer && <div className="h-2" />}
             </div>
           </motion.div>
         </>

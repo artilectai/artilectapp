@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScaleButton, iosSpring } from "@/components/iOSAnimations";
+import { openTelegramSupport } from "@/lib/telegram";
 import { toast } from "sonner";
 
 interface Plan {
@@ -155,28 +156,7 @@ export function PremiumSubscriptionPlans({
   const [trialCountdown, setTrialCountdown] = useState<number>(0);
 
   // Redirect helper: open Telegram support chat
-  const redirectToTelegramSupport = () => {
-    const webUrl = 'https://t.me/artilectsupport';
-    // Prefer Telegram WebApp API when inside Telegram
-    try {
-      const twa = (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) as any;
-      if (twa && typeof twa.openTelegramLink === 'function') {
-        twa.openTelegramLink(webUrl);
-        return;
-      }
-    } catch {}
-    // Try deep link first, then fallback to https
-    try {
-      if (typeof window !== 'undefined') {
-        (window.location as any).href = 'tg://resolve?domain=artilectsupport';
-        setTimeout(() => { window.location.href = webUrl; }, 500);
-        return;
-      }
-    } catch {}
-    if (typeof window !== 'undefined') {
-      window.location.href = webUrl;
-    }
-  };
+  const redirectToTelegramSupport = () => openTelegramSupport('artilectsupport');
 
   // Simulate trial countdown for Pro plan
   useEffect(() => {
