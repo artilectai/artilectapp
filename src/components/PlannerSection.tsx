@@ -283,6 +283,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         milestones: Array.isArray(row.milestones)
           ? row.milestones.map((m: any) => ({ ...m, dueDate: m?.dueDate ? new Date(m.dueDate) : undefined }))
           : [],
+  checklist: Array.isArray(row.checklist) ? row.checklist : [],
+  tags: Array.isArray(row.tags) ? row.tags : [],
+  estimateHours: typeof row.estimate_hours === 'number' ? row.estimate_hours : undefined,
         progress: typeof row.progress === 'number' ? row.progress : 0,
         createdAt: row.created_at ? new Date(row.created_at) : new Date(),
         updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
@@ -2269,7 +2272,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
       </div>
       <div className="flex-1 overflow-auto">
         <div className="min-w-[860px] p-4">
-          <div className="grid grid-cols-[36px_1fr_160px_180px_1.2fr_40px] items-center px-3 py-2 text-xs text-muted-foreground sticky top-0 bg-surface-1/70 backdrop-blur rounded-xl border border-border">
+          <div className="grid grid-cols-[36px_1fr_1fr_1fr_1fr_40px] items-center gap-2 px-3 py-2 text-xs text-muted-foreground sticky top-0 bg-surface-1/70 backdrop-blur rounded-xl border border-border">
             <span></span>
             <span className="uppercase tracking-wide">{t('planner.table.task', { defaultValue: 'Task' })}</span>
             <span className="uppercase tracking-wide">{t('planner.table.status', { defaultValue: 'Status' })}</span>
@@ -2287,7 +2290,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="grid grid-cols-[36px_1fr_160px_180px_1.2fr_40px] items-center gap-2 px-3 py-2 rounded-xl bg-surface-1/60 hover:bg-surface-1 transition-colors border border-border"
+                  className="grid grid-cols-[36px_1fr_1fr_1fr_1fr_40px] items-center gap-2 px-3 py-2 rounded-xl bg-surface-1/60 hover:bg-surface-1 transition-colors border border-border"
                 >
                   <div className="flex items-center justify-center">
                     <Checkbox checked={r.completed} onCheckedChange={(c) => updateRow(r.id, { completed: !!c })} />
@@ -2299,10 +2302,10 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                       if (e.key === 'Enter') addRow();
                     }}
                     placeholder={t('planner.table.taskPlaceholder', { defaultValue: 'Write a step' }) as string}
-                    className="h-10 rounded-lg bg-surface-2/60 border-input"
+                    className="h-10 w-full rounded-lg bg-surface-2/60 border-input"
                   />
                   <Select value={r.status || 'todo'} onValueChange={(v)=>updateRow(r.id, { status: v as any })}>
-                    <SelectTrigger className="h-10 rounded-lg bg-surface-2/60 border-input"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-10 w-full rounded-lg bg-surface-2/60 border-input"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todo">{t('planner.filters.status.todo')}</SelectItem>
                       <SelectItem value="doing">{t('planner.filters.status.doing')}</SelectItem>
@@ -2313,13 +2316,13 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                     type="date"
                     value={r.dueDate ? new Date(r.dueDate).toISOString().slice(0,10) : ''}
                     onChange={(e)=>updateRow(r.id, { dueDate: e.target.value ? new Date(e.target.value) : undefined })}
-                    className="h-10 rounded-lg bg-surface-2/60 border-input"
+                    className="h-10 w-full rounded-lg bg-surface-2/60 border-input"
                   />
                   <Input
                     value={r.notes || ''}
                     onChange={(e)=>updateRow(r.id, { notes: e.target.value })}
                     placeholder={t('planner.table.notesPlaceholder', { defaultValue: 'Notes' }) as string}
-                    className="h-10 rounded-lg bg-surface-2/60 border-input"
+                    className="h-10 w-full rounded-lg bg-surface-2/60 border-input"
                   />
                   <ScaleButton variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={()=>removeRow(r.id)}>×</ScaleButton>
                 </motion.div>
