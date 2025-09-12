@@ -1199,6 +1199,35 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     }
   }, [selectedDate, viewMode, loadTasks, loadGoals]);
 
+  // Toggle a checklist item inside a task (details pane on desktop)
+  const handleToggleChecklistItem = useCallback(async (taskId: string, checklistItemId: string) => {
+    let updatedTask: Task | null = null;
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const nextChecklist = (t.checklist || []).map(ci => ci.id === checklistItemId ? { ...ci, completed: !ci.completed } : ci);
+      const nextProgress = nextChecklist.length > 0 ? Math.round((nextChecklist.filter(ci => ci.completed).length / nextChecklist.length) * 100) : t.progress;
+      updatedTask = { ...t, checklist: nextChecklist, progress: nextProgress, updatedAt: new Date() };
+      return updatedTask;
+    }));
+    if (selectedTask?.id === taskId && updatedTask) {
+      setSelectedTask(updatedTask);
+    }
+    // Persist progress only (server may not store checklist items)
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+      if (!userId || !updatedTask) return;
+      const prog = (updatedTask as Task).progress;
+      await supabase
+        .from('planner_items')
+        .update({ progress: prog, updated_at: new Date().toISOString() })
+        .eq('id', taskId)
+        .eq('user_id', userId);
+    } catch (e) {
+      console.warn('Failed to persist progress:', e);
+    }
+  }, [selectedTask]);
+
   const handleSaveGoal = useCallback(async (goalData: Partial<Goal>) => {
     setIsLoading(true);
     
@@ -1925,6 +1954,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                 setIsEditorOpen(true);
               }}
               onDelete={() => handleDeleteTask(selectedTask.id)}
+              onToggleChecklist={handleToggleChecklistItem}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-center p-8">
@@ -2010,10 +2040,11 @@ PlannerSection.displayName = 'PlannerSection';
 
 export default PlannerSection;
 
-function TaskDetailPanel({ task, onEdit, onDelete }: {
+function TaskDetailPanel({ task, onEdit, onDelete, onToggleChecklist }: {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: () => void;
+  onToggleChecklist?: (taskId: string, checklistItemId: string) => void;
 }) {
   const { t } = useTranslation('app');
   return (
@@ -2046,7 +2077,10 @@ function TaskDetailPanel({ task, onEdit, onDelete }: {
           <div className="space-y-2">
             {task.checklist.map(item => (
               <div key={item.id} className="flex items-center gap-2">
-                <Checkbox checked={item.completed} disabled />
+                <Checkbox
+                  checked={item.completed}
+                  onCheckedChange={() => onToggleChecklist?.(task.id, item.id)}
+                />
                 <span className={item.completed ? "line-through text-muted-foreground" : ""}>
                   {item.text}
                 </span>
