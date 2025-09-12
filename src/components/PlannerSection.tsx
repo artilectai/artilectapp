@@ -1994,7 +1994,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                           }
                         }}
                       >
-                        <CardContent className="p-4">
+                        <CardContent className="relative p-4">
                           <div className="flex items-start gap-3">
                             <Checkbox 
                               checked={item.status === "done" || item.status === "completed"}
@@ -2002,27 +2002,35 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                               onClick={(e) => e.stopPropagation()}
                             />
                             
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap min-w-0">
+                            <div className="flex-1 min-w-0 pr-16">
+                              <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
                                 <h3 className={`font-medium clamp-2 break-anywhere ${
                                   item.status === "done" || item.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"
                                 }`}>
                                   {item.title}
                                 </h3>
-                                <Badge className={`text-xs ${getPriorityColor(item.priority)}`}>
-                                  {t(`planner.priority.${item.priority}`)}
-                                </Badge>
                               </div>
+                              {/* Priority badge pinned top-right */}
+                              <Badge className={`absolute right-3 top-3 text-xs ${getPriorityColor(item.priority)}`}>
+                                {t(`planner.priority.${item.priority}`)}
+                              </Badge>
                               
                               {item.description && (
                                 <p className="text-sm text-muted-foreground clamp-2 break-anywhere mb-2">
                                   {item.description}
                                 </p>
                               )}
-                              
-                              {item.progress > 0 && item.progress < 100 && (
-                                <Progress value={item.progress} className="h-1 mb-2" />
-                              )}
+                              {(() => {
+                                // Show progress line whenever there are subtasks/milestones (even at 0% or 100%).
+                                const isTask = viewMode === 'daily';
+                                const hasTaskChecklist = isTask && 'checklist' in (item as any) && Array.isArray((item as any).checklist) && (item as any).checklist.length > 0;
+                                const hasGoalMilestones = !isTask && 'milestones' in (item as any) && Array.isArray((item as any).milestones) && (item as any).milestones.length > 0;
+                                const hasGoalChecklist = !isTask && 'checklist' in (item as any) && Array.isArray((item as any).checklist) && (item as any).checklist.length > 0;
+                                const showProgress = hasTaskChecklist || hasGoalMilestones || hasGoalChecklist;
+                                return showProgress ? (
+                                  <Progress value={item.progress} className="h-1.5 mb-2" />
+                                ) : null;
+                              })()}
                               
                               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                 {"dueDate" in item && (item as Task).dueDate && (
