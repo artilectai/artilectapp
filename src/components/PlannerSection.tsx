@@ -1780,7 +1780,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   {/* Main Content Area */}
   <motion.div className="flex-1 flex">
         {/* Task List */}
-        <div className="flex-1 md:w-2/5 md:overflow-y-auto overflow-visible min-h-0">
+  <div className="flex-1 md:w-2/5 overflow-y-auto overflow-x-hidden min-h-0">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">
@@ -1849,8 +1849,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                             />
                             
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className={`font-medium truncate ${
+                              <div className="flex items-center gap-2 mb-1 flex-wrap min-w-0">
+                                <h3 className={`font-medium clamp-2 break-anywhere ${
                                   item.status === "done" || item.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"
                                 }`}>
                                   {item.title}
@@ -1861,7 +1861,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                               </div>
                               
                               {item.description && (
-                                <p className="text-sm text-muted-foreground truncate mb-2">
+                                <p className="text-sm text-muted-foreground clamp-2 break-anywhere mb-2">
                                   {item.description}
                                 </p>
                               )}
@@ -1870,7 +1870,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                                 <Progress value={item.progress} className="h-1 mb-2" />
                               )}
                               
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                 {"dueDate" in item && (item as Task).dueDate && (
                                   <span>{t('planner.detail.dueDate')}: {(item as Task).dueDate!.toLocaleDateString()}</span>
                                 )}
@@ -1881,7 +1881,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                                   <span>{(item as Task).estimateHours}h</span>
                                 )}
                                 {"tags" in item && (item as Task).tags && (item as Task).tags.length > 0 && (
-                                  <div className="flex gap-1">
+                                  <div className="flex gap-1 flex-wrap max-w-full">
                                     {(item as Task).tags!.slice(0, 2).map(tag => (
                                       <Badge key={tag} variant="outline" className="text-xs">
                                         {tag}
@@ -1892,7 +1892,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                               </div>
                             </div>
                             
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
                           </div>
                         </CardContent>
                       </Card>

@@ -58,7 +58,7 @@ export default function TasksList() {
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 overflow-x-hidden">
       <div className="flex items-center gap-3">
         <button
           onClick={handleAdd}
@@ -75,7 +75,9 @@ export default function TasksList() {
       </div>
       <ul className="list-disc pl-5 space-y-1">
         {tasks.map((t) => (
-          <li key={t.id}>{t.title}</li>
+          <li key={t.id} className="break-anywhere clamp-2 leading-snug">
+            {t.title}
+          </li>
         ))}
         {tasks.length === 0 && (
           <li className="list-none text-muted-foreground">No tasks yet</li>

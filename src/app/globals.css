@@ -164,6 +164,19 @@ padding-inline: 2rem;
   /* Safe modal height: keeps dialogs within top/bottom safe areas */
   .max-h-safe-modal { max-height: calc(100lvh - var(--safe-top) - var(--safe-bottom) - 24px); }
 
+  /* Text helpers for mobile lists */
+  .clamp-2 {
+    display: -webkit-box;
+  line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .break-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   /* Optional global frame if needed */
   /* Edge-to-edge sides; components handle their own safe paddings */
   .app-frame { padding: 0; }
