@@ -2604,22 +2604,28 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="grid grid-cols-[36px_1fr_1fr_1fr_1fr_40px] items-center gap-2 px-3 py-2 rounded-xl bg-surface-1/60 hover:bg-surface-1 transition-colors border border-border"
+                  className="grid grid-cols-[36px_1fr_1fr_1fr_1fr_40px] items-start gap-2 px-3 py-2 rounded-xl bg-surface-1/60 hover:bg-surface-1 transition-colors border border-border"
                 >
                   <div className="flex items-center justify-center">
                     <Checkbox checked={r.completed} onCheckedChange={(c) => updateRow(r.id, { completed: !!c })} />
                   </div>
-                  <Input
+                  <Textarea
                     value={r.title}
-                    onChange={(e)=>updateRow(r.id, { title: e.target.value })}
+                    onChange={(e)=>{
+                      updateRow(r.id, { title: e.target.value });
+                      // auto-resize to fit content
+                      const el = e.currentTarget; requestAnimationFrame(()=>{ el.style.height = '0px'; el.style.height = el.scrollHeight + 'px'; });
+                    }}
+                    onInput={(e:any)=>{ const el = e.currentTarget as HTMLTextAreaElement; el.style.height='0px'; el.style.height=el.scrollHeight+'px'; }}
+                    onFocus={(e)=>{ const el = e.currentTarget; el.style.height='0px'; el.style.height=el.scrollHeight+'px'; }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') addRow();
+                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addRow(); }
                     }}
                     placeholder={t('planner.table.taskPlaceholder', { defaultValue: 'Write a step' }) as string}
-                    className="h-10 w-full rounded-lg bg-surface-2/60 border-input"
+                    className="min-h-10 h-auto w-full rounded-lg bg-surface-2/60 border-input resize-none overflow-hidden break-anywhere whitespace-pre-wrap py-2"
                   />
                   <Select value={r.status || 'todo'} onValueChange={(v)=>updateRow(r.id, { status: v as any })}>
-                    <SelectTrigger className="h-10 w-full rounded-lg bg-surface-2/60 border-input"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-10 w-full rounded-lg bg-surface-2/60 border-input whitespace-nowrap"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todo">{t('planner.filters.status.todo')}</SelectItem>
                       <SelectItem value="doing">{t('planner.filters.status.doing')}</SelectItem>
@@ -2632,11 +2638,12 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                     onChange={(e)=>updateRow(r.id, { dueDate: e.target.value ? new Date(e.target.value) : undefined })}
                     className="h-10 w-full rounded-lg bg-surface-2/60 border-input"
                   />
-                  <Input
+                  <Textarea
                     value={r.notes || ''}
-                    onChange={(e)=>updateRow(r.id, { notes: e.target.value })}
+                    onChange={(e)=>{ updateRow(r.id, { notes: e.target.value }); const el = e.currentTarget; requestAnimationFrame(()=>{ el.style.height='0px'; el.style.height=el.scrollHeight+'px'; }); }}
+                    onInput={(e:any)=>{ const el = e.currentTarget as HTMLTextAreaElement; el.style.height='0px'; el.style.height=el.scrollHeight+'px'; }}
                     placeholder={t('planner.table.notesPlaceholder', { defaultValue: 'Notes' }) as string}
-                    className="h-10 w-full rounded-lg bg-surface-2/60 border-input"
+                    className="min-h-10 h-auto w-full rounded-lg bg-surface-2/60 border-input resize-none overflow-hidden break-anywhere whitespace-pre-wrap py-2"
                   />
                   <ScaleButton variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={()=>removeRow(r.id)}>×</ScaleButton>
                 </motion.div>
