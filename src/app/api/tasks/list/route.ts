@@ -88,6 +88,8 @@ export async function POST(request: NextRequest) {
       status: requestBody.status || 'todo',
       priority: requestBody.priority || 'medium',
       due_date: requestBody.dueDate || null,
+      checklist: Array.isArray(requestBody.checklist) ? requestBody.checklist : [],
+      progress: typeof requestBody.progress === 'number' ? requestBody.progress : 0,
       created_at: now,
       updated_at: now,
     };
@@ -167,6 +169,14 @@ export async function PUT(request: NextRequest) {
 
     if (requestBody.dueDate !== undefined) {
       updateData.due_date = requestBody.dueDate;
+    }
+
+    if (requestBody.checklist !== undefined) {
+      updateData.checklist = Array.isArray(requestBody.checklist) ? requestBody.checklist : [];
+    }
+
+    if (requestBody.progress !== undefined) {
+      updateData.progress = requestBody.progress;
     }
 
     if (requestBody.completedAt !== undefined) {

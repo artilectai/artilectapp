@@ -984,8 +984,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         dueDate: row.due_date ? new Date(row.due_date) : undefined,
         estimateHours: typeof row.estimate_hours === 'number' ? row.estimate_hours : undefined,
         tags: Array.isArray(row.tags) ? row.tags : [],
-        checklist: [],
-        progress: 0,
+        checklist: Array.isArray(row.checklist) ? row.checklist : [],
+        progress: typeof row.progress === 'number' ? row.progress : 0,
         attachments: [],
         createdAt: row.created_at ? new Date(row.created_at) : new Date(),
         updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
@@ -1027,10 +1027,26 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             : null;
           return { ...t, ...taskData, completedAt: nextCompletedAt, updatedAt: new Date() };
         }));
+        // Also persist server-side
+        try {
+          await updateTaskAction({
+            id: taskData.id,
+            title: taskData.title,
+            description: taskData.description,
+            status: taskData.status as any,
+            priority: taskData.priority as any,
+            start_date: taskData.startDate ? taskData.startDate.toISOString() : undefined,
+            due_date: taskData.dueDate ? taskData.dueDate.toISOString() : undefined,
+            estimate_hours: typeof taskData.estimateHours === 'number' ? taskData.estimateHours : undefined,
+            tags: taskData.tags || undefined as any,
+            ...(Array.isArray(taskData.checklist) ? { checklist: taskData.checklist as any } : {}),
+            ...(typeof taskData.progress === 'number' ? { progress: taskData.progress } : {}),
+          } as any);
+        } catch {}
       } else {
         // Persist new task via server action and refresh
         await createTaskAction({
-          title: taskData.title || t('planner.default.untitledTask'),
+          title: taskData.title || (t('planner.default.untitledTask') as string),
           description: taskData.description,
           status: (taskData.status as any) || 'todo',
           priority: (taskData.priority as any) || 'medium',
@@ -1038,7 +1054,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           due_date: taskData.dueDate ? taskData.dueDate.toISOString() : undefined,
           estimate_hours: typeof taskData.estimateHours === 'number' ? taskData.estimateHours : undefined,
           tags: taskData.tags || [],
-        });
+          ...(typeof taskData.progress === 'number' ? { progress: taskData.progress } : {}),
+          ...(Array.isArray(taskData.checklist) ? { checklist: taskData.checklist as any } : {}),
+        } as any);
         await loadTasks();
       }
       
@@ -1212,19 +1230,20 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     if (selectedTask?.id === taskId && updatedTask) {
       setSelectedTask(updatedTask);
     }
-    // Persist progress only (server may not store checklist items)
+    // Persist checklist and progress to Supabase
     try {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth?.user?.id;
       if (!userId || !updatedTask) return;
       const prog = (updatedTask as Task).progress;
+      const checklist = (updatedTask as Task).checklist;
       await supabase
         .from('planner_items')
-        .update({ progress: prog, updated_at: new Date().toISOString() })
+        .update({ progress: prog, checklist, updated_at: new Date().toISOString() })
         .eq('id', taskId)
         .eq('user_id', userId);
     } catch (e) {
-      console.warn('Failed to persist progress:', e);
+      console.warn('Failed to persist checklist/progress:', e);
     }
   }, [selectedTask]);
 
@@ -1367,7 +1386,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     if (selectedGoal?.id === goalId && updated) {
       setSelectedGoal(updated);
     }
-    // Persist progress only (milestones kept client-side for now)
+  // Persist progress only (milestones kept client-side for now)
     try {
       if (!updated) return;
       const prog = (updated as Goal).progress;

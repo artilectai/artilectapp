@@ -11,6 +11,8 @@ export async function createTask(input: {
   due_date?: string;
   estimate_hours?: number;
   tags?: string[];
+  checklist?: Array<{ id: string; text: string; completed: boolean }>;
+  progress?: number;
 }) {
   const supabase = await supabaseServer();
   const {
@@ -22,7 +24,16 @@ export async function createTask(input: {
   const { error } = await supabase.from('planner_items').insert({
     user_id: user.id,
     type: 'daily',
-    ...input,
+    title: input.title,
+    description: input.description ?? null,
+    status: input.status ?? 'todo',
+    priority: input.priority ?? 'medium',
+    start_date: input.start_date ?? null,
+    due_date: input.due_date ?? null,
+    estimate_hours: typeof input.estimate_hours === 'number' ? input.estimate_hours : null,
+    tags: input.tags ?? [],
+    checklist: input.checklist ?? [],
+    progress: typeof input.progress === 'number' ? input.progress : 0,
   });
   if (error) throw error;
 }
@@ -37,6 +48,8 @@ export async function updateTask(input: {
   due_date?: string | null;
   estimate_hours?: number | null;
   tags?: string[] | null;
+  checklist?: Array<{ id: string; text: string; completed: boolean }> | null;
+  progress?: number | null;
   completed_at?: string | null;
 }) {
   const supabase = await supabaseServer();
@@ -55,6 +68,8 @@ export async function updateTask(input: {
   if (typeof input.due_date !== 'undefined') updateBody.due_date = input.due_date;
   if (typeof input.estimate_hours !== 'undefined') updateBody.estimate_hours = input.estimate_hours;
   if (typeof input.tags !== 'undefined') updateBody.tags = input.tags;
+  if (typeof input.checklist !== 'undefined') updateBody.checklist = input.checklist ?? [];
+  if (typeof input.progress !== 'undefined') updateBody.progress = input.progress;
   if (typeof input.completed_at !== 'undefined') updateBody.completed_at = input.completed_at;
 
   const { error } = await supabase

@@ -60,6 +60,7 @@ create table if not exists public.planner_items (
   -- Task-like fields
   estimate_hours int,
   tags text[],
+  checklist jsonb not null default '[]'::jsonb,
   -- Goal-like fields
   milestones jsonb not null default '[]'::jsonb,
   progress int not null default 0,
@@ -173,6 +174,10 @@ create table if not exists public.workout_sessions (
 create index if not exists planner_items_user_idx on public.planner_items(user_id);
 create index if not exists planner_items_type_idx on public.planner_items(type);
 create index if not exists planner_items_created_idx on public.planner_items(created_at desc);
+
+-- Ensure new columns exist when re-running on an existing database
+alter table if exists public.planner_items
+  add column if not exists checklist jsonb not null default '[]'::jsonb;
 
 -- RLS
 alter table public.planner_items enable row level security;
