@@ -100,6 +100,8 @@ interface Milestone {
   title: string;
   completed: boolean;
   dueDate?: Date;
+  status?: 'todo' | 'doing' | 'done';
+  notes?: string;
 }
 
 type ViewMode = "daily" | "weekly" | "monthly" | "yearly";
@@ -215,6 +217,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   const [monthlyGoals, setMonthlyGoals] = useState<Goal[]>([]);
   const [yearlyGoals, setYearlyGoals] = useState<Goal[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  // Web-only project mode for monthly/yearly views
+  const [projectMode, setProjectMode] = useState(false);
   
   // UI state
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
@@ -1722,6 +1726,27 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                 )}
               </Button>
             </div>
+            {/* Project/List switcher at far right (web-only, monthly/yearly) */}
+            <div className="hidden md:flex items-center gap-2 ml-auto">
+              {(viewMode === 'monthly' || viewMode === 'yearly') && (
+                <div className="inline-flex rounded-md border border-input bg-surface-1 p-1">
+                  <Button
+                    variant={projectMode ? 'ghost' : 'default'}
+                    className={`${projectMode ? 'text-muted-foreground' : 'bg-[#00d563] text-black hover:bg-[#00d563]/90'} h-8 px-3 py-1 rounded-md`}
+                    onClick={() => setProjectMode(false)}
+                  >
+                    {t('planner.views.list', { defaultValue: 'List' })}
+                  </Button>
+                  <Button
+                    variant={projectMode ? 'default' : 'ghost'}
+                    className={`${projectMode ? 'bg-[#00d563] text-black hover:bg-[#00d563]/90' : 'text-muted-foreground'} h-8 px-3 py-1 rounded-md`}
+                    onClick={() => setProjectMode(true)}
+                  >
+                    {t('planner.views.projects', { defaultValue: 'Projects' })}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Advanced filters */}
@@ -1872,7 +1897,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   {/* Main Content Area */}
   <motion.div className="flex-1 flex">
         {/* Task List */}
-  <div className="flex-1 md:flex-none md:w-1/2 overflow-y-auto overflow-x-hidden min-h-0">
+  <div className={`flex-1 md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[30%]' : 'md:w-1/2'} overflow-y-auto overflow-x-hidden min-h-0`}>
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">
@@ -2015,7 +2040,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         </div>
 
   {/* Detail Panel - Desktop */}
-  <div className="hidden md:block md:flex-none md:w-1/2 border-l border-border bg-surface-1/50">
+  <div className={`hidden md:block md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[70%]' : 'md:w-1/2'} border-l border-border bg-surface-1/50`}>
           {viewMode === 'daily' ? (
             selectedTask ? (
               <TaskDetailPanel 
@@ -2034,12 +2059,23 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             )
           ) : (
             selectedGoal ? (
-              <GoalDetailPanel
-                goal={selectedGoal}
-                onEdit={(goal) => { setEditingGoal(goal); setIsGoalEditorOpen(true); }}
-                onDelete={() => handleDeleteGoal(selectedGoal.id)}
-                onToggleMilestone={handleToggleMilestone}
-              />
+              projectMode && (viewMode==='monthly' || viewMode==='yearly') ? (
+                <ProjectPlanTable goal={selectedGoal} onChange={async (updated) => {
+                  setSelectedGoal(updated);
+                  // compute progress from milestones
+                  const ms = updated.milestones || [];
+                  const prog = ms.length ? Math.round((ms.filter(m=>m.completed).length / ms.length) * 100) : 0;
+                  // persist
+                  try { await supabase.from('planner_items').update({ milestones: ms, progress: prog, updated_at: new Date().toISOString() }).eq('id', updated.id); } catch {}
+                }} />
+              ) : (
+                <GoalDetailPanel
+                  goal={selectedGoal}
+                  onEdit={(goal) => { setEditingGoal(goal); setIsGoalEditorOpen(true); }}
+                  onDelete={() => handleDeleteGoal(selectedGoal.id)}
+                  onToggleMilestone={handleToggleMilestone}
+                />
+              )
             ) : (
               <div className="flex items-center justify-center h-full text-center p-8">
                 <div>
@@ -2124,6 +2160,79 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 PlannerSection.displayName = 'PlannerSection';
 
 export default PlannerSection;
+
+// Notion-like project plan table for monthly/yearly project mode
+function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) => void }) {
+  const { t } = useTranslation('app');
+  const [rows, setRows] = useState<Milestone[]>(goal.milestones || []);
+
+  useEffect(() => {
+    setRows(goal.milestones || []);
+  }, [goal.id]);
+
+  const updateRow = (id: string, patch: Partial<Milestone>) => {
+    const next = rows.map(r => r.id === id ? { ...r, ...patch } : r);
+    setRows(next);
+    onChange({ ...goal, milestones: next });
+  };
+  const addRow = () => {
+    const r: Milestone = { id: String(Date.now()), title: '', completed: false };
+    const next = [...rows, r];
+    setRows(next);
+    onChange({ ...goal, milestones: next });
+  };
+  const removeRow = (id: string) => {
+    const next = rows.filter(r => r.id !== id);
+    setRows(next);
+    onChange({ ...goal, milestones: next });
+  };
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">{goal.title}</h3>
+          {goal.description && <p className="text-sm text-muted-foreground clamp-2">{goal.description}</p>}
+        </div>
+        <ScaleButton className="h-9" variant="outline" onClick={addRow}>{t('planner.editor.addItem')}</ScaleButton>
+      </div>
+      <div className="flex-1 overflow-auto">
+        <div className="min-w-[720px]">
+          <div className="grid grid-cols-[28px_1fr_140px_160px_1fr_36px] items-center px-4 py-2 text-xs text-muted-foreground border-b border-border sticky top-0 bg-surface-1/80 backdrop-blur">
+            <span></span>
+            <span>{t('planner.table.task', { defaultValue: 'Task' })}</span>
+            <span>{t('planner.table.status', { defaultValue: 'Status' })}</span>
+            <span>{t('planner.table.due', { defaultValue: 'Due date' })}</span>
+            <span>{t('planner.table.notes', { defaultValue: 'Notes' })}</span>
+            <span></span>
+          </div>
+          {rows.map((r) => (
+            <div key={r.id} className="grid grid-cols-[28px_1fr_140px_160px_1fr_36px] items-center px-4 py-2 border-b border-border">
+              <Checkbox checked={r.completed} onCheckedChange={(c) => updateRow(r.id, { completed: !!c })} />
+              <Input value={r.title} onChange={(e)=>updateRow(r.id, { title: e.target.value })} placeholder={t('planner.table.taskPlaceholder', { defaultValue: 'Write a step' }) as string} className="h-9" />
+              <Select value={r.status || 'todo'} onValueChange={(v)=>updateRow(r.id, { status: v as any })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">{t('planner.filters.status.todo')}</SelectItem>
+                  <SelectItem value="doing">{t('planner.filters.status.doing')}</SelectItem>
+                  <SelectItem value="done">{t('planner.filters.status.done')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input type="date" value={r.dueDate ? new Date(r.dueDate).toISOString().slice(0,10) : ''} onChange={(e)=>updateRow(r.id, { dueDate: e.target.value ? new Date(e.target.value) : undefined })} className="h-9" />
+              <Input value={r.notes || ''} onChange={(e)=>updateRow(r.id, { notes: e.target.value })} placeholder={t('planner.table.notesPlaceholder', { defaultValue: 'Notes' }) as string} className="h-9" />
+              <ScaleButton variant="ghost" onClick={()=>removeRow(r.id)}>×</ScaleButton>
+            </div>
+          ))}
+          {rows.length === 0 && (
+            <div className="p-6 text-center text-muted-foreground">
+              {t('planner.table.empty', { defaultValue: 'Add steps to your project' })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function GoalDetailPanel({ goal, onEdit, onDelete, onToggleMilestone }: {
   goal: Goal;
