@@ -2428,6 +2428,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
   const { t } = useTranslation('app');
   const [rows, setRows] = useState<Milestone[]>(goal.milestones || []);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [openDueFor, setOpenDueFor] = useState<string | null>(null);
 
   useEffect(() => {
     setRows(goal.milestones || []);
@@ -2651,7 +2652,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                       <SelectItem value="done">{t('planner.filters.status.done')}</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Popover>
+      <Popover open={openDueFor === r.id} onOpenChange={(v)=> setOpenDueFor(v ? r.id : null)}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -2666,7 +2667,8 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                         value={r.dueDate ? new Date(r.dueDate) : undefined}
                         onChange={(d) => updateRow(r.id, { dueDate: d })}
                         onDone={() => {
-                          (document.activeElement as HTMLElement | null)?.blur?.();
+        setOpenDueFor(null);
+        (document.activeElement as HTMLElement | null)?.blur?.();
                         }}
                       />
                     </PopoverContent>
