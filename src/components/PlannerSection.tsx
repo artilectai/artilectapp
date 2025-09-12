@@ -2224,6 +2224,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               goal={editingGoal}
               onSave={handleSaveGoal}
               onCancel={() => setIsGoalEditorOpen(false)}
+              onDelete={editingGoal?.id ? () => { handleDeleteGoal(editingGoal.id as string); setIsGoalEditorOpen(false); } : undefined}
               isLoading={isLoading}
             />
           )}
@@ -2942,10 +2943,11 @@ function TaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
   );
 }
 
-function GoalEditor({ goal, onSave, onCancel, isLoading }: {
+function GoalEditor({ goal, onSave, onCancel, onDelete, isLoading }: {
   goal: Partial<Goal>;
   onSave: (goal: Partial<Goal>) => void;
   onCancel: () => void;
+  onDelete?: () => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState(goal);
@@ -2954,8 +2956,14 @@ function GoalEditor({ goal, onSave, onCancel, isLoading }: {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title?.trim()) return;
-    
-    onSave({ ...formData });
+  // Compute progress from checklist and milestones for parity with Task editor
+  const checklist = formData.checklist || [];
+  const milestones = formData.milestones || [];
+  const total = checklist.length + milestones.length;
+  const completed = checklist.filter(i => i.completed).length + milestones.filter(m => m.completed).length;
+  const progress = total > 0 ? Math.round((completed / total) * 100) : (formData.progress || 0);
+
+  onSave({ ...formData, progress });
   };
 
   const addMilestone = () => {
@@ -2986,8 +2994,53 @@ function GoalEditor({ goal, onSave, onCancel, isLoading }: {
     }));
   };
 
+  // Checklist parity with Task editor
+  const addChecklistItem = () => {
+    const newItem: ChecklistItem = {
+      id: Date.now().toString(),
+      text: "",
+      completed: false,
+    };
+    setFormData(prev => ({
+      ...prev,
+      checklist: [...(prev.checklist || []), newItem],
+    }));
+  };
+
+  const updateChecklistItem = (id: string, updates: Partial<ChecklistItem>) => {
+    setFormData(prev => ({
+      ...prev,
+      checklist: prev.checklist?.map(item => (item.id === id ? { ...item, ...updates } : item)),
+    }));
+  };
+
+  const removeChecklistItem = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      checklist: prev.checklist?.filter(item => item.id !== id),
+    }));
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+      {/* header with optional delete icon for parity */}
+      <div className="flex items-center justify-between -mt-1">
+        <div className="text-sm font-medium text-muted-foreground">
+          {formData?.id ? t('planner.editor.goal.editTitle', { defaultValue: 'Edit Goal' }) : t('planner.editor.goal.newTitle', { defaultValue: 'New Goal' })}
+        </div>
+        {goal?.id && onDelete && (
+          <ScaleButton
+            type="button"
+            variant="ghost"
+            className="p-2 rounded-full text-destructive hover:bg-destructive/10"
+            onClick={onDelete}
+            aria-label={t('buttons.delete')}
+            title={t('buttons.delete') as string}
+          >
+            <Trash2 className="w-5 h-5" />
+          </ScaleButton>
+        )}
+      </div>
       <div className="space-y-1.5">
         <Label htmlFor="title" className="text-sm font-medium">{t('planner.editor.goal.titleLabel')}</Label>
         <Input
@@ -2998,6 +3051,35 @@ function GoalEditor({ goal, onSave, onCancel, isLoading }: {
           placeholder={t('planner.editor.goal.titlePlaceholder')}
           required
         />
+      </div>
+
+      {/* Checklist (same UX as Task editor) */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <Label className="text-sm font-medium">{t('planner.editor.checklistLabel')}</Label>
+          <ScaleButton type="button" variant="outline" size="sm" onClick={addChecklistItem}>
+            {t('planner.editor.addItem')}
+          </ScaleButton>
+        </div>
+        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+          {formData.checklist?.map((item) => (
+            <div key={item.id} className="flex items-center gap-2">
+              <Checkbox
+                checked={item.completed}
+                onCheckedChange={(c) => updateChecklistItem(item.id, { completed: !!c })}
+              />
+              <Input
+                value={item.text}
+                onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
+                placeholder={t('planner.editor.checklistItemPlaceholder')}
+                className="h-10 flex-1 min-w-0"
+              />
+              <ScaleButton type="button" variant="ghost" size="sm" onClick={() => removeChecklistItem(item.id)}>
+                ×
+              </ScaleButton>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -3093,6 +3175,39 @@ function GoalEditor({ goal, onSave, onCancel, isLoading }: {
         </div>
       </div>
 
+      {/* Estimate hours (parity) */}
+      <div className="space-y-1.5">
+        <Label htmlFor="goal-estimateHours" className="text-sm font-medium">{t('planner.editor.estimateLabel')}</Label>
+        <Input
+          id="goal-estimateHours"
+          type="number"
+          min="0"
+          step="0.5"
+          className="h-11 w-full min-w-0"
+          value={formData.estimateHours || ""}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            estimateHours: e.target.value ? parseFloat(e.target.value) : undefined,
+          }))}
+          placeholder={t('planner.editor.estimatePlaceholder')}
+        />
+      </div>
+
+      {/* Tags (parity) */}
+      <div className="space-y-1.5">
+        <Label htmlFor="goal-tags" className="text-sm font-medium">{t('planner.editor.tagsLabel')}</Label>
+        <Input
+          id="goal-tags"
+          className="h-11 w-full min-w-0"
+          value={(formData.tags || []).join(", ")}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean),
+          }))}
+          placeholder={t('planner.editor.tagsPlaceholder')}
+        />
+      </div>
+
       <div>
         <div className="flex items-center justify-between mb-2">
           <Label className="text-sm font-medium">{t('planner.editor.milestonesLabel')}</Label>
@@ -3126,14 +3241,13 @@ function GoalEditor({ goal, onSave, onCancel, isLoading }: {
         </div>
       </div>
 
-      {/* footer */}
+      {/* footer (match Task editor) */}
       <div className="sticky bottom-0 -mx-4 sm:mx-0 border-t bg-background/90 backdrop-blur px-4 py-3">
-        {/* centered inner row */}
-        <div className="mx-auto w-full max-w-[420px] flex items-center justify-between gap-3">
+        <div className="mx-auto w-full max-w-[420px] grid grid-cols-2 gap-3">
           <ScaleButton
             type="button"
             variant="outline"
-            className="w-32"
+            className="w-full"
             onClick={onCancel}
             disabled={isLoading}
           >
@@ -3142,7 +3256,7 @@ function GoalEditor({ goal, onSave, onCancel, isLoading }: {
 
           <ScaleButton
             type="submit"
-            className="w-32"
+            className="w-full"
             disabled={!formData.title?.trim() || isLoading}
           >
             {isLoading ? t('planner.editor.saving') : t('planner.editor.goal.save')}
