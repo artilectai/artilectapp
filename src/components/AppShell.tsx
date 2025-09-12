@@ -673,7 +673,7 @@ export default function AppShell({
         {/* Bottom Navigation with Swipe Gestures */}
         <nav 
           className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-md bg-[#0b0e11]/70 border-t border-[#2a2d30]/30 overflow-hidden"
-          style={{ bottom: 'calc(-1 * var(--kb-offset, 0px))', transform: 'translateY(calc(100vh - 100dvh))' }}
+          style={{ bottom: 'calc(2px - var(--kb-offset, 0px))', transform: 'translateY(calc(100vh - 100dvh))' }}
           onTouchStart={handleNavTouchStart}
           onTouchEnd={handleNavTouchEnd}
         >
