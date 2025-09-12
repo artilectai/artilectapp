@@ -452,9 +452,26 @@ export default function AppShell({
 
   // Keyboard shortcuts
   useEffect(() => {
+    const isEditableTarget = (el: EventTarget | null) => {
+      const t = el as HTMLElement | null;
+      if (!t) return false;
+      if (t.closest && t.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]')) return true;
+      return false;
+    };
+
+    const hasOpenOverlay = () => {
+      // Heuristic: any open dialog/modal/popover
+      return !!document.querySelector(
+        'dialog[open], [role="dialog"]:not([aria-hidden="true"]), [aria-modal="true"], [data-radix-portal] [data-state="open"], [data-state="open"][data-overlay]'
+      );
+    };
+
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
-      
+      if (e.defaultPrevented) return;
+      if (e.isComposing) return;
+      if (isEditableTarget(e.target)) return;
+      if (hasOpenOverlay()) return;
+
       switch (e.key) {
         case '1':
           handleModeSwitch('planner');
