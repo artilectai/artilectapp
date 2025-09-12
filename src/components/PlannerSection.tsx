@@ -250,6 +250,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   const [customDateEnd, setCustomDateEnd] = useState<Date | null>(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showCompletedTasks, setShowCompletedTasks] = useState(true);
+  // Header-level file input for project import when no project is selected
+  const headerFileInputRef = useRef<HTMLInputElement | null>(null);
 
   // i18n-aware date formatters
   const lang = (i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
@@ -1516,6 +1518,164 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     (dir, mode) => setSelectedDate(prev => stepByView(prev, mode, dir))
   );
 
+  // Helpers to allow export/import even when no project is selected
+  const slug = useCallback((s: string) => (s || 'project')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-'), []);
+
+  const serializeGoal = useCallback((g: Goal) => ({
+    version: 1,
+    exported_at: new Date().toISOString(),
+    title: g.title,
+    description: g.description || null,
+    status: g.status,
+    priority: g.priority,
+    type: g.type,
+    target_date: g.targetDate ? new Date(g.targetDate).toISOString() : null,
+    progress: typeof g.progress === 'number' ? g.progress : 0,
+    checklist: Array.isArray(g.checklist) ? g.checklist : [],
+    tags: Array.isArray(g.tags) ? g.tags : [],
+    estimate_hours: typeof g.estimateHours === 'number' ? g.estimateHours : null,
+    milestones: Array.isArray(g.milestones)
+      ? g.milestones.map(m => ({
+          id: m.id,
+          title: m.title,
+          completed: !!m.completed,
+          status: m.status || 'todo',
+          notes: m.notes || '',
+          dueDate: m.dueDate ? new Date(m.dueDate).toISOString() : null,
+        }))
+      : [],
+  }), []);
+
+  const headerExport = useCallback(() => {
+    try {
+      if (selectedGoal) {
+        const data = serializeGoal(selectedGoal);
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const ts = new Date().toISOString().replace(/[:.]/g, '-');
+        a.download = `artilect-project-${slug(selectedGoal.title)}-${ts}.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        toast.success(t('toasts.planner.exported', { defaultValue: 'Project exported' }));
+        return;
+      }
+      // Export all visible projects for current period if none selected
+      if ((viewMode === 'monthly' || viewMode === 'yearly')) {
+        const goals = (filteredItems as Goal[]) || [];
+        if (!goals.length) return; // nothing to export
+        const data = goals.map(serializeGoal);
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const ts = new Date().toISOString().replace(/[:.]/g, '-');
+        a.download = `artilect-projects-${viewMode}-${ts}.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        toast.success(t('toasts.planner.exported', { defaultValue: 'Project exported' }));
+      }
+    } catch {
+      toast.error(t('toasts.planner.exportFailed', { defaultValue: 'Failed to export project' }));
+    }
+  }, [selectedGoal, filteredItems, viewMode, t, slug, serializeGoal]);
+
+  const normalizeImportedProject = useCallback((obj: any, fallbackType: Goal['type']) => {
+    const title = typeof obj?.title === 'string' && obj.title.trim() ? obj.title.trim() : (t('planner.default.untitledGoal') as string);
+    const description = typeof obj?.description === 'string' ? obj.description : null;
+    const status = (obj?.status === 'planning' || obj?.status === 'in_progress' || obj?.status === 'completed' || obj?.status === 'paused')
+      ? obj.status : 'planning';
+    const priority = (obj?.priority === 'low' || obj?.priority === 'medium' || obj?.priority === 'high') ? obj.priority : 'medium';
+    const type = (obj?.type === 'weekly' || obj?.type === 'monthly' || obj?.type === 'yearly') ? obj.type : fallbackType;
+    const target_date = obj?.target_date ? new Date(obj.target_date).toISOString() : new Date().toISOString();
+    const tags = Array.isArray(obj?.tags) ? obj.tags.filter((x: any) => typeof x === 'string') : [];
+    const checklist = Array.isArray(obj?.checklist) ? obj.checklist : [];
+    const estimate_hours = typeof obj?.estimate_hours === 'number' ? obj.estimate_hours : null;
+    const milestones = Array.isArray(obj?.milestones) ? obj.milestones.map((m: any) => ({
+      id: typeof m?.id === 'string' && m.id ? m.id : String(Date.now() + Math.random()),
+      title: typeof m?.title === 'string' ? m.title : '',
+      completed: !!m?.completed,
+      status: (m?.status === 'todo' || m?.status === 'doing' || m?.status === 'done') ? m.status : 'todo',
+      notes: typeof m?.notes === 'string' ? m.notes : '',
+      dueDate: m?.dueDate ? m.dueDate : null,
+    })) : [];
+    const progress = typeof obj?.progress === 'number'
+      ? obj.progress
+      : (milestones.length ? Math.round((milestones.filter((m: any) => m.completed).length / milestones.length) * 100) : 0);
+    return { title, description, status, priority, type, target_date, milestones, progress, checklist, tags, estimate_hours } as any;
+  }, [t]);
+
+  const headerImportFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const text = await f.text();
+      const json = JSON.parse(text);
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+      if (!userId) throw new Error('Not signed in');
+      const fallbackType: Goal['type'] = (viewMode === 'yearly' ? 'yearly' : 'monthly');
+      const records = Array.isArray(json) ? json.map((o: any) => normalizeImportedProject(o, fallbackType)) : [normalizeImportedProject(json, fallbackType)];
+      const payload = records.map(r => ({
+        user_id: userId,
+        title: r.title,
+        description: r.description,
+        status: r.status,
+        priority: r.priority,
+        type: r.type,
+        target_date: r.target_date,
+        milestones: r.milestones,
+        progress: r.progress,
+        checklist: r.checklist,
+        tags: r.tags,
+        estimate_hours: r.estimate_hours,
+      }));
+      const { data: inserted, error } = await supabase.from('planner_items').insert(payload).select('*');
+      if (error) throw error;
+      await loadGoals();
+      // Auto-select the first imported project
+      const row = Array.isArray(inserted) && inserted[0];
+      if (row) {
+        const g: Goal = {
+          id: String(row.id),
+          title: row.title || '',
+          description: row.description || undefined,
+          status: (row.status || 'planning'),
+          priority: (row.priority || 'medium'),
+          type: (row.type || fallbackType),
+          targetDate: row.target_date ? new Date(row.target_date) : new Date(),
+          milestones: Array.isArray(row.milestones) ? row.milestones : [],
+          checklist: Array.isArray(row.checklist) ? row.checklist : [],
+          tags: Array.isArray(row.tags) ? row.tags : [],
+          estimateHours: typeof row.estimate_hours === 'number' ? row.estimate_hours : undefined,
+          progress: typeof row.progress === 'number' ? row.progress : 0,
+          createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+          updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
+        } as any;
+        setSelectedGoal(g);
+        setProjectMode(true);
+      }
+      toast.success(t('toasts.planner.imported', { defaultValue: 'Project imported' }));
+    } catch (err: any) {
+      const msg = err?.message || err?.error_description || String(err);
+      toast.error(`${t('toasts.planner.importFailed', { defaultValue: 'Failed to import project' })}: ${msg}`);
+    } finally {
+      if (headerFileInputRef.current) headerFileInputRef.current.value = '';
+    }
+  }, [viewMode, normalizeImportedProject, t, loadGoals]);
+
+  const triggerHeaderImport = useCallback(() => {
+    const el = headerFileInputRef.current;
+    if (!el) return;
+    // @ts-ignore
+    if (typeof el.showPicker === 'function') el.showPicker(); else el.click();
+  }, []);
+
   return (
     <div className="flex flex-col h-full bg-background">
         <div ref={swipeZoneRef} className="w-full touch-pan-y select-none">
@@ -1749,7 +1909,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             {/* Project/List switcher at far right (web-only, monthly/yearly) */}
             <div className="hidden md:flex items-center gap-2 ml-auto">
               {(viewMode === 'monthly' || viewMode === 'yearly') && (
-                <div className="inline-flex rounded-md border border-input bg-surface-1 p-1">
+                <div className="inline-flex items-center gap-2">
+                  <div className="inline-flex rounded-md border border-input bg-surface-1 p-1">
                   <Button
                     variant={projectMode ? 'ghost' : 'default'}
                     className={`${projectMode ? 'text-muted-foreground' : 'bg-[#00d563] text-black hover:bg-[#00d563]/90'} h-8 px-3 py-1 rounded-md`}
@@ -1764,6 +1925,18 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                   >
                     {t('planner.views.projects', { defaultValue: 'Projects' })}
                   </Button>
+                  </div>
+                  {projectMode && (
+                    <>
+                      <input ref={headerFileInputRef} type="file" accept=".json,application/json" className="sr-only" onChange={headerImportFile} />
+                      <ScaleButton variant="outline" className="h-8 px-3 rounded-md" onClick={headerExport} disabled={(viewMode==='monthly'||viewMode==='yearly') && !selectedGoal && (filteredItems as any[])?.length===0}>
+                        {t('planner.actions.export', { defaultValue: 'Export' })}
+                      </ScaleButton>
+                      <ScaleButton variant="outline" className="h-8 px-3 rounded-md" onClick={triggerHeaderImport}>
+                        {t('planner.actions.import', { defaultValue: 'Import' })}
+                      </ScaleButton>
+                    </>
+                  )}
                 </div>
               )}
             </div>
