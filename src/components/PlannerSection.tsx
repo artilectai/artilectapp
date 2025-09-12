@@ -93,6 +93,10 @@ interface Goal {
   type: "weekly" | "monthly" | "yearly";
   createdAt: Date;
   updatedAt: Date;
+  // Parity with Task for UI reuse
+  tags?: string[];
+  checklist?: ChecklistItem[];
+  estimateHours?: number;
 }
 
 interface Milestone {
@@ -131,6 +135,14 @@ const stepByView = (d: Date, mode: "daily"|"weekly"|"monthly"|"yearly", dir: 1|-
 
 const isInteractive = (el: HTMLElement | null) =>
   !!el && (["INPUT","TEXTAREA","SELECT","BUTTON","A","LABEL"].includes(el.tagName) || el.closest("[data-no-swipe]" as any));
+
+// Status mapping between Goal and Task semantics for UI parity
+const goalStatusToTask = (s: Goal["status"]): Task["status"] => (
+  s === 'completed' ? 'done' : s === 'in_progress' ? 'doing' : s === 'paused' ? 'skipped' : 'todo'
+);
+const taskStatusToGoal = (s: Task["status"]): Goal["status"] => (
+  s === 'done' ? 'completed' : s === 'doing' ? 'in_progress' : s === 'skipped' ? 'paused' : 'planning'
+);
 
 // Global-listener swipe hook: works even when nested components capture events.
 function useWholeAreaSwipe(
@@ -1259,7 +1271,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   const userId = auth?.user?.id;
   if (!userId) throw new Error('Not signed in');
       // Persist to Supabase with optimistic UI
-      if (goalData.id) {
+    if (goalData.id) {
         const payload = {
           title: goalData.title,
           description: goalData.description ?? null,
@@ -1268,7 +1280,10 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           type: goalData.type,
           target_date: goalData.targetDate ? goalData.targetDate.toISOString() : undefined,
           milestones: goalData.milestones || [],
-          progress: typeof goalData.progress === 'number' ? goalData.progress : undefined,
+      progress: typeof goalData.progress === 'number' ? goalData.progress : undefined,
+      checklist: Array.isArray(goalData.checklist) ? goalData.checklist : undefined,
+      tags: Array.isArray(goalData.tags) ? goalData.tags : undefined,
+      estimate_hours: typeof goalData.estimateHours === 'number' ? goalData.estimateHours : undefined,
           updated_at: new Date().toISOString(),
         } as any;
   await supabase.from('planner_items').update(payload).eq('id', goalData.id);
@@ -1283,6 +1298,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           target_date: (goalData.targetDate || selectedDate).toISOString(),
           milestones: goalData.milestones || [],
           progress: typeof goalData.progress === 'number' ? goalData.progress : 0,
+          checklist: Array.isArray(goalData.checklist) ? goalData.checklist : [],
+          tags: Array.isArray(goalData.tags) ? goalData.tags : [],
+          estimate_hours: typeof goalData.estimateHours === 'number' ? goalData.estimateHours : null,
         } as any;
   await supabase.from('planner_items').insert(toInsert);
       }
@@ -2062,18 +2080,66 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               projectMode && (viewMode==='monthly' || viewMode==='yearly') ? (
                 <ProjectPlanTable goal={selectedGoal} onChange={async (updated) => {
                   setSelectedGoal(updated);
-                  // compute progress from milestones
                   const ms = updated.milestones || [];
-                  const prog = ms.length ? Math.round((ms.filter(m=>m.completed).length / ms.length) * 100) : 0;
-                  // persist
+                  const prog = ms.length ? Math.round((ms.filter((m: Milestone)=>m.completed).length / ms.length) * 100) : 0;
                   try { await supabase.from('planner_items').update({ milestones: ms, progress: prog, updated_at: new Date().toISOString() }).eq('id', updated.id); } catch {}
                 }} />
               ) : (
-                <GoalDetailPanel
-                  goal={selectedGoal}
-                  onEdit={(goal) => { setEditingGoal(goal); setIsGoalEditorOpen(true); }}
+                // Reuse TaskDetailPanel UI for goals to match daily task details
+                <TaskDetailPanel
+                  task={{
+                    id: selectedGoal.id,
+                    title: selectedGoal.title,
+                    description: selectedGoal.description,
+                    status: goalStatusToTask(selectedGoal.status),
+                    priority: selectedGoal.priority,
+                    startDate: undefined,
+                    dueDate: selectedGoal.targetDate,
+                    estimateHours: selectedGoal.estimateHours,
+                    tags: selectedGoal.tags || [],
+                    checklist: selectedGoal.checklist || [],
+                    progress: selectedGoal.progress,
+                    attachments: [],
+                    createdAt: selectedGoal.createdAt,
+                    updatedAt: selectedGoal.updatedAt,
+                    completedAt: selectedGoal.status === 'completed' ? (selectedGoal.updatedAt || new Date()) : null,
+                  }}
+                  onEdit={(taskLike) => {
+                    // Map edited Task back to Goal and open goal editor with prefilled data
+                    setEditingGoal({
+                      id: selectedGoal.id,
+                      title: taskLike.title,
+                      description: taskLike.description,
+                      status: taskStatusToGoal(taskLike.status),
+                      priority: taskLike.priority,
+                      targetDate: taskLike.dueDate || selectedGoal.targetDate,
+                      milestones: selectedGoal.milestones,
+                      progress: taskLike.progress,
+                      type: selectedGoal.type,
+                      tags: taskLike.tags,
+                      checklist: taskLike.checklist,
+                      estimateHours: taskLike.estimateHours,
+                      createdAt: selectedGoal.createdAt,
+                      updatedAt: new Date(),
+                    } as any);
+                    setIsGoalEditorOpen(true);
+                  }}
                   onDelete={() => handleDeleteGoal(selectedGoal.id)}
-                  onToggleMilestone={handleToggleMilestone}
+                  onToggleChecklist={async (taskId, checklistItemId) => {
+                    // Toggle within goal.checklist and persist progress and checklist
+                    let updated = selectedGoal;
+                    const nextChecklist = (selectedGoal.checklist || []).map(ci => ci.id === checklistItemId ? { ...ci, completed: !ci.completed } : ci);
+                    const nextProgress = nextChecklist.length ? Math.round((nextChecklist.filter(ci=>ci.completed).length / nextChecklist.length) * 100) : selectedGoal.progress;
+                    updated = { ...selectedGoal, checklist: nextChecklist, progress: nextProgress, updatedAt: new Date() } as Goal;
+                    setSelectedGoal(updated);
+                    // Replace in list state
+                    if (viewMode === 'weekly') setWeeklyGoals(prev => prev.map(g => g.id === updated.id ? updated : g));
+                    if (viewMode === 'monthly') setMonthlyGoals(prev => prev.map(g => g.id === updated.id ? updated : g));
+                    if (viewMode === 'yearly') setYearlyGoals(prev => prev.map(g => g.id === updated.id ? updated : g));
+                    try {
+                      await supabase.from('planner_items').update({ checklist: nextChecklist, progress: nextProgress, updated_at: new Date().toISOString() }).eq('id', updated.id);
+                    } catch {}
+                  }}
                 />
               )
             ) : (
