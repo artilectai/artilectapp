@@ -154,6 +154,30 @@ export function PremiumSubscriptionPlans({
   const [isLoading, setIsLoading] = useState(false);
   const [trialCountdown, setTrialCountdown] = useState<number>(0);
 
+  // Redirect helper: open Telegram support chat
+  const redirectToTelegramSupport = () => {
+    const webUrl = 'https://t.me/artilectsupport';
+    // Prefer Telegram WebApp API when inside Telegram
+    try {
+      const twa = (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) as any;
+      if (twa && typeof twa.openTelegramLink === 'function') {
+        twa.openTelegramLink(webUrl);
+        return;
+      }
+    } catch {}
+    // Try deep link first, then fallback to https
+    try {
+      if (typeof window !== 'undefined') {
+        (window.location as any).href = 'tg://resolve?domain=artilectsupport';
+        setTimeout(() => { window.location.href = webUrl; }, 500);
+        return;
+      }
+    } catch {}
+    if (typeof window !== 'undefined') {
+      window.location.href = webUrl;
+    }
+  };
+
   // Simulate trial countdown for Pro plan
   useEffect(() => {
     if (currentPlan === 'pro-trial') {
@@ -172,14 +196,13 @@ export function PremiumSubscriptionPlans({
   const handlePlanSelect = async (planId: string) => {
     if (planId === currentPlan) return;
 
-    // For paid plans, navigate to checkout to collect card details.
+    // For paid plans, redirect to Telegram support chat instead of checkout.
     const selected = plans.find(p => p.id === planId);
     if (selected && selected.monthlyPrice > 0) {
-      const billing = billingPeriod === 'annual' ? 'annual' : 'monthly';
       setIsLoading(true);
-      router.push(`/checkout?plan=${planId}&billing=${billing}`);
-      // stop here; the actual activation happens after successful payment
-      setIsLoading(false);
+      redirectToTelegramSupport();
+      // Stop further processing; upgrade handled via support
+      setTimeout(() => setIsLoading(false), 800);
       return;
     }
 
