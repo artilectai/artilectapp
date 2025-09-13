@@ -2641,10 +2641,10 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
           {/* Columns: [drag+checkbox | Task grows | Status auto | Due auto | Notes grows | actions] */}
           <div className="grid grid-cols-[56px_minmax(280px,2fr)_auto_auto_1fr_40px] items-center gap-2 px-3 py-2 text-xs text-muted-foreground sticky top-0 bg-surface-1/70 backdrop-blur rounded-xl border border-border">
             <span></span>
-            <span className="uppercase tracking-wide">{t('planner.table.task', { defaultValue: 'Task' })}</span>
-            <span className="uppercase tracking-wide">{t('planner.table.status', { defaultValue: 'Status' })}</span>
-            <span className="uppercase tracking-wide">{t('planner.table.due', { defaultValue: 'Due date' })}</span>
-            <span className="uppercase tracking-wide">{t('planner.table.notes', { defaultValue: 'Notes' })}</span>
+            <span className="uppercase tracking-wide justify-self-start pl-3">{t('planner.table.task', { defaultValue: 'Task' })}</span>
+            <span className="uppercase tracking-wide justify-self-center">{t('planner.table.status', { defaultValue: 'Status' })}</span>
+            <span className="uppercase tracking-wide justify-self-center">{t('planner.table.due', { defaultValue: 'Due date' })}</span>
+            <span className="uppercase tracking-wide justify-self-start pl-3">{t('planner.table.notes', { defaultValue: 'Notes' })}</span>
             <span></span>
           </div>
 
