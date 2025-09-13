@@ -21,7 +21,8 @@ import {
   Clock,
   Lock,
   Crown,
-  Trash2
+  Trash2,
+  GripVertical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2429,6 +2430,9 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
   const [rows, setRows] = useState<Milestone[]>(goal.milestones || []);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [openDueFor, setOpenDueFor] = useState<string | null>(null);
+  // drag & drop state
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   useEffect(() => {
     setRows(goal.milestones || []);
@@ -2450,6 +2454,34 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     setRows(next);
     onChange({ ...goal, milestones: next });
   };
+
+  // --- Drag & Drop reordering ---
+  const onDragStart = (id: string) => (e: React.DragEvent) => {
+    setDragId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+  };
+  const onDragOver = (id: string) => (e: React.DragEvent) => {
+    e.preventDefault();
+    setOverId(id);
+    e.dataTransfer.dropEffect = 'move';
+  };
+  const onDragLeave = () => setOverId(prev => prev === dragId ? null : prev);
+  const onDrop = (id: string) => (e: React.DragEvent) => {
+    e.preventDefault();
+    const fromId = dragId || e.dataTransfer.getData('text/plain');
+    setDragId(null); setOverId(null);
+    if (!fromId || fromId === id) return;
+    const srcIdx = rows.findIndex(r => r.id === fromId);
+    const dstIdx = rows.findIndex(r => r.id === id);
+    if (srcIdx < 0 || dstIdx < 0) return;
+    const next = [...rows];
+    const [moved] = next.splice(srcIdx, 1);
+    next.splice(dstIdx, 0, moved);
+    setRows(next);
+    onChange({ ...goal, milestones: next });
+  };
+  const onDragEnd = () => { setDragId(null); setOverId(null); };
 
   // Helpers for export/import
   const slug = (s: string) => (s || 'project')
@@ -2606,7 +2638,8 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
       </div>
       <div className="flex-1 overflow-auto">
         <div className="min-w-[860px] p-4">
-          <div className="grid grid-cols-[36px_1fr_1fr_1fr_1fr_40px] items-center gap-2 px-3 py-2 text-xs text-muted-foreground sticky top-0 bg-surface-1/70 backdrop-blur rounded-xl border border-border">
+          {/* Columns: [drag+checkbox | Task grows | Status auto | Due auto | Notes grows | actions] */}
+          <div className="grid grid-cols-[56px_minmax(280px,2fr)_auto_auto_1fr_40px] items-center gap-2 px-3 py-2 text-xs text-muted-foreground sticky top-0 bg-surface-1/70 backdrop-blur rounded-xl border border-border">
             <span></span>
             <span className="uppercase tracking-wide">{t('planner.table.task', { defaultValue: 'Task' })}</span>
             <span className="uppercase tracking-wide">{t('planner.table.status', { defaultValue: 'Status' })}</span>
@@ -2624,9 +2657,21 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="grid grid-cols-[36px_1fr_1fr_1fr_1fr_40px] items-start gap-2 px-3 py-2 rounded-xl bg-surface-1/60 hover:bg-surface-1 transition-colors border border-border"
+                  onDragOver={onDragOver(r.id)}
+                  onDrop={onDrop(r.id)}
+                  onDragLeave={onDragLeave}
+                  className={`grid grid-cols-[56px_minmax(280px,2fr)_auto_auto_1fr_40px] items-start gap-2 px-3 py-2 rounded-xl transition-colors border border-border ${overId === r.id ? 'bg-surface-1 ring-1 ring-primary/40' : 'bg-surface-1/60 hover:bg-surface-1'}`}
                 >
-                  <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      aria-label="Drag"
+                      draggable
+                      onDragStart={onDragStart(r.id)}
+                      onDragEnd={onDragEnd}
+                      className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded"
+                    >
+                      <GripVertical className="h-4 w-4" />
+                    </button>
                     <Checkbox checked={r.completed} onCheckedChange={(c) => updateRow(r.id, { completed: !!c })} />
                   </div>
                   <Textarea
@@ -2645,7 +2690,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                     className="min-h-10 h-auto w-full rounded-lg bg-surface-2/60 border-input resize-none overflow-hidden break-anywhere whitespace-pre-wrap py-2"
                   />
                   <Select value={r.status || 'todo'} onValueChange={(v)=>updateRow(r.id, { status: v as any })}>
-                    <SelectTrigger className="h-10 w-full rounded-lg bg-surface-2/60 border-input whitespace-nowrap"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-10 w-auto px-3 rounded-lg bg-surface-2/60 border-input whitespace-nowrap"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todo">{t('planner.filters.status.todo')}</SelectItem>
                       <SelectItem value="doing">{t('planner.filters.status.doing')}</SelectItem>
@@ -2656,7 +2701,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="h-10 w-full justify-start text-left font-normal rounded-lg bg-surface-2/60 border-input"
+                        className="h-10 w-auto px-3 justify-start text-left font-normal rounded-lg bg-surface-2/60 border-input whitespace-nowrap"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {r.dueDate ? formatDMY(new Date(r.dueDate)) : 'dd/mm/yyyy'}
