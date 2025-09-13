@@ -2639,11 +2639,11 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
       <div className="flex-1 overflow-auto">
         <div className="min-w-[860px] p-4">
           {/* Columns: [drag+checkbox | Task grows | Status auto | Due auto | Notes grows | actions] */}
-          <div className="grid grid-cols-[56px_minmax(280px,2fr)_auto_auto_1fr_40px] items-center gap-2 px-3 py-2 text-xs text-muted-foreground sticky top-0 bg-surface-1/70 backdrop-blur rounded-xl border border-border">
+          <div className="grid grid-cols-[56px_minmax(280px,2fr)_minmax(88px,max-content)_minmax(132px,max-content)_1fr_40px] items-center gap-2 px-3 py-2 text-xs text-muted-foreground sticky top-0 bg-surface-1/70 backdrop-blur rounded-xl border border-border">
             <span></span>
             <span className="uppercase tracking-wide justify-self-start pl-3">{t('planner.table.task', { defaultValue: 'Task' })}</span>
-            <span className="uppercase tracking-wide justify-self-center">{t('planner.table.status', { defaultValue: 'Status' })}</span>
-            <span className="uppercase tracking-wide justify-self-center">{t('planner.table.due', { defaultValue: 'Due date' })}</span>
+            <span className="uppercase tracking-wide justify-self-start">{t('planner.table.status', { defaultValue: 'Status' })}</span>
+            <span className="uppercase tracking-wide justify-self-start">{t('planner.table.due', { defaultValue: 'Due date' })}</span>
             <span className="uppercase tracking-wide justify-self-start pl-3">{t('planner.table.notes', { defaultValue: 'Notes' })}</span>
             <span></span>
           </div>
@@ -2660,7 +2660,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                   onDragOver={onDragOver(r.id)}
                   onDrop={onDrop(r.id)}
                   onDragLeave={onDragLeave}
-                  className={`grid grid-cols-[56px_minmax(280px,2fr)_auto_auto_1fr_40px] items-start gap-2 px-3 py-2 rounded-xl transition-colors border border-border ${overId === r.id ? 'bg-surface-1 ring-1 ring-primary/40' : 'bg-surface-1/60 hover:bg-surface-1'}`}
+                  className={`grid grid-cols-[56px_minmax(280px,2fr)_minmax(88px,max-content)_minmax(132px,max-content)_1fr_40px] items-start gap-2 px-3 py-2 rounded-xl transition-colors border border-border ${overId === r.id ? 'bg-surface-1 ring-1 ring-primary/40' : 'bg-surface-1/60 hover:bg-surface-1'}`}
                 >
                   <div className="flex items-center justify-center gap-1">
                     <button
@@ -2690,7 +2690,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                     className="min-h-10 h-auto w-full rounded-lg bg-surface-2/60 border-input resize-none overflow-hidden break-anywhere whitespace-pre-wrap py-2"
                   />
                   <Select value={r.status || 'todo'} onValueChange={(v)=>updateRow(r.id, { status: v as any })}>
-                    <SelectTrigger className="h-10 w-auto px-3 rounded-lg bg-surface-2/60 border-input whitespace-nowrap"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-10 w-auto px-3 rounded-lg bg-surface-2/60 border-input whitespace-nowrap justify-start"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todo">{t('planner.filters.status.todo')}</SelectItem>
                       <SelectItem value="doing">{t('planner.filters.status.doing')}</SelectItem>
