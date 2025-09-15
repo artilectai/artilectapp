@@ -274,24 +274,35 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         .order('created_at', { ascending: false });
       if (error) throw error;
       const rows = (data || []) as any[];
-      const allGoals: Goal[] = rows.map((row) => ({
-        id: String(row.id),
-        title: row.title || '',
-        description: row.description || undefined,
-        status: (row.status || 'planning') as Goal['status'],
-        priority: (row.priority || 'medium') as Goal['priority'],
-        type: (row.type || 'weekly') as Goal['type'],
-        targetDate: row.target_date ? new Date(row.target_date) : new Date(),
-        milestones: Array.isArray(row.milestones)
-          ? row.milestones.map((m: any) => ({ ...m, dueDate: m?.dueDate ? new Date(m.dueDate) : undefined }))
-          : [],
-  checklist: Array.isArray(row.checklist) ? row.checklist : [],
-  tags: Array.isArray(row.tags) ? row.tags : [],
-  estimateHours: typeof row.estimate_hours === 'number' ? row.estimate_hours : undefined,
-        progress: typeof row.progress === 'number' ? row.progress : 0,
-        createdAt: row.created_at ? new Date(row.created_at) : new Date(),
-        updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
-      }));
+      const allGoals: Goal[] = rows.map((row) => {
+        // Migrate milestones -> checklist to keep details identical to daily tasks
+        const rawMilestones: any[] = Array.isArray(row.milestones) ? row.milestones : [];
+        const migratedFromMilestones: ChecklistItem[] = rawMilestones.map((m: any) => ({
+          id: String(m?.id ?? `${Date.now()}-${Math.random()}`),
+          text: String(m?.title ?? m?.text ?? ''),
+          completed: !!m?.completed,
+        }));
+        const existingChecklist: ChecklistItem[] = Array.isArray(row.checklist) ? row.checklist : [];
+        const mergedChecklist = existingChecklist.length
+          ? existingChecklist
+          : migratedFromMilestones; // prefer explicit checklist; otherwise use migrated milestones
+        return {
+          id: String(row.id),
+          title: row.title || '',
+          description: row.description || undefined,
+          status: (row.status || 'planning') as Goal['status'],
+          priority: (row.priority || 'medium') as Goal['priority'],
+          type: (row.type || 'weekly') as Goal['type'],
+          targetDate: row.target_date ? new Date(row.target_date) : new Date(),
+          milestones: [], // milestones no longer used in UI
+          checklist: mergedChecklist,
+          tags: Array.isArray(row.tags) ? row.tags : [],
+          estimateHours: typeof row.estimate_hours === 'number' ? row.estimate_hours : undefined,
+          progress: typeof row.progress === 'number' ? row.progress : 0,
+          createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+          updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
+        } as Goal;
+      });
       setWeeklyGoals(allGoals.filter(g => g.type === 'weekly'));
       setMonthlyGoals(allGoals.filter(g => g.type === 'monthly'));
       setYearlyGoals(allGoals.filter(g => g.type === 'yearly'));
@@ -1288,7 +1299,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   const userId = auth?.user?.id;
   if (!userId) throw new Error('Not signed in');
       // Persist to Supabase with optimistic UI
-    if (goalData.id) {
+  if (goalData.id) {
         const payload = {
           title: goalData.title,
           description: goalData.description ?? null,
@@ -1296,9 +1307,11 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           priority: goalData.priority,
           type: goalData.type,
           target_date: goalData.targetDate ? goalData.targetDate.toISOString() : undefined,
-          milestones: goalData.milestones || [],
-      progress: typeof goalData.progress === 'number' ? goalData.progress : undefined,
-      checklist: Array.isArray(goalData.checklist) ? goalData.checklist : undefined,
+      // milestones removed from UI; keep empty in storage for forward-compat
+      milestones: [],
+    progress: typeof goalData.progress === 'number' ? goalData.progress : undefined,
+    // persist checklist only
+    checklist: Array.isArray(goalData.checklist) ? goalData.checklist : [],
       tags: Array.isArray(goalData.tags) ? goalData.tags : undefined,
       estimate_hours: typeof goalData.estimateHours === 'number' ? goalData.estimateHours : undefined,
           updated_at: new Date().toISOString(),
@@ -1313,7 +1326,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           priority: goalData.priority || 'medium',
           type: (goalData.type as any) || (viewMode as any),
           target_date: (goalData.targetDate || selectedDate).toISOString(),
-          milestones: goalData.milestones || [],
+          milestones: [],
           progress: typeof goalData.progress === 'number' ? goalData.progress : 0,
           checklist: Array.isArray(goalData.checklist) ? goalData.checklist : [],
           tags: Array.isArray(goalData.tags) ? goalData.tags : [],
@@ -3225,43 +3238,15 @@ function GoalEditor({ goal, onSave, onCancel, onDelete, isLoading }: {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title?.trim()) return;
-  // Compute progress from checklist and milestones for parity with Task editor
+  // Progress computed only from checklist (milestones removed)
   const checklist = formData.checklist || [];
-  const milestones = formData.milestones || [];
-  const total = checklist.length + milestones.length;
-  const completed = checklist.filter(i => i.completed).length + milestones.filter(m => m.completed).length;
+  const total = checklist.length;
+  const completed = checklist.filter(i => i.completed).length;
   const progress = total > 0 ? Math.round((completed / total) * 100) : (formData.progress || 0);
 
-  onSave({ ...formData, progress });
+  onSave({ ...formData, milestones: [], progress });
   };
 
-  const addMilestone = () => {
-    const newMilestone: Milestone = {
-      id: Date.now().toString(),
-      title: "",
-      completed: false
-    };
-    setFormData(prev => ({
-      ...prev,
-      milestones: [...(prev.milestones || []), newMilestone]
-    }));
-  };
-
-  const updateMilestone = (id: string, updates: Partial<Milestone>) => {
-    setFormData(prev => ({
-      ...prev,
-      milestones: prev.milestones?.map(milestone => 
-        milestone.id === id ? { ...milestone, ...updates } : milestone
-      )
-    }));
-  };
-
-  const removeMilestone = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      milestones: prev.milestones?.filter(milestone => milestone.id !== id)
-    }));
-  };
 
   // Checklist parity with Task editor
   const addChecklistItem = () => {
@@ -3477,38 +3462,7 @@ function GoalEditor({ goal, onSave, onCancel, onDelete, isLoading }: {
         />
       </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <Label className="text-sm font-medium">{t('planner.editor.milestonesLabel')}</Label>
-          <ScaleButton type="button" variant="outline" size="sm" onClick={addMilestone}>
-            {t('planner.editor.addMilestone')}
-          </ScaleButton>
-        </div>
-        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-          {formData.milestones?.map((milestone) => (
-            <div key={milestone.id} className="flex items-center gap-2">
-              <Checkbox
-                checked={milestone.completed}
-                onCheckedChange={(checked) => updateMilestone(milestone.id, { completed: !!checked })}
-              />
-              <Input
-                value={milestone.title}
-                onChange={(e) => updateMilestone(milestone.id, { title: e.target.value })}
-                placeholder={t('planner.editor.milestoneTitlePlaceholder')}
-                className="h-10 flex-1 min-w-0"
-              />
-              <ScaleButton
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => removeMilestone(milestone.id)}
-              >
-                ×
-              </ScaleButton>
-            </div>
-          ))}
-        </div>
-      </div>
+  {/* Milestones removed: weekly/monthly/yearly use the same checklist UX as daily tasks */}
 
       {/* footer (match Task editor) */}
       <div className="sticky bottom-0 -mx-4 sm:mx-0 border-t bg-background/90 backdrop-blur px-4 py-3">
