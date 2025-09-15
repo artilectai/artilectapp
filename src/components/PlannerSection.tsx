@@ -1515,12 +1515,20 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   }), [subscriptionPlan]);
 
   // Add missing renderLockedTab function
-  const renderLockedTab = (mode: ViewMode, icon: React.ReactNode, label: string) => (
-    <div className="flex items-center gap-2 px-3 py-2 text-muted-foreground cursor-not-allowed opacity-50">
+  // Uniform tab trigger that reserves space for lock to avoid layout shift
+  const TabTriggerWithLock = (
+    { value, icon, label, locked }:
+    { value: ViewMode; icon: React.ReactNode; label: string; locked: boolean }
+  ) => (
+    <TabsTrigger value={value} disabled={locked} className="relative flex items-center gap-2">
       {icon}
       <span className="hidden sm:inline">{label}</span>
-      <Lock className="h-3 w-3" />
-    </div>
+      {/* Reserve constant width whether locked or not */}
+      <span className="inline-flex w-3 h-3 items-center justify-center ml-0.5">
+        <Lock className={`h-3 w-3 transition-opacity duration-150 ${locked ? 'opacity-100' : 'opacity-0'}`} />
+      </span>
+      {locked && <span className="sr-only">Locked</span>}
+    </TabsTrigger>
   );
 
   // Swipe zone ref and hook — captures horizontal swipes across the whole planner area
@@ -1842,33 +1850,27 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               <CalendarIcon className="h-4 w-4" />
               <span className="hidden sm:inline">{t('planner.views.daily')}</span>
             </TabsTrigger>
-            
-            {isViewModeAllowed('weekly') ? (
-              <TabsTrigger value="weekly" className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('planner.views.weekly')}</span>
-              </TabsTrigger>
-            ) : (
-              renderLockedTab('weekly', <CalendarDays className="h-4 w-4" />, t('planner.views.weekly'))
-            )}
-            
-            {isViewModeAllowed('monthly') ? (
-              <TabsTrigger value="monthly" className="flex items-center gap-2">
-                <ListTodo className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('planner.views.monthly')}</span>
-              </TabsTrigger>
-            ) : (
-              renderLockedTab('monthly', <ListTodo className="h-4 w-4" />, t('planner.views.monthly'))
-            )}
-            
-            {isViewModeAllowed('yearly') ? (
-              <TabsTrigger value="yearly" className="flex items-center gap-2">
-                <ChartGantt className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('planner.views.yearly')}</span>
-              </TabsTrigger>
-            ) : (
-              renderLockedTab('yearly', <ChartGantt className="h-4 w-4" />, t('planner.views.yearly'))
-            )}
+            {/* Always render the same trigger markup; lock icon visibility toggles without affecting layout */}
+            {TabTriggerWithLock({
+              value: 'weekly',
+              icon: <CalendarDays className="h-4 w-4" />,
+              label: t('planner.views.weekly'),
+              locked: !isViewModeAllowed('weekly')
+            })}
+
+            {TabTriggerWithLock({
+              value: 'monthly',
+              icon: <ListTodo className="h-4 w-4" />,
+              label: t('planner.views.monthly'),
+              locked: !isViewModeAllowed('monthly')
+            })}
+
+            {TabTriggerWithLock({
+              value: 'yearly',
+              icon: <ChartGantt className="h-4 w-4" />,
+              label: t('planner.views.yearly'),
+              locked: !isViewModeAllowed('yearly')
+            })}
           </TabsList>
         </Tabs>
       </div>
