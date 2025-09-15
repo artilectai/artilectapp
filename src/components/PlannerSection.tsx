@@ -1533,11 +1533,17 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     { value, icon, label, locked }:
     { value: ViewMode; icon: React.ReactNode; label: string; locked: boolean }
   ) => (
-    <TabsTrigger value={value} disabled={locked} className="relative flex items-center gap-2">
+    <TabsTrigger
+      value={value}
+      disabled={locked}
+      className="relative flex items-center justify-center sm:justify-start gap-0 sm:gap-2"
+    >
+      {/* Main icon (always centered on mobile) */}
       {icon}
+      {/* Label only on sm+ */}
       <span className="hidden sm:inline">{label}</span>
-      {/* Reserve constant width whether locked or not */}
-      <span className="inline-flex w-3 h-3 items-center justify-center ml-0.5">
+      {/* Lock indicator overlayed; doesn't affect layout */}
+      <span aria-hidden className="pointer-events-none absolute right-1.5 top-1.5">
         <Lock className={`h-3 w-3 transition-opacity duration-150 ${locked ? 'opacity-100' : 'opacity-0'}`} />
       </span>
       {locked && <span className="sr-only">Locked</span>}
@@ -1856,9 +1862,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       </div>
 
       {/* View Mode Tabs (kept outside the swipe zone) */}
-      <div className="px-4 py-2 border-b border-border bg-surface-1/50">
+  <div className="px-4 py-2 border-b border-border bg-surface-1/50 tabs-stable">
         <Tabs value={viewMode} onValueChange={(v) => handleViewModeChange(v as ViewMode)}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-4 h-10">
             <TabsTrigger value="daily" className="flex items-center gap-2">
               <CalendarIcon className="h-4 w-4" />
               <span className="hidden sm:inline">{t('planner.views.daily')}</span>
