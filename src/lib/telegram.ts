@@ -6,6 +6,7 @@ export function initTelegramUI() {
   const apply = () => {
     try { webApp.ready?.(); } catch {}
     try { webApp.expand?.(); } catch {}
+  try { if (typeof webApp.isVersionAtLeast === 'function' && webApp.isVersionAtLeast('8.0') && typeof webApp.requestFullscreen === 'function') { webApp.requestFullscreen(); } } catch {}
     try { webApp.disableVerticalSwipes?.(); } catch {}
     try { webApp.enableClosingConfirmation?.(); } catch {}
     try { webApp.setHeaderColor?.('secondary_bg_color'); } catch {}
@@ -15,7 +16,21 @@ export function initTelegramUI() {
   // Re-apply on common lifecycle events
   const onVis = () => apply();
   const onFocus = () => apply();
-  try { webApp.onEvent?.('viewportChanged', apply); } catch {}
+  try {
+    webApp.onEvent?.('viewportChanged', () => {
+      try { webApp.expand?.(); } catch {}
+      apply();
+    });
+  } catch {}
+  try {
+    webApp.onEvent?.('fullscreenChanged', () => {
+      try {
+        if (!webApp.isFullscreen && typeof webApp.requestFullscreen === 'function') {
+          webApp.requestFullscreen();
+        }
+      } catch {}
+    });
+  } catch {}
   try { document.addEventListener('visibilitychange', onVis); } catch {}
   try { window.addEventListener('focus', onFocus); } catch {}
   // Expose a manual trigger for debugging

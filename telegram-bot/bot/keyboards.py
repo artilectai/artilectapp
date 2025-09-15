@@ -6,7 +6,16 @@ if not WEBAPP_URL:
     # Fallback to avoid broken buttons; button will still render but not open anything meaningful
     WEBAPP_URL = "https://google.com"
 
+BOT_USERNAME = os.getenv("BOT_USERNAME", "artilectai_bot").lstrip("@")
+
 def open_app_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="Open Artilect", web_app=WebAppInfo(url=WEBAPP_URL))
-    ]])
+        """
+        Provide two open options:
+            1) web_app button for classic Mini App (may open as a sheet inside chats)
+            2) direct deep link which opens full-screen by default: t.me/<bot>?startapp=...
+        """
+        deep_link = f"https://t.me/{BOT_USERNAME}?startapp=start"
+        return InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="Open Artilect", web_app=WebAppInfo(url=WEBAPP_URL))],
+                [InlineKeyboardButton(text="Open Full Screen", url=deep_link)],
+        ])

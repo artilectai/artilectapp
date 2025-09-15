@@ -45,8 +45,15 @@ export default function RootLayout({
                     if(!tg) return false;
                     try{ tg.ready && tg.ready(); }catch(e){}
                     try{ tg.expand && tg.expand(); }catch(e){}
+                    // Bot API 8.0+: full-screen API
+                    try{
+                      if (typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('8.0') && typeof tg.requestFullscreen === 'function') {
+                        tg.requestFullscreen();
+                      }
+                    }catch(e){}
                     try{ tg.disableVerticalSwipes && tg.disableVerticalSwipes(); }catch(e){}
                     try{ tg.enableClosingConfirmation && tg.enableClosingConfirmation(); }catch(e){}
+                    try{ tg.setHeaderColor && tg.setHeaderColor('secondary_bg_color'); }catch(e){}
                     return true;
                   } catch(e) { return false; }
                 }
@@ -61,7 +68,19 @@ export default function RootLayout({
                 function re(){ apply(); }
                 window.addEventListener('focus', re, { passive: true });
                 document.addEventListener('visibilitychange', re, { passive: true });
-                try { (window as any).Telegram?.WebApp?.onEvent?.('viewportChanged', re); } catch(e){}
+                try {
+                  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.onEvent) {
+                    window.Telegram.WebApp.onEvent('viewportChanged', re);
+                    window.Telegram.WebApp.onEvent('fullscreenChanged', function(){
+                      try {
+                        var tg = window.Telegram && window.Telegram.WebApp;
+                        if (tg && !tg.isFullscreen && typeof tg.requestFullscreen === 'function') {
+                          tg.requestFullscreen();
+                        }
+                      } catch(e){}
+                    });
+                  }
+                } catch(e){}
               })();
             `}
           </Script>

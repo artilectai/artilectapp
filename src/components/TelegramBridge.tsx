@@ -53,6 +53,14 @@ export default function TelegramBridge() {
       applyTgGuards();
     };
     try { tg?.onEvent?.('viewportChanged', handleViewportChanged); } catch {}
+    const handleFullscreenChanged = () => {
+      try {
+        if (!tg?.isFullscreen && typeof tg?.requestFullscreen === 'function') {
+          tg.requestFullscreen();
+        }
+      } catch {}
+    };
+    try { tg?.onEvent?.('fullscreenChanged', handleFullscreenChanged); } catch {}
 
     // Re-apply on tab visibility/focus changes
     const handleVis = () => applyTgGuards();
@@ -61,7 +69,8 @@ export default function TelegramBridge() {
     window.addEventListener('focus', handleFocus);
 
     return () => {
-      try { tg?.offEvent?.('viewportChanged', handleViewportChanged); } catch {}
+  try { tg?.offEvent?.('viewportChanged', handleViewportChanged); } catch {}
+  try { tg?.offEvent?.('fullscreenChanged', handleFullscreenChanged); } catch {}
   document.removeEventListener('visibilitychange', handleVis);
   window.removeEventListener('focus', handleFocus);
     };
