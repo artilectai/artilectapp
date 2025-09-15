@@ -1528,8 +1528,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   }), [subscriptionPlan]);
 
   // Add missing renderLockedTab function
-  // Uniform tab trigger with absolute lock overlay (no layout shift),
-  // matching Workout tabs: icon-only, centered.
+  // Uniform tab trigger with absolute lock overlay (no layout shift).
+  // Mobile: icon-only centered. Web (md+): icon + text like before.
   const TabTriggerWithLock = (
     { value, icon, label, locked }:
     { value: ViewMode; icon: React.ReactNode; label: string; locked: boolean }
@@ -1537,12 +1537,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     <TabsTrigger
       value={value}
       disabled={locked}
-      className="relative flex items-center justify-center gap-2"
+      className="relative flex items-center justify-center md:justify-start gap-2"
     >
       {/* Main icon (always centered on mobile) */}
       {icon}
-      {/* Keep label for a11y but don’t render visually to match Workout */}
-      <span className="sr-only">{label}</span>
+      {/* Show label on md+ (web), hide on mobile */}
+      <span className="hidden md:inline">{label}</span>
       {/* Lock indicator overlayed; doesn't affect layout */}
       <span aria-hidden className="pointer-events-none absolute right-1.5 top-1.5">
         <Lock className={`h-3 w-3 transition-opacity duration-150 ${locked ? 'opacity-100' : 'opacity-0'}`} />
@@ -1866,9 +1866,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       <div className="px-4 py-2 border-b border-border bg-surface-1/50">
         <Tabs value={viewMode} onValueChange={(v) => handleViewModeChange(v as ViewMode)}>
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="daily" className="flex items-center justify-center gap-2">
+                <TabsTrigger value="daily" className="flex items-center justify-center md:justify-start gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  <span className="sr-only">{t('planner.views.daily')}</span>
+                  <span className="hidden md:inline">{t('planner.views.daily')}</span>
             </TabsTrigger>
             {/* Always render the same trigger markup; lock icon visibility toggles without affecting layout */}
             {TabTriggerWithLock({
@@ -2298,9 +2298,14 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               projectMode && (viewMode==='monthly' || viewMode==='yearly') ? (
                 <ProjectPlanTable goal={selectedGoal} onChange={async (updated) => {
                   setSelectedGoal(updated);
-                  const ms = updated.milestones || [];
-                  const prog = ms.length ? Math.round((ms.filter((m: Milestone)=>m.completed).length / ms.length) * 100) : 0;
-                  try { await supabase.from('planner_items').update({ milestones: ms, progress: prog, updated_at: new Date().toISOString() }).eq('id', updated.id); } catch {}
+                  const cl = updated.checklist || [];
+                  const prog = cl.length ? Math.round((cl.filter((c: any)=>c.completed).length / cl.length) * 100) : 0;
+                  try {
+                    await supabase
+                      .from('planner_items')
+                      .update({ checklist: cl, progress: prog, updated_at: new Date().toISOString() })
+                      .eq('id', updated.id);
+                  } catch {}
                 }} />
               ) : (
                 // Reuse TaskDetailPanel UI for goals to match daily task details
@@ -2449,7 +2454,8 @@ export default PlannerSection;
 // Notion-like project plan table for monthly/yearly project mode
 function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) => void }) {
   const { t } = useTranslation('app');
-  const [rows, setRows] = useState<Milestone[]>(goal.milestones || []);
+  type RowItem = ChecklistItem & { status?: 'todo'|'doing'|'done'; notes?: string; dueDate?: string | Date };
+  const [rows, setRows] = useState<RowItem[]>(Array.isArray(goal.checklist) ? (goal.checklist as any) : []);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [openDueFor, setOpenDueFor] = useState<string | null>(null);
   // drag & drop state
@@ -2457,24 +2463,24 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
   const [overId, setOverId] = useState<string | null>(null);
 
   useEffect(() => {
-    setRows(goal.milestones || []);
+    setRows(Array.isArray(goal.checklist) ? (goal.checklist as any) : []);
   }, [goal.id]);
 
-  const updateRow = (id: string, patch: Partial<Milestone>) => {
+  const updateRow = (id: string, patch: Partial<RowItem>) => {
     const next = rows.map(r => r.id === id ? { ...r, ...patch } : r);
     setRows(next);
-    onChange({ ...goal, milestones: next });
+    onChange({ ...goal, checklist: next as any, milestones: [] });
   };
   const addRow = () => {
-    const r: Milestone = { id: String(Date.now()), title: '', completed: false };
+    const r: RowItem = { id: String(Date.now()), text: '', completed: false, status: 'todo' };
     const next = [...rows, r];
     setRows(next);
-    onChange({ ...goal, milestones: next });
+    onChange({ ...goal, checklist: next as any, milestones: [] });
   };
   const removeRow = (id: string) => {
     const next = rows.filter(r => r.id !== id);
     setRows(next);
-    onChange({ ...goal, milestones: next });
+    onChange({ ...goal, checklist: next as any, milestones: [] });
   };
 
   // --- Drag & Drop reordering ---
@@ -2494,14 +2500,14 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     const fromId = dragId || e.dataTransfer.getData('text/plain');
     setDragId(null); setOverId(null);
     if (!fromId || fromId === id) return;
-    const srcIdx = rows.findIndex(r => r.id === fromId);
+  const srcIdx = rows.findIndex(r => r.id === fromId);
     const dstIdx = rows.findIndex(r => r.id === id);
     if (srcIdx < 0 || dstIdx < 0) return;
     const next = [...rows];
     const [moved] = next.splice(srcIdx, 1);
     next.splice(dstIdx, 0, moved);
     setRows(next);
-    onChange({ ...goal, milestones: next });
+  onChange({ ...goal, checklist: next as any, milestones: [] });
   };
   const onDragEnd = () => { setDragId(null); setOverId(null); };
 
@@ -2524,25 +2530,17 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
       type: g.type,
       target_date: g.targetDate ? new Date(g.targetDate).toISOString() : null,
       progress: typeof g.progress === 'number' ? g.progress : 0,
-      checklist: Array.isArray(g.checklist) ? g.checklist : [],
+      checklist: Array.isArray(g.checklist) ? g.checklist : rows,
       tags: Array.isArray(g.tags) ? g.tags : [],
       estimate_hours: typeof g.estimateHours === 'number' ? g.estimateHours : null,
-      milestones: Array.isArray(g.milestones)
-        ? g.milestones.map(m => ({
-            id: m.id,
-            title: m.title,
-            completed: !!m.completed,
-            status: m.status || 'todo',
-            notes: m.notes || '',
-            dueDate: m.dueDate ? new Date(m.dueDate).toISOString() : null
-          }))
-        : []
+      // keep milestones empty; we migrated to checklist
+      milestones: []
     };
   };
 
   const handleExport = () => {
     try {
-      const data = serializeGoal({ ...goal, milestones: rows });
+  const data = serializeGoal({ ...goal, checklist: rows as any, milestones: [] });
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -2568,19 +2566,21 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     const tags = Array.isArray(obj?.tags) ? obj.tags.filter((x: any) => typeof x === 'string') : [];
     const checklist = Array.isArray(obj?.checklist) ? obj.checklist : [];
     const estimate_hours = typeof obj?.estimate_hours === 'number' ? obj.estimate_hours : null;
-    const milestones = Array.isArray(obj?.milestones) ? obj.milestones.map((m: any) => ({
+    // If legacy export only had milestones, migrate to checklist
+    const legacyMilestones = Array.isArray(obj?.milestones) ? obj.milestones : [];
+    const migratedChecklist = (checklist.length ? checklist : legacyMilestones.map((m: any) => ({
       id: typeof m?.id === 'string' && m.id ? m.id : String(Date.now() + Math.random()),
-      title: typeof m?.title === 'string' ? m.title : '',
+      text: typeof m?.title === 'string' ? m.title : '',
       completed: !!m?.completed,
-      status: (m?.status === 'todo' || m?.status === 'doing' || m?.status === 'done') ? m.status : 'todo',
+      status: (m?.status === 'todo' || m?.status === 'doing' || m?.status === 'done') ? m.status : (m?.completed ? 'done' : 'todo'),
       notes: typeof m?.notes === 'string' ? m.notes : '',
       dueDate: m?.dueDate ? m.dueDate : null
-    })) : [];
+    })));
     const progress = typeof obj?.progress === 'number'
       ? obj.progress
-      : (milestones.length ? Math.round((milestones.filter((m: any) => m.completed).length / milestones.length) * 100) : 0);
+      : (migratedChecklist.length ? Math.round((migratedChecklist.filter((m: any) => m.completed).length / migratedChecklist.length) * 100) : 0);
 
-    return { title, description, status, priority, type, target_date, milestones, progress, checklist, tags, estimate_hours } as any;
+    return { title, description, status, priority, type, target_date, milestones: [], progress, checklist: migratedChecklist, tags, estimate_hours } as any;
   };
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2602,7 +2602,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
         priority: r.priority,
         type: r.type,
         target_date: r.target_date,
-        milestones: r.milestones,
+        milestones: [],
         progress: r.progress,
         checklist: r.checklist,
         tags: r.tags,
@@ -2697,9 +2697,9 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                     <Checkbox checked={r.completed} onCheckedChange={(c) => updateRow(r.id, { completed: !!c })} />
                   </div>
                   <Textarea
-                    value={r.title}
+                    value={r.text as any}
                     onChange={(e)=>{
-                      updateRow(r.id, { title: e.target.value });
+                      updateRow(r.id, { text: e.target.value });
                       // auto-resize to fit content
                       const el = e.currentTarget; requestAnimationFrame(()=>{ el.style.height = '0px'; el.style.height = el.scrollHeight + 'px'; });
                     }}
