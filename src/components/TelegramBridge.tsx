@@ -119,7 +119,8 @@ export default function TelegramBridge() {
       }
       // Else, go back one step in app history; if cannot, try closing
       try { router.back(); } catch {}
-      try { if (stack.length <= 1) tg.close?.(); } catch {}
+      // Do NOT programmatically close the app; leave Close button as the sole way
+      // If there is no history, do nothing here. User can press Telegram's Close.
     };
 
     // Keep a ref to remove handler if supported

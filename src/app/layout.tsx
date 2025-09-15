@@ -34,6 +34,37 @@ export default function RootLayout({
   return (
     <html lang="en">
   <body className="antialiased app-frame">
+          {/* Early Telegram bootstrap to force full-screen and disable collapse before hydration */}
+          <Script id="tg-early-expand" strategy="beforeInteractive">
+            {`
+              (function(){
+                var tries = 0;
+                function apply(){
+                  try {
+                    var tg = window.Telegram && window.Telegram.WebApp;
+                    if(!tg) return false;
+                    try{ tg.ready && tg.ready(); }catch(e){}
+                    try{ tg.expand && tg.expand(); }catch(e){}
+                    try{ tg.disableVerticalSwipes && tg.disableVerticalSwipes(); }catch(e){}
+                    try{ tg.enableClosingConfirmation && tg.enableClosingConfirmation(); }catch(e){}
+                    return true;
+                  } catch(e) { return false; }
+                }
+                // First attempt immediately
+                apply();
+                // Re-apply a few times to catch late SDK init or chat-mode open
+                var iv = setInterval(function(){
+                  tries++;
+                  if (apply() || tries > 20) { clearInterval(iv); }
+                }, 150);
+                // Also on focus / visibility and viewport changes
+                function re(){ apply(); }
+                window.addEventListener('focus', re, { passive: true });
+                document.addEventListener('visibilitychange', re, { passive: true });
+                try { (window as any).Telegram?.WebApp?.onEvent?.('viewportChanged', re); } catch(e){}
+              })();
+            `}
+          </Script>
           <I18nClientInit />
           <Suspense fallback={null}>
             <TelegramBridge />

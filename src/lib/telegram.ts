@@ -3,12 +3,23 @@ export const tg = (typeof window !== "undefined" ? (window as any).Telegram?.Web
 export function initTelegramUI() {
   const webApp = (typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : undefined) as any;
   if (!webApp) return;
-  try { webApp.ready?.(); } catch {}
-  try { webApp.expand?.(); } catch {}
-  try { webApp.disableVerticalSwipes?.(); } catch {}
-  try { webApp.enableClosingConfirmation?.(); } catch {}
-  try { webApp.setHeaderColor?.('secondary_bg_color'); } catch {}
-  try { webApp.setBackgroundColor?.('#0b0f10'); } catch {}
+  const apply = () => {
+    try { webApp.ready?.(); } catch {}
+    try { webApp.expand?.(); } catch {}
+    try { webApp.disableVerticalSwipes?.(); } catch {}
+    try { webApp.enableClosingConfirmation?.(); } catch {}
+    try { webApp.setHeaderColor?.('secondary_bg_color'); } catch {}
+    try { webApp.setBackgroundColor?.('#0b0f10'); } catch {}
+  };
+  apply();
+  // Re-apply on common lifecycle events
+  const onVis = () => apply();
+  const onFocus = () => apply();
+  try { webApp.onEvent?.('viewportChanged', apply); } catch {}
+  try { document.addEventListener('visibilitychange', onVis); } catch {}
+  try { window.addEventListener('focus', onFocus); } catch {}
+  // Expose a manual trigger for debugging
+  try { (window as any).__tgApply = apply; } catch {}
 }
 
 /** Open the Telegram support chat (defaults to @artilectsupport) using the best available method. */
