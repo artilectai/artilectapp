@@ -1528,7 +1528,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   }), [subscriptionPlan]);
 
   // Add missing renderLockedTab function
-  // Uniform tab trigger that reserves space for lock to avoid layout shift
+  // Uniform tab trigger with absolute lock overlay (no layout shift),
+  // matching Workout tabs: icon-only, centered.
   const TabTriggerWithLock = (
     { value, icon, label, locked }:
     { value: ViewMode; icon: React.ReactNode; label: string; locked: boolean }
@@ -1536,12 +1537,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     <TabsTrigger
       value={value}
       disabled={locked}
-      className="relative flex items-center justify-center sm:justify-start gap-0 sm:gap-2"
+      className="relative flex items-center justify-center gap-2"
     >
       {/* Main icon (always centered on mobile) */}
       {icon}
-      {/* Label only on sm+ */}
-      <span className="hidden sm:inline">{label}</span>
+      {/* Keep label for a11y but don’t render visually to match Workout */}
+      <span className="sr-only">{label}</span>
       {/* Lock indicator overlayed; doesn't affect layout */}
       <span aria-hidden className="pointer-events-none absolute right-1.5 top-1.5">
         <Lock className={`h-3 w-3 transition-opacity duration-150 ${locked ? 'opacity-100' : 'opacity-0'}`} />
@@ -1862,12 +1863,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
       </div>
 
       {/* View Mode Tabs (kept outside the swipe zone) */}
-  <div className="px-4 py-2 border-b border-border bg-surface-1/50 tabs-stable">
+      <div className="px-4 py-2 border-b border-border bg-surface-1/50">
         <Tabs value={viewMode} onValueChange={(v) => handleViewModeChange(v as ViewMode)}>
-          <TabsList className="grid w-full grid-cols-4 h-10">
-            <TabsTrigger value="daily" className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('planner.views.daily')}</span>
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="daily" className="flex items-center justify-center gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span className="sr-only">{t('planner.views.daily')}</span>
             </TabsTrigger>
             {/* Always render the same trigger markup; lock icon visibility toggles without affecting layout */}
             {TabTriggerWithLock({
