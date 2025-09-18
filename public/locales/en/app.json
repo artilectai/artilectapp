@@ -430,6 +430,22 @@
         "budgets": "Budgets",
         "goals": "Goals"
       },
+      "reset": {
+        "button": "Reset Finance Data",
+        "confirmTitle": "Reset All Finance Data",
+        "confirmDesc": "This will permanently delete ALL your accounts, transactions, budgets, goals and categories. This action cannot be undone.",
+        "typeToConfirm": "Type RESET to confirm",
+        "placeholder": "Type RESET",
+        "performing": "Resetting...",
+        "done": "Finance data reset",
+        "toast": {
+          "success": "All finance data deleted",
+          "error": "Failed to reset finance data"
+        },
+        "exportHint": "Consider exporting your data before resetting.",
+        "cancel": "Cancel",
+        "confirm": "Delete Everything"
+      },
       "periods": {
         "daily": "Daily",
         "weekly": "Weekly",

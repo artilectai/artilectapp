@@ -1121,6 +1121,22 @@
         "markComplete": "{{name}} ni bajarildi deb belgilash"
       },
       "history": {
+        "reset": {
+          "button": "Moliya ma'lumotlarini tozalash",
+          "confirmTitle": "Barcha ma'lumotlarni tozalash",
+          "confirmDesc": "Barcha hisoblar, tranzaksiyalar, byudjetlar, maqsadlar va toifalar O'CHIRILADI. Bu amalni qaytarib bo'lmaydi.",
+          "typeToConfirm": "Tasdiqlash uchun RESET yozing",
+          "placeholder": "RESET yozing",
+          "performing": "Tozalanmoqda...",
+          "done": "Moliya ma'lumotlari tozalandi",
+          "toast": {
+            "success": "Barcha moliyaviy ma'lumotlar o'chirildi",
+            "error": "Tozalash muvaffaqiyatsiz tugadi"
+          },
+          "exportHint": "O'chirishdan oldin ma'lumotlarni eksport qilishni o'ylab ko'ring.",
+          "cancel": "Bekor qilish",
+          "confirm": "Hammasini o'chirish"
+        },
         "title": "Trening tarixi",
         "empty": "Hali tugallangan treninglar yo‘q"
       },

@@ -2298,14 +2298,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               projectMode && (viewMode==='monthly' || viewMode==='yearly') ? (
                 <ProjectPlanTable goal={selectedGoal} onChange={async (updated) => {
                   setSelectedGoal(updated);
-                  const cl = updated.checklist || [];
-                  const prog = cl.length ? Math.round((cl.filter((c: any)=>c.completed).length / cl.length) * 100) : 0;
-                  try {
-                    await supabase
-                      .from('planner_items')
-                      .update({ checklist: cl, progress: prog, updated_at: new Date().toISOString() })
-                      .eq('id', updated.id);
-                  } catch {}
+                  const ms = updated.milestones || [];
+                  const prog = ms.length ? Math.round((ms.filter((m: Milestone)=>m.completed).length / ms.length) * 100) : 0;
+                  try { await supabase.from('planner_items').update({ milestones: ms, progress: prog, updated_at: new Date().toISOString() }).eq('id', updated.id); } catch {}
                 }} />
               ) : (
                 // Reuse TaskDetailPanel UI for goals to match daily task details
@@ -2454,8 +2449,20 @@ export default PlannerSection;
 // Notion-like project plan table for monthly/yearly project mode
 function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) => void }) {
   const { t } = useTranslation('app');
-  type RowItem = ChecklistItem & { status?: 'todo'|'doing'|'done'; notes?: string; dueDate?: string | Date };
-  const [rows, setRows] = useState<RowItem[]>(Array.isArray(goal.checklist) ? (goal.checklist as any) : []);
+  // Extended row type allows richer fields formerly on milestones while persisting only basic checklist fields.
+  type ExtendedChecklistRow = ChecklistItem & {
+    title?: string; // alias to support legacy mapping
+    status?: 'todo' | 'doing' | 'done';
+    notes?: string;
+    dueDate?: string | Date | null;
+  };
+  const toExtended = (): ExtendedChecklistRow[] => {
+    if (goal.checklist && goal.checklist.length > 0) {
+      return goal.checklist.map(ci => ({ ...ci, title: (ci as any).title || ci.text }));
+    }
+    return (goal.milestones || []).map(m => ({ id: m.id, text: m.title, title: m.title, completed: !!m.completed, status: m.status as any, notes: m.notes, dueDate: m.dueDate || null }));
+  };
+  const [rows, setRows] = useState<ExtendedChecklistRow[]>(toExtended());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [openDueFor, setOpenDueFor] = useState<string | null>(null);
   // drag & drop state
@@ -2463,24 +2470,31 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
   const [overId, setOverId] = useState<string | null>(null);
 
   useEffect(() => {
-    setRows(Array.isArray(goal.checklist) ? (goal.checklist as any) : []);
-  }, [goal.id]);
+    setRows(toExtended());
+  }, [goal.id, goal.checklist, goal.milestones]);
 
-  const updateRow = (id: string, patch: Partial<RowItem>) => {
+  const updateRow = (id: string, patch: Partial<ExtendedChecklistRow>) => {
     const next = rows.map(r => r.id === id ? { ...r, ...patch } : r);
     setRows(next);
-    onChange({ ...goal, checklist: next as any, milestones: [] });
+    const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
+    // Persist only id/text/completed
+    const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
+    onChange({ ...goal, checklist: persisted, milestones: [], progress });
   };
   const addRow = () => {
-    const r: RowItem = { id: String(Date.now()), text: '', completed: false, status: 'todo' };
+    const r: ExtendedChecklistRow = { id: String(Date.now()), text: '', title: '', completed: false, status: 'todo' };
     const next = [...rows, r];
     setRows(next);
-    onChange({ ...goal, checklist: next as any, milestones: [] });
+    const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
+    const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
+    onChange({ ...goal, checklist: persisted, milestones: [], progress });
   };
   const removeRow = (id: string) => {
     const next = rows.filter(r => r.id !== id);
     setRows(next);
-    onChange({ ...goal, checklist: next as any, milestones: [] });
+    const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
+    const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
+    onChange({ ...goal, checklist: persisted, milestones: [], progress });
   };
 
   // --- Drag & Drop reordering ---
@@ -2501,13 +2515,15 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     setDragId(null); setOverId(null);
     if (!fromId || fromId === id) return;
   const srcIdx = rows.findIndex(r => r.id === fromId);
-    const dstIdx = rows.findIndex(r => r.id === id);
+  const dstIdx = rows.findIndex(r => r.id === id);
     if (srcIdx < 0 || dstIdx < 0) return;
     const next = [...rows];
     const [moved] = next.splice(srcIdx, 1);
     next.splice(dstIdx, 0, moved);
     setRows(next);
-  onChange({ ...goal, checklist: next as any, milestones: [] });
+    const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
+    const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
+    onChange({ ...goal, checklist: persisted, milestones: [], progress });
   };
   const onDragEnd = () => { setDragId(null); setOverId(null); };
 
@@ -2530,17 +2546,19 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
       type: g.type,
       target_date: g.targetDate ? new Date(g.targetDate).toISOString() : null,
       progress: typeof g.progress === 'number' ? g.progress : 0,
-      checklist: Array.isArray(g.checklist) ? g.checklist : rows,
       tags: Array.isArray(g.tags) ? g.tags : [],
       estimate_hours: typeof g.estimateHours === 'number' ? g.estimateHours : null,
-      // keep milestones empty; we migrated to checklist
-      milestones: []
+      // Export unified as checklist only; keep milestones empty
+      milestones: [],
+      checklist: Array.isArray(g.checklist)
+        ? g.checklist.map(ci => ({ id: ci.id, text: (ci as any).text || (ci as any).title || '', completed: !!ci.completed }))
+        : []
     };
   };
 
   const handleExport = () => {
     try {
-  const data = serializeGoal({ ...goal, checklist: rows as any, milestones: [] });
+  const data = serializeGoal({ ...goal, checklist: rows, milestones: [] });
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -2564,22 +2582,16 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     const type = (obj?.type === 'weekly' || obj?.type === 'monthly' || obj?.type === 'yearly') ? obj.type : goal.type;
     const target_date = obj?.target_date ? new Date(obj.target_date).toISOString() : (goal.targetDate ? new Date(goal.targetDate).toISOString() : new Date().toISOString());
     const tags = Array.isArray(obj?.tags) ? obj.tags.filter((x: any) => typeof x === 'string') : [];
-    const checklist = Array.isArray(obj?.checklist) ? obj.checklist : [];
+  const checklist = Array.isArray(obj?.checklist) ? obj.checklist : [];
     const estimate_hours = typeof obj?.estimate_hours === 'number' ? obj.estimate_hours : null;
-    // If legacy export only had milestones, migrate to checklist
-    const legacyMilestones = Array.isArray(obj?.milestones) ? obj.milestones : [];
-    const migratedChecklist = (checklist.length ? checklist : legacyMilestones.map((m: any) => ({
-      id: typeof m?.id === 'string' && m.id ? m.id : String(Date.now() + Math.random()),
-      text: typeof m?.title === 'string' ? m.title : '',
-      completed: !!m?.completed,
-      status: (m?.status === 'todo' || m?.status === 'doing' || m?.status === 'done') ? m.status : (m?.completed ? 'done' : 'todo'),
-      notes: typeof m?.notes === 'string' ? m.notes : '',
-      dueDate: m?.dueDate ? m.dueDate : null
-    })));
+    // If legacy milestones supplied but no checklist, migrate them.
+    let migratedChecklist = checklist;
+    if ((!migratedChecklist || migratedChecklist.length === 0) && Array.isArray(obj?.milestones)) {
+      migratedChecklist = obj.milestones.map((m: any) => ({ id: m.id || String(Date.now()+Math.random()), text: m.title || '', completed: !!m.completed }));
+    }
     const progress = typeof obj?.progress === 'number'
       ? obj.progress
-      : (migratedChecklist.length ? Math.round((migratedChecklist.filter((m: any) => m.completed).length / migratedChecklist.length) * 100) : 0);
-
+      : (migratedChecklist.length ? Math.round((migratedChecklist.filter((c: any) => c.completed).length / migratedChecklist.length) * 100) : 0);
     return { title, description, status, priority, type, target_date, milestones: [], progress, checklist: migratedChecklist, tags, estimate_hours } as any;
   };
 
@@ -2593,7 +2605,7 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
       const userId = auth?.user?.id;
       if (!userId) throw new Error('Not signed in');
 
-      const records = Array.isArray(json) ? json.map(normalizeImportedProject) : [normalizeImportedProject(json)];
+  const records = Array.isArray(json) ? json.map(normalizeImportedProject) : [normalizeImportedProject(json)];
       const payload = records.map(r => ({
         user_id: userId,
         title: r.title,
@@ -2697,9 +2709,9 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                     <Checkbox checked={r.completed} onCheckedChange={(c) => updateRow(r.id, { completed: !!c })} />
                   </div>
                   <Textarea
-                    value={r.text as any}
+                    value={r.title}
                     onChange={(e)=>{
-                      updateRow(r.id, { text: e.target.value });
+                      updateRow(r.id, { title: e.target.value });
                       // auto-resize to fit content
                       const el = e.currentTarget; requestAnimationFrame(()=>{ el.style.height = '0px'; el.style.height = el.scrollHeight + 'px'; });
                     }}

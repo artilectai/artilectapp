@@ -192,6 +192,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   const [showEditAccountDialog, setShowEditAccountDialog] = useState(false);
     const [showBudgetDialog, setShowBudgetDialog] = useState(false);
     const [showGoalDialog, setShowGoalDialog] = useState(false);
+  // (Former reset finance data dialog removed)
     // Mobile detection for chart sizing
     const [isMobile, setIsMobile] = useState(false);
 
@@ -1791,7 +1792,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   };
 
     return (
-  <div className="flex flex-col bg-background">
+      <div className="flex flex-col bg-background">
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-border/50">
             <div className="flex items-center justify-between mb-4">
@@ -2541,37 +2542,38 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       </div>
 
       {/* Summary */}
-      {activeFiltersCount > 0 && (
-        <div className="pt-2 border-t border-border/30">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
-            <span className="text-muted-foreground">
-              {t('finance.section.filters.summary.showing', { count: filteredData.filteredTransactions.length, total: transactions.length })}
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {transactionFilters.search && (
-                <span className="px-2 py-1 bg-money-green/10 text-money-green text-xs rounded-full">
-                  {t('finance.section.filters.summary.search')} "{transactionFilters.search}"
+          {activeFiltersCount > 0 && (
+            <div className="pt-2 border-t border-border/30">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
+                <span className="text-muted-foreground">
+                  {t('finance.section.filters.summary.showing', { count: filteredData.filteredTransactions.length, total: transactions.length })}
                 </span>
-              )}
-              {transactionFilters.type !== 'all' && (
-                <span className="px-2 py-1 bg-blue-400/10 text-blue-400 text-xs rounded-full capitalize">
-                  {transactionFilters.type}
-                </span>
-              )}
-              {transactionFilters.category !== 'all' && (
-                <span className="px-2 py-1 bg-purple-400/10 text-purple-400 text-xs rounded-full">
-                  {translateCategory(transactionFilters.category)}
-                </span>
-              )}
+                <div className="flex flex-wrap gap-1.5">
+                  {transactionFilters.search && (
+                    <span className="px-2 py-1 bg-money-green/10 text-money-green text-xs rounded-full">
+                      {t('finance.section.filters.summary.search')} "{transactionFilters.search}"
+                    </span>
+                  )}
+                  {transactionFilters.type !== 'all' && (
+                    <span className="px-2 py-1 bg-blue-400/10 text-blue-400 text-xs rounded-full capitalize">
+                      {transactionFilters.type}
+                    </span>
+                  )}
+                  {transactionFilters.category !== 'all' && (
+                    <span className="px-2 py-1 bg-purple-400/10 text-purple-400 text-xs rounded-full">
+                      {translateCategory(transactionFilters.category)}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
-    </div>
-  )}
-</div>
-
-                {/* Transaction List */}
+    
+      </div>
+    
+                    {/* Transaction List */}
                 {filteredData.filteredTransactions.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-surface-1 rounded-full flex items-center justify-center mx-auto mb-4">
