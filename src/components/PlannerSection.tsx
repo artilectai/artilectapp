@@ -1862,11 +1862,14 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 
       </div>
 
-      {/* View Mode Tabs (kept outside the swipe zone) */}
+      {/* View Mode Tabs (centered on web, full-width grid on mobile) */}
       <div className="px-4 py-2 border-b border-border bg-surface-1/50">
-        <Tabs value={viewMode} onValueChange={(v) => handleViewModeChange(v as ViewMode)}>
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="daily" className="flex items-center justify-center md:justify-start gap-2">
+        <div className="w-full flex md:justify-center">
+          <Tabs value={viewMode} onValueChange={(v) => handleViewModeChange(v as ViewMode)}>
+            <TabsList
+              className="grid grid-cols-4 gap-1 w-full max-w-[460px] mx-auto md:max-w-none md:inline-flex md:w-auto md:gap-2 md:px-2"
+            >
+                <TabsTrigger value="daily" className="flex items-center justify-center md:justify-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
                   <span className="hidden md:inline">{t('planner.views.daily')}</span>
             </TabsTrigger>
@@ -1891,8 +1894,9 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
               label: t('planner.views.yearly'),
               locked: !isViewModeAllowed('yearly')
             })}
-          </TabsList>
-        </Tabs>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
   {/* Enhanced Filters (Search removed) */}
