@@ -1537,7 +1537,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     <TabsTrigger
       value={value}
       disabled={locked}
-      className="relative flex items-center justify-center md:justify-center gap-2 flex-1 md:flex-none"
+      className="relative w-full flex items-center justify-center gap-2"
     >
       {/* Main icon (always centered on mobile) */}
       {icon}
@@ -1862,12 +1862,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 
       </div>
 
-      {/* View Mode Tabs (centered on web, full-width on mobile) */}
+      {/* View Mode Tabs (always full-width across screen) */}
       <div className="px-4 py-2 border-b border-border bg-surface-1/50">
-        <div className="w-full flex md:justify-center">
+        <div className="w-full">
           <Tabs value={viewMode} onValueChange={(v) => handleViewModeChange(v as ViewMode)}>
-            <TabsList className="w-full mx-auto gap-1 md:gap-2 md:w-auto md:px-2 justify-between md:justify-center">
-                <TabsTrigger value="daily" className="flex items-center justify-center md:justify-center gap-2 flex-1 md:flex-none">
+            <TabsList className="grid grid-cols-4 gap-2 w-full">
+                <TabsTrigger value="daily" className="w-full flex items-center justify-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
                   <span className="hidden md:inline">{t('planner.views.daily')}</span>
             </TabsTrigger>
