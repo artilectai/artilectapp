@@ -1862,11 +1862,13 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
 
       </div>
 
-      {/* View Mode Tabs (always full-width across screen) */}
+      {/* View Mode Tabs (centered, locale-safe) */}
       <div className="px-4 py-2 border-b border-border bg-surface-1/50">
-        <div className="w-full">
+        <div className="w-full flex justify-center">
           <Tabs value={viewMode} onValueChange={(v) => handleViewModeChange(v as ViewMode)}>
-            <TabsList className="grid grid-cols-4 gap-2 w-full">
+            <TabsList
+              className="grid grid-cols-4 gap-2 w-full max-w-[520px] px-[calc(env(safe-area-inset-left)_+_0px)]"
+            >
                 <TabsTrigger value="daily" className="w-full flex items-center justify-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
                   <span className="hidden md:inline">{t('planner.views.daily')}</span>
