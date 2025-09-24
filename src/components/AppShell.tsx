@@ -695,7 +695,8 @@ export default function AppShell({
           onTouchEnd={handleNavTouchEnd}
         >
           <div className="flex items-center justify-center h-[88px] px-4 pb-[calc(env(safe-area-inset-bottom,0px)/2)] shadow-[0_-6px_20px_rgba(0,0,0,0.25)]">
-            <div className="flex items-center justify-around w-full max-w-md mx-auto gap-2">
+            {/* Bottom nav items: switched from justify-around flex to equal-width grid for stable centering across locales */}
+            <div className="grid grid-cols-3 w-full max-w-md mx-auto gap-2">
               {navItemsBase.map((item) => {
                 const isActive = currentMode === item.id;
                 const label = item.id === 'planner' ? t('nav.planner') : item.id === 'finance' ? t('nav.finance') : t('nav.workout');
@@ -703,7 +704,7 @@ export default function AppShell({
                   <motion.button
                     key={item.id}
                     onClick={(event: React.MouseEvent) => handleModeSwitch(item.id, event)}
-                    className={`flex flex-col items-center gap-1 min-w-[60px] min-h-[52px] px-3 py-2 rounded-xl transition-all relative ${
+                    className={`flex flex-col items-center justify-center gap-1 w-full min-h-[52px] px-3 py-2 rounded-xl transition-all relative ${
                       isActive 
                         ? 'text-[#00d563]' 
                         : 'text-muted-foreground hover:text-foreground'
