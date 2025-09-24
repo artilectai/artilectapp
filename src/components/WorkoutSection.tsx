@@ -759,7 +759,13 @@ const WorkoutSection = forwardRef<WorkoutSectionRef, WorkoutSectionProps>(({
                 return d;
               });
               const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-              const wd = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'short' });
+              // Localized short weekday name using same keys as Planner (dates.weekdaysShort.{su,mo,...})
+              const weekdayKey = ['su','mo','tu','we','th','fr','sa'][new Date().getDay()];
+              const wd = (d: Date) => {
+                const idx = d.getDay();
+                const key = ['su','mo','tu','we','th','fr','sa'][idx];
+                return t(`dates.weekdaysShort.${key}`);
+              };
               return (
                 <div className="flex items-center gap-2">
                   {days.map((d) => {
