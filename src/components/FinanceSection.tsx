@@ -1988,7 +1988,9 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   <div className="pb-28">{/* extra bottom padding so last chart (pie) is fully visible and not cut by bottom nav */}
           <div className="p-4">
             <Tabs value={activeTab} onValueChange={handleRestrictedTabAccess} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 bg-surface-1 mb-6 h-12 rounded-full">
+              {/* Centered segmented control: wrapper uses flex to center; inner grid has fixed max width */}
+              <div className="w-full flex justify-center mb-6">
+                <TabsList className="grid grid-cols-4 w-full max-w-[520px] bg-surface-1 h-12 rounded-full overflow-hidden">
                 <TabsTrigger value="dashboard" className="text-sm font-medium rounded-full">{t('finance.section.tabs.dashboard')}</TabsTrigger>
                 <TabsTrigger value="transactions" className="text-sm font-medium rounded-full">{t('finance.section.tabs.transactions')}</TabsTrigger>
                 <TabsTrigger 
@@ -2005,7 +2007,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                   {t('finance.section.tabs.goals')}
                   {!limits.goalsAllowed && <Lock className="h-3 w-3" />}
                 </TabsTrigger>
-              </TabsList>
+                </TabsList>
+              </div>
 
               <TabsContent value="dashboard" className="space-y-6">
                 {/* Quick Actions */}
