@@ -1507,6 +1507,37 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       }
     };
 
+    // Delete a budget (with confirmation)
+    const handleDeleteBudget = async (budgetId: string) => {
+      if (!budgetId) return;
+      const target = budgets.find(b => b.id === budgetId);
+      if (!target) return;
+      const confirmed = typeof window === 'undefined' ? true : window.confirm(t('finance.section.budgets.confirmDelete', { defaultValue: 'Delete this budget?' }));
+      if (!confirmed) return;
+      const snapshot = budgets;
+      // Optimistic removal
+      setBudgets(prev => prev.filter(b => b.id !== budgetId));
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (!uid) throw new Error('Not signed in');
+        // Only delete if budget id is a real UUID (optimistic temps have temp_ prefix)
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(budgetId)) {
+          const { error } = await supabase
+            .from('finance_budgets')
+            .delete()
+            .eq('id', budgetId)
+            .eq('user_id', uid);
+          if (error) throw error;
+        }
+        toast.success(t('finance.section.budgets.deleted', { defaultValue: 'Budget deleted' }));
+      } catch (e: any) {
+        console.error('Failed to delete budget:', e);
+        setBudgets(snapshot); // rollback
+        toast.error(t('toasts.errors.deleteFailed', { defaultValue: 'Failed to delete' }), { description: e?.message || String(e) });
+      }
+    };
+
     const handleSaveGoal = async () => {
                     if (!limits.goalsAllowed) {
                       toast.error(t('toasts.finance.goalsRequirePro'));
@@ -1558,6 +1589,34 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           description: msg
         });
         console.error('Failed to save goal:', e);
+      }
+    };
+
+    const handleDeleteGoal = async (goalId: string) => {
+      if (!goalId) return;
+      const target = goals.find(g => g.id === goalId);
+      if (!target) return;
+      const confirmed = typeof window === 'undefined' ? true : window.confirm(t('finance.section.goals.confirmDelete', { defaultValue: 'Delete this goal?' }));
+      if (!confirmed) return;
+      const snapshot = goals;
+      setGoals(prev => prev.filter(g => g.id !== goalId));
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (!uid) throw new Error('Not signed in');
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(goalId)) {
+          const { error } = await supabase
+            .from('finance_goals')
+            .delete()
+            .eq('id', goalId)
+            .eq('user_id', uid);
+          if (error) throw error;
+        }
+        toast.success(t('finance.section.goals.deleted', { defaultValue: 'Goal deleted' }));
+      } catch (e: any) {
+        console.error('Failed to delete goal:', e);
+        setGoals(snapshot);
+        toast.error(t('toasts.errors.deleteFailed', { defaultValue: 'Failed to delete' }), { description: e?.message || String(e) });
       }
     };
 
@@ -2694,38 +2753,45 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     </div>
                     <div className="space-y-3">
                       {budgets.map((budget) => (
-                      <Card key={budget.id} className="glass-card">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-medium">{translateCategory(budget.category)}</h3>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground capitalize">
-                                {t(`finance.section.periods.${budget.period}` as const)}
-                              </span>
-                              <div className="px-3 py-1 bg-money-green/10 text-money-green text-xs rounded-full">
-                                {t('finance.section.budgets.autoTracked')}
+                        <Card key={budget.id} className="glass-card">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3 gap-3">
+                              <div>
+                                <h3 className="font-medium">{translateCategory(budget.category)}</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-muted-foreground capitalize">
+                                    {t(`finance.section.periods.${budget.period}` as const)}
+                                  </span>
+                                  <div className="px-2 py-0.5 bg-money-green/10 text-money-green text-[10px] rounded-full">
+                                    {t('finance.section.budgets.autoTracked')}
+                                  </div>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteBudget(budget.id)}
+                                title={t('buttons.delete')}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span>{t('finance.analyst.budgets.summary.of', { spent: formatCurrency(budget.spent), budgeted: formatCurrency(budget.limit) })}</span>
+                                <span className="font-medium">{((budget.spent / budget.limit) * 100).toFixed(1)}%</span>
+                              </div>
+                              <Progress value={Math.min((budget.spent / budget.limit) * 100, 100)} className="h-2" />
+                              <div className="text-xs text-muted-foreground">
+                                {budget.limit - budget.spent > 0
+                                  ? t('finance.section.budgets.remaining', { amount: formatCurrency(budget.limit - budget.spent) })
+                                  : t('finance.section.budgets.overBudget', { amount: formatCurrency(budget.spent - budget.limit) })}
                               </div>
                             </div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span>{t('finance.analyst.budgets.summary.of', { spent: formatCurrency(budget.spent), budgeted: formatCurrency(budget.limit) })}</span>
-                              <span className="font-medium">{((budget.spent / budget.limit) * 100).toFixed(1)}%</span>
-                            </div>
-                            <Progress 
-                              value={Math.min((budget.spent / budget.limit) * 100, 100)} 
-                              className="h-2"
-                            />
-                            <div className="text-xs text-muted-foreground">
-                              {budget.limit - budget.spent > 0 
-                                ? t('finance.section.budgets.remaining', { amount: formatCurrency(budget.limit - budget.spent) })
-                                : t('finance.section.budgets.overBudget', { amount: formatCurrency(budget.spent - budget.limit) })
-                              }
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
                   </>
                 )}
@@ -2760,44 +2826,52 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     </div>
                     <div className="space-y-3">
                       {goals.map((goal) => (
-                      <Card key={goal.id} className="glass-card">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-medium">{goal.name}</h3>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">
-                                {goal.deadline.toLocaleDateString()}
-                              </span>
+                        <Card key={goal.id} className="glass-card">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3 gap-3">
+                              <div>
+                                <h3 className="font-medium">{goal.name}</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-muted-foreground">{goal.deadline.toLocaleDateString()}</span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedGoal(goal);
+                                      setShowGoalProgress(true);
+                                      setGoalProgressAmount('');
+                                    }}
+                                    className="h-6 px-2 text-[10px]"
+                                  >
+                                    {t('buttons.update')}
+                                  </Button>
+                                </div>
+                              </div>
                               <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedGoal(goal);
-                                  setShowGoalProgress(true);
-                                  setGoalProgressAmount('');
-                                }}
-                                className="h-7 px-2 text-xs"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteGoal(goal.id)}
+                                title={t('buttons.delete')}
                               >
-                                {t('buttons.update')}
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span>{t('finance.analyst.goals.summary.of', { current: formatCurrency(goal.currentAmount), target: formatCurrency(goal.targetAmount) })}</span>
-                              <span className="font-medium">{((goal.currentAmount / goal.targetAmount) * 100).toFixed(1)}%</span>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span>{t('finance.analyst.goals.summary.of', { current: formatCurrency(goal.currentAmount), target: formatCurrency(goal.targetAmount) })}</span>
+                                <span className="font-medium">{((goal.currentAmount / goal.targetAmount) * 100).toFixed(1)}%</span>
+                              </div>
+                              <Progress value={(goal.currentAmount / goal.targetAmount) * 100} className="h-2" />
+                              <div className="text-xs text-muted-foreground">
+                                {goal.targetAmount - goal.currentAmount > 0
+                                  ? t('finance.section.budgets.remaining', { amount: formatCurrency(goal.targetAmount - goal.currentAmount) })
+                                  : t('finance.section.goals.achieved')}
+                              </div>
                             </div>
-                            <Progress value={(goal.currentAmount / goal.targetAmount) * 100} className="h-2" />
-                            <div className="text-xs text-muted-foreground">
-                              {goal.targetAmount - goal.currentAmount > 0 
-                                ? t('finance.section.budgets.remaining', { amount: formatCurrency(goal.targetAmount - goal.currentAmount) })
-                                : t('finance.section.goals.achieved')
-                              }
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
                   </>
                 )}
