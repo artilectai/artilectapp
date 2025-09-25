@@ -1139,52 +1139,57 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       // Helper: detect UUID-like ids
       const isUUID = (id: string | undefined) => !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 
-  // Ensure we use the exact selected account; if local id, resolve by name or create remote twin
+      // Ensure we use EXACTLY the user-selected account; only create a remote account if that specific id is non-UUID (legacy/local) and has no remote counterpart yet.
       const ensureRemoteAccountId = async (): Promise<string> => {
-        const desiredId = transactionData.accountId || accounts[0]?.id || '';
-        if (isUUID(desiredId)) return desiredId as string;
+        const desiredId = (transactionData.accountId && String(transactionData.accountId)) || accounts[0]?.id || '';
+        if (!desiredId) throw new Error('No account selected');
 
-        // Try find selected account by id in current list
-        const selected = accounts.find(a => a.id === desiredId);
-        if (selected) {
-          // If there is already a remote account with the same name, use it
-          const sameNameRemote = accounts.find(a => a.name === selected.name && isUUID(a.id));
-          if (sameNameRemote) return sameNameRemote.id;
-          // Create a remote account mirroring selected
-          const { data, error } = await supabase
+        // If already a remote (UUID) -> done
+        if (isUUID(desiredId)) return desiredId;
+
+        // Find the local/legacy account entry
+        const localAccount = accounts.find(a => a.id === desiredId);
+        if (localAccount) {
+          // If same id (non-UUID) but there exists a REMOTE entry with same name & type, use that remote id to avoid duplicate creation
+          const existingRemote = accounts.find(a => a.name === localAccount.name && a.type === localAccount.type && isUUID(a.id));
+          if (existingRemote) return existingRemote.id;
+
+          // Create remote twin only for this local account
+          const { data: created, error: createErr } = await supabase
             .from('finance_accounts')
             .insert({
               user_id: userRes.user.id,
-              name: selected.name,
-              type: selected.type,
-              color: selected.color || '#10B981',
-              is_default: !!selected.isDefault,
+              name: localAccount.name,
+              type: localAccount.type,
+              color: localAccount.color || '#10B981',
+              is_default: !!localAccount.isDefault,
+              balance: localAccount.balance ?? 0,
             })
             .select('id')
             .single();
-          if (error) throw new Error(`Failed to create account: ${error.message}`);
-          return String(data.id);
+          if (createErr) throw new Error(`Failed to create account: ${createErr.message}`);
+          return String(created.id);
         }
 
-        // Fallback: use any existing remote account if present
+        // Fallbacks: prefer any remote account
         const anyRemote = accounts.find(a => isUUID(a.id));
         if (anyRemote) return anyRemote.id;
 
-        // Last resort: create a default remote account
-        const fallbackName = 'Main Account';
-  const { data, error } = await supabase
+        // Last resort: create brand new default remote account
+        const { data: fallback, error: fallbackErr } = await supabase
           .from('finance_accounts')
           .insert({
             user_id: userRes.user.id,
-            name: fallbackName,
+            name: 'Main Account',
             type: 'cash',
             color: '#10B981',
             is_default: true,
+            balance: 0,
           })
           .select('id')
           .single();
-        if (error) throw new Error(`Failed to create account: ${error.message}`);
-        return String(data.id);
+        if (fallbackErr) throw new Error(`Failed to create default account: ${fallbackErr.message}`);
+        return String(fallback.id);
       };
 
       // Ensure we have a finance_categories row and return its id (for non-transfer types)
@@ -1285,7 +1290,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
   // Update the selected account balance so the Balance card reflects the change immediately
   try {
-    const delta = ((transactionData.type as any) === 'income' ? 1 : -1) * Number(transactionData.amount || 0);
+  const rawAmount = Math.abs(Number(transactionData.amount || 0));
+  const delta = ((transactionData.type as any) === 'income' ? 1 : -1) * rawAmount;
     const current = accounts.find(a => a.id === resolvedAccountId)?.balance ?? 0;
     const next = current + delta;
     // Optimistic local update
