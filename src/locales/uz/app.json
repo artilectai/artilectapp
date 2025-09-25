@@ -936,29 +936,28 @@
       }
     },
     "analytics": {
-      "header": "Mashg'ulotlar analitikasi",
-      "subheader": "Sessiyalar, progress va seriyalarni kuzating",
-      "labels": {
-        "completed": "Bajarildi",
-        "missed": "O'tkazildi",
-        "complete": "Tugatildi",
-        "week": "Hafta"
+    "header": "Mashg'ulotlar analitikasi",
+    "subheader": "Sessiyalar, progress va seriyalarni kuzating",
+    "labels": {
+      "completed": "Bajarildi",
+      "missed": "O'tkazildi",
+      "complete": "Tugatildi",
+      "week": "Hafta"
+    },
+    "units": {
+      "workoutsLabel": "Mashg'ulotlar",
+      "caloriesLabel": "Yoqilgan kaloriya",
+      "days": "kun",
+      "min": "daq",
+      "lbs": "funt",
+      "mi": "mil",
+      "bpm": "ur/min"
+    },
+    "time": {
       },
-      "units": {
-        "workoutsLabel": "Mashg'ulotlar",
-        "caloriesLabel": "Yoqilgan kaloriya",
-        "days": "kun",
-        "min": "daq",
-        "lbs": "funt",
-        "mi": "mil",
-        "bpm": "ur/min"
-      },
-      "time": {
-        },
-        "startDateLabel": "Boshlanish sanasi",
-        "dateUpdated": "Byudjet sanasi yangilandi"
-      },
-      "cards": {
+      "startDateLabel": "Boshlanish sanasi",
+      "dateUpdated": "Byudjet sanasi yangilandi",
+    "cards": {
         "completionRate": {
           "title": "Bajarilish foizi",
           "subtitle": "{{completed}} / {{total}} ta mashg'ulot"
