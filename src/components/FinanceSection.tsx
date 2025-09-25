@@ -1141,8 +1141,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
       // Ensure we use EXACTLY the user-selected account; only create a remote account if that specific id is non-UUID (legacy/local) and has no remote counterpart yet.
       const ensureRemoteAccountId = async (): Promise<string> => {
-        const desiredId = (transactionData.accountId && String(transactionData.accountId)) || accounts[0]?.id || '';
-        if (!desiredId) throw new Error('No account selected');
+  const desiredId = transactionData.accountId ? String(transactionData.accountId) : '';
+  if (!desiredId) throw new Error('No account selected');
 
         // If already a remote (UUID) -> done
         if (isUUID(desiredId)) return desiredId;
@@ -1171,25 +1171,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           return String(created.id);
         }
 
-        // Fallbacks: prefer any remote account
-        const anyRemote = accounts.find(a => isUUID(a.id));
-        if (anyRemote) return anyRemote.id;
-
-        // Last resort: create brand new default remote account
-        const { data: fallback, error: fallbackErr } = await supabase
-          .from('finance_accounts')
-          .insert({
-            user_id: userRes.user.id,
-            name: 'Main Account',
-            type: 'cash',
-            color: '#10B981',
-            is_default: true,
-            balance: 0,
-          })
-          .select('id')
-          .single();
-        if (fallbackErr) throw new Error(`Failed to create default account: ${fallbackErr.message}`);
-        return String(fallback.id);
+        // If account not found locally anymore, abort instead of silently switching to another
+        throw new Error('Selected account not found');
       };
 
       // Ensure we have a finance_categories row and return its id (for non-transfer types)
@@ -2841,6 +2824,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             onSave={handleSaveTransaction}
             onCancel={() => setShowTransactionDialog(false)}
             defaultDate={new Date()}
+            defaultAccountId={selectedAccount !== 'all' ? selectedAccount : accounts[0]?.id}
           />
         </SlideUpModal>
 

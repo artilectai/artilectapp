@@ -51,6 +51,8 @@ interface TransactionFormProps {
   defaultDate: Date;
   initialTransaction?: Partial<Transaction>;
   currency?: string;
+  /** Preselect a specific account (e.g. currently focused in FinanceSection) */
+  defaultAccountId?: string;
 }
 
 // Outgoing payload shape expected by FinanceSection (category as string)
@@ -110,7 +112,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   onCancel,
   defaultDate,
   initialTransaction,
-  currency: propCurrency
+  currency: propCurrency,
+  defaultAccountId
 }) => {
   const { i18n, t } = useTranslation('app');
   const lang = (i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
@@ -144,10 +147,20 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     type: 'expense',
     description: '',
     date: defaultDate,
-    accountId: accounts[0]?.id || '',
+    accountId: initialTransaction?.accountId || defaultAccountId || accounts[0]?.id || '',
     tags: [],
     ...initialTransaction
   });
+
+  // If defaultAccountId changes (user switches account then opens dialog quickly) and current formData has no account or stale one, update once.
+  useEffect(() => {
+    setFormData(prev => {
+      if (!prev.accountId && (defaultAccountId || accounts[0]?.id)) {
+        return { ...prev, accountId: defaultAccountId || accounts[0]?.id || '' };
+      }
+      return prev;
+    });
+  }, [defaultAccountId, accounts]);
 
   const [amountInput, setAmountInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
