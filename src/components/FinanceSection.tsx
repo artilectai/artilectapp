@@ -1887,7 +1887,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       );
   };
 
-  // Editing existing budget date range
+  // Editing existing budget date range (placed before any conditional returns to satisfy rules-of-hooks)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [editBudgetStart, setEditBudgetStart] = useState<Date | null>(null);
   const [showEditBudgetDialog, setShowEditBudgetDialog] = useState(false);
