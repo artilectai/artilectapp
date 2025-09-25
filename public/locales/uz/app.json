@@ -253,7 +253,9 @@
           "of": "{{spent}} / {{budgeted}}",
           "remaining": "Qoldi: {{amount}}",
           "overBudget": "Chegaradan oshdi: {{amount}}"
-        }
+        },
+        "startDateLabel": "Boshlanish sanasi",
+        "dateUpdated": "Byudjet sanasi yangilandi"
       },
       "goals": {
         "time": {
@@ -563,7 +565,9 @@
         "periodLabel": "Davr",
         "limitLabel": "Byudjet limiti",
         "categoryLabel": "Toifa",
-        "categoryPlaceholder": "masalan, Ovqat, Transport, Ko‘ngilochar"
+        "categoryPlaceholder": "masalan, Ovqat, Transport, Ko‘ngilochar",
+        "startDateLabel": "Boshlanish sanasi",
+        "dateUpdated": "Byudjet sanasi yangilandi"
       },
       "goals": {
         "active": "Faol maqsadlar",

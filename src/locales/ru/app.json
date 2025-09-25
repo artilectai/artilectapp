@@ -225,7 +225,9 @@
           "of": "{{spent}} из {{budgeted}}",
           "remaining": "Осталось {{amount}}",
           "overBudget": "Сверх бюджета на {{amount}}"
-        }
+        },
+        "startDateLabel": "Дата начала",
+        "dateUpdated": "Дата бюджета обновлена"
       },
       "goals": {
         "time": {

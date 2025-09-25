@@ -579,7 +579,9 @@
         "periodLabel": "Period",
         "limitLabel": "Budget Limit",
         "categoryLabel": "Category",
-        "categoryPlaceholder": "e.g., Food, Transport, Entertainment"
+        "categoryPlaceholder": "e.g., Food, Transport, Entertainment",
+        "startDateLabel": "Start Date",
+        "dateUpdated": "Budget date updated"
       },
       "goals": {
         "active": "Active Goals",
@@ -1544,7 +1546,6 @@
     "export": "Export",
     "delete": "Delete",
     "upgrade": "Upgrade",
-    "skip": "Skip",
     "update": "Update",
     "saveChanges": "Save Changes"
   },

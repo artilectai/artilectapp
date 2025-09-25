@@ -531,9 +531,11 @@
 				"overBudget": "{{amount}} over budget",
 				"info": "Budgets are automatically tracked based on your spending categories. Just set a limit and we'll track your progress!",
 				"periodLabel": "Period",
+				"startDateLabel": "Start Date",
 				"limitLabel": "Budget Limit",
 				"categoryLabel": "Category",
-				"categoryPlaceholder": "e.g., Food, Transport, Entertainment"
+				"categoryPlaceholder": "e.g., Food, Transport, Entertainment",
+				"dateUpdated": "Budget date updated"
 			},
 			"goals": {
 				"active": "Active Goals",

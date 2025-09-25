@@ -92,9 +92,12 @@ interface Budget {
   id: string;
   category: string;
   limit: number;
+  // 'spent' stored in DB but we will recompute dynamically from transactions for the active date range
   spent: number;
   currency: string;
   period: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+  startDate?: Date; // inclusive
+  endDate?: Date;   // exclusive boundary (start + period)
 }
 
 interface Goal {
@@ -265,8 +268,10 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     const [newBudget, setNewBudget] = useState({
       category: '',
       limit: '',
-      period: 'monthly' as TimePeriod
+      period: 'monthly' as TimePeriod,
+      startDate: new Date()
     });
+    const [isBudgetStartOpen, setIsBudgetStartOpen] = useState(false);
 
     const [newGoal, setNewGoal] = useState({
       name: '',
@@ -447,7 +452,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                 );
               }
 
-              if (Array.isArray(savedBudgets)) setBudgets(savedBudgets as Budget[]);
+              if (Array.isArray(savedBudgets)) {
+                setBudgets((savedBudgets as any[]).map(b => ({
+                  ...b,
+                  startDate: b.startDate ? new Date(b.startDate) : undefined,
+                  endDate: b.endDate ? new Date(b.endDate) : undefined,
+                })) as Budget[]);
+              }
               if (Array.isArray(savedGoals)) {
                 setGoals(
                   (savedGoals as any[]).map((g: any) => ({
@@ -543,14 +554,32 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           );
         }
         if (Array.isArray(buds)) {
-          setBudgets(buds.map((b: any) => ({
-            id: String(b.id),
-            category: b.category,
-            limit: Number(b.limit_amount),
-            spent: Number(b.spent ?? 0),
-            currency: b.currency,
-            period: b.period
-          })) as Budget[]);
+          setBudgets(buds.map((b: any) => {
+            // Derive dates if missing (fallback similar to migration logic)
+            let start: Date | undefined = b.start_date ? new Date(b.start_date) : (b.created_at ? new Date(b.created_at) : undefined);
+            let end: Date | undefined = b.end_date ? new Date(b.end_date) : undefined;
+            if (start && !end) {
+              const s = new Date(start);
+              switch (b.period) {
+                case 'daily': end = new Date(s.getTime() + 24*60*60*1000); break;
+                case 'weekly': end = new Date(s.getTime() + 7*24*60*60*1000); break;
+                case 'monthly': end = new Date(s); end.setMonth(end.getMonth() + 1); break;
+                case 'quarterly': end = new Date(s); end.setMonth(end.getMonth() + 3); break;
+                case 'yearly': end = new Date(s); end.setFullYear(end.getFullYear() + 1); break;
+                default: end = new Date(s); end.setMonth(end.getMonth() + 1);
+              }
+            }
+            return {
+              id: String(b.id),
+              category: b.category,
+              limit: Number(b.limit_amount),
+              spent: Number(b.spent ?? 0),
+              currency: b.currency,
+              period: b.period,
+              startDate: start,
+              endDate: end,
+            } as Budget;
+          }));
         }
         if (Array.isArray(gos)) {
           setGoals(gos.map((g: any) => ({
@@ -1450,6 +1479,19 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       setEditCustomAccountTypeName('');
     };
 
+  const computeEndDate = (period: TimePeriod, start: Date): Date => {
+    const end = new Date(start);
+    switch (period) {
+      case 'daily': end.setDate(end.getDate() + 1); break;
+      case 'weekly': end.setDate(end.getDate() + 7); break;
+      case 'monthly': end.setMonth(end.getMonth() + 1); break;
+      case 'quarterly': end.setMonth(end.getMonth() + 3); break;
+      case 'yearly': end.setFullYear(end.getFullYear() + 1); break;
+      default: end.setMonth(end.getMonth() + 1); break;
+    }
+    return end;
+  };
+
   const handleSaveBudget = async () => {
                     if (!limits.budgetsAllowed) {
                       toast.error(t('toasts.finance.budgetsRequirePro'));
@@ -1457,19 +1499,23 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         return;
       }
 
-      if (!newBudget.category || !newBudget.limit) {
+      if (!newBudget.category || !newBudget.limit || !newBudget.startDate) {
   toast.error(t('toasts.finance.requiredFields'));
         return;
       }
 
       const limitValue = parseFloat(newBudget.limit);
+      const start = newBudget.startDate;
+      const end = computeEndDate(newBudget.period, start);
       const optimistic: Budget = {
         id: `temp_${Date.now()}`,
         category: newBudget.category,
         limit: limitValue,
         spent: 0,
         currency: currency,
-        period: newBudget.period
+        period: newBudget.period,
+        startDate: start,
+        endDate: end
       };
 
       setBudgets(prev => [optimistic, ...prev]);
@@ -1486,6 +1532,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             spent: optimistic.spent,
             currency: optimistic.currency,
             period: optimistic.period,
+            start_date: optimistic.startDate?.toISOString(),
+            end_date: optimistic.endDate?.toISOString(),
           })
           .select('id')
           .single();
@@ -1493,7 +1541,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         const newId = String((data as any).id);
         setBudgets(prev => prev.map(b => b.id === optimistic.id ? { ...b, id: newId } : b));
         // Success UI only after DB insert succeeds
-        setNewBudget({ category: '', limit: '', period: 'monthly' });
+        setNewBudget({ category: '', limit: '', period: 'monthly', startDate: new Date() });
         setShowBudgetDialog(false);
         toast.success(t('toasts.finance.budgetCreated'));
       } catch (e: any) {
@@ -1837,6 +1885,46 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           {label}
         </text>
       );
+  };
+
+  // Editing existing budget date range
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [editBudgetStart, setEditBudgetStart] = useState<Date | null>(null);
+  const [showEditBudgetDialog, setShowEditBudgetDialog] = useState(false);
+
+  const openEditBudget = (b: Budget) => {
+    setEditingBudget(b);
+    setEditBudgetStart(b.startDate ? new Date(b.startDate) : new Date());
+    setShowEditBudgetDialog(true);
+  };
+
+  const handleUpdateBudgetDates = async () => {
+    if (!editingBudget || !editBudgetStart) return;
+    const original = editingBudget;
+    const newStart = editBudgetStart;
+    const newEnd = computeEndDate(editingBudget.period, newStart);
+    // Optimistic update
+    setBudgets(prev => prev.map(b => b.id === original.id ? { ...b, startDate: newStart, endDate: newEnd } : b));
+    setShowEditBudgetDialog(false);
+    try {
+      // Skip remote update for temp IDs (not yet persisted)
+      if (!/^temp_/.test(original.id)) {
+        const { error } = await supabase.from('finance_budgets')
+          .update({
+            start_date: newStart.toISOString(),
+            end_date: newEnd.toISOString()
+          })
+          .eq('id', original.id);
+        if (error) throw error;
+      }
+      toast.success(t('finance.section.budgets.dateUpdated', { defaultValue: 'Budget date updated' }));
+    } catch (e: any) {
+      // rollback
+      setBudgets(prev => prev.map(b => b.id === original.id ? original : b));
+      toast.error(t('toasts.errors.saveFailed', { defaultValue: 'Failed to save changes' }), {
+        description: e?.message || String(e)
+      });
+    }
   };
 
     return (
@@ -2752,6 +2840,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                       </Button>
                     </div>
                     <div className="space-y-3">
+                      {/** Derive spent dynamically based on transactions within range */}
                       {budgets.map((budget) => (
                         <Card key={budget.id} className="glass-card">
                           <CardContent className="p-4">
@@ -2765,29 +2854,61 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                                   <div className="px-2 py-0.5 bg-money-green/10 text-money-green text-[10px] rounded-full">
                                     {t('finance.section.budgets.autoTracked')}
                                   </div>
+                                  {budget.startDate && budget.endDate && (
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {budget.startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                      {' – '}
+                                      {new Date(budget.endDate.getTime() - 24*60*60*1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                onClick={() => handleDeleteBudget(budget.id)}
-                                title={t('buttons.delete')}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 px-2 text-[10px]"
+                                  onClick={() => openEditBudget(budget)}
+                                >
+                                  {t('buttons.update')}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                  onClick={() => handleDeleteBudget(budget.id)}
+                                  title={t('buttons.delete')}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                             <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span>{t('finance.analyst.budgets.summary.of', { spent: formatCurrency(budget.spent), budgeted: formatCurrency(budget.limit) })}</span>
-                                <span className="font-medium">{((budget.spent / budget.limit) * 100).toFixed(1)}%</span>
-                              </div>
-                              <Progress value={Math.min((budget.spent / budget.limit) * 100, 100)} className="h-2" />
-                              <div className="text-xs text-muted-foreground">
-                                {budget.limit - budget.spent > 0
-                                  ? t('finance.section.budgets.remaining', { amount: formatCurrency(budget.limit - budget.spent) })
-                                  : t('finance.section.budgets.overBudget', { amount: formatCurrency(budget.spent - budget.limit) })}
-                              </div>
+                              {(() => {
+                                // compute dynamic spent
+                                const start = budget.startDate;
+                                const end = budget.endDate;
+                                const dynamicSpent = transactions.filter(tx => (
+                                  tx.type === 'expense' &&
+                                  tx.category && tx.category.toLowerCase() === budget.category.toLowerCase() &&
+                                  start && end && tx.date >= start && tx.date < end
+                                )).reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+                                const pct = (dynamicSpent / budget.limit) * 100;
+                                return (
+                                  <>
+                                    <div className="flex justify-between text-sm">
+                                      <span>{t('finance.analyst.budgets.summary.of', { spent: formatCurrency(dynamicSpent), budgeted: formatCurrency(budget.limit) })}</span>
+                                      <span className="font-medium">{pct.toFixed(1)}%</span>
+                                    </div>
+                                    <Progress value={Math.min(pct, 100)} className="h-2" />
+                                    <div className="text-xs text-muted-foreground">
+                                      {dynamicSpent <= budget.limit
+                                        ? t('finance.section.budgets.remaining', { amount: formatCurrency(budget.limit - dynamicSpent) })
+                                        : t('finance.section.budgets.overBudget', { amount: formatCurrency(dynamicSpent - budget.limit) })}
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </CardContent>
                         </Card>
@@ -3008,6 +3129,48 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   </div>
 </SlideUpModal>
 
+{/* Edit Budget Dialog */}
+<SlideUpModal
+  isOpen={showEditBudgetDialog}
+  onClose={() => setShowEditBudgetDialog(false)}
+  title={t('buttons.update') + ' ' + (editingBudget ? translateCategory(editingBudget.category) : '')}
+>
+  <div className="p-4 sm:p-5 space-y-5">
+    {editingBudget && (
+      <>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">{t('finance.section.budgets.startDateLabel', { defaultValue: 'Start Date' })}</Label>
+            <DateStepper
+              value={editBudgetStart || undefined}
+              onChange={(date: Date) => setEditBudgetStart(date)}
+              onDone={() => {/* nothing extra */}}
+              minYear={new Date().getFullYear() - 2}
+              maxYear={new Date().getFullYear() + 2}
+            />
+          </div>
+          {editBudgetStart && (
+            <div className="text-xs text-muted-foreground">
+              {(() => {
+                const newEnd = computeEndDate(editingBudget.period, editBudgetStart);
+                return `${editBudgetStart.toLocaleDateString()} – ${new Date(newEnd.getTime() - 24*60*60*1000).toLocaleDateString()}`;
+              })()}
+            </div>
+          )}
+        </div>
+        <Button
+          type="button"
+          onClick={handleUpdateBudgetDates}
+          disabled={!editBudgetStart}
+          className="w-full h-11 rounded-xl bg-money-gradient text-black font-semibold"
+        >
+          {t('buttons.saveChanges')}
+        </Button>
+      </>
+    )}
+  </div>
+</SlideUpModal>
+
         {/* Edit Account Dialog */}
 <SlideUpModal
   isOpen={showEditAccountDialog}
@@ -3149,7 +3312,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       </div>
 
       <div className="space-y-1.5">
-  <Label className="text-sm font-medium">{t('finance.section.budgets.periodLabel')}</Label>
+        <Label className="text-sm font-medium">{t('finance.section.budgets.periodLabel')}</Label>
         <Select
           value={newBudget.period}
           onValueChange={(v: TimePeriod) => setNewBudget(p => ({ ...p, period: v }))}
@@ -3165,6 +3328,31 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             <SelectItem value="yearly">{t('finance.section.periods.yearly')}</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium">{t('finance.section.budgets.startDateLabel', { defaultValue: 'Start Date' })}</Label>
+        <Popover open={isBudgetStartOpen} onOpenChange={setIsBudgetStartOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full rounded-xl bg-surface-1 border-border hover:bg-surface-2 justify-start text-left flex items-center gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              {newBudget.startDate ? newBudget.startDate.toLocaleDateString() : t('planner.editor.pickDate')}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start" onOpenAutoFocus={(e)=>e.preventDefault()}>
+            <DateStepper
+              value={newBudget.startDate}
+              onChange={(date: Date) => setNewBudget(p => ({ ...p, startDate: date }))}
+              onDone={() => setIsBudgetStartOpen(false)}
+              minYear={new Date().getFullYear() - 2}
+              maxYear={new Date().getFullYear() + 2}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <Button

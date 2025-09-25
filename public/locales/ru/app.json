@@ -563,7 +563,9 @@
         "periodLabel": "Период",
         "limitLabel": "Лимит бюджета",
         "categoryLabel": "Категория",
-        "categoryPlaceholder": "например, Еда, Транспорт, Развлечения"
+        "categoryPlaceholder": "например, Еда, Транспорт, Развлечения",
+        "startDateLabel": "Дата начала",
+        "dateUpdated": "Диапазон бюджета обновлён"
       },
       "goals": {
         "active": "Активные цели",

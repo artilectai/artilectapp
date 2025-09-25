@@ -7,7 +7,7 @@
     "edit": "Tahrirlash",
     "save": "Saqlash",
     "cancel": "Bekor qilish",
-  "next": "Keyingi",
+    "next": "Keyingi",
     "undo": "Ortga qaytarish",
     "back": "Orqaga",
     "validation": {
@@ -225,7 +225,9 @@
           "of": "{{spent}} / {{budgeted}}",
           "remaining": "Qoldi: {{amount}}",
           "overBudget": "Byudjetdan ortiq: {{amount}}"
-        }
+        },
+        "startDateLabel": "Boshlanish sanasi",
+        "dateUpdated": "Byudjet sanasi yangilandi"
       },
       "goals": {
         "time": {
@@ -531,7 +533,9 @@
         "periodLabel": "Davr",
         "limitLabel": "Byudjet limiti",
         "categoryLabel": "Kategoriya",
-        "categoryPlaceholder": "masalan, Ovqat, Transport, Ko'ngilochar"
+        "categoryPlaceholder": "masalan, Ovqat, Transport, Ko'ngilochar",
+        "startDateLabel": "Boshlanish sanasi",
+        "dateUpdated": "Byudjet sanasi yangilandi"
       },
       "goals": {
         "active": "Faol maqsadlar",
@@ -950,7 +954,9 @@
         "bpm": "ur/min"
       },
       "time": {
-        "weekN": "{{num}}-hafta"
+        },
+        "startDateLabel": "Boshlanish sanasi",
+        "dateUpdated": "Byudjet sanasi yangilandi"
       },
       "cards": {
         "completionRate": {
@@ -1010,30 +1016,6 @@
       }
     }
   },
-  "onboarding": {
-    "title": "Boshlang'ich sozlash",
-    "stepCounter": "{{current}} / {{total}}",
-    "step1": {
-      "title": "Tilni tanlang",
-      "description": "Afzal tilni tanlang",
-      "continue": "Davom etish"
-    },
-    "step2": {
-      "title": "Vaqt mintaqasini tanlang",
-      "description": "O'zingizga mos vaqt mintaqasini tanlang",
-      "timezone": "Vaqt mintaqasi",
-      "continue": "Davom etish"
-    },
-    "step3": {
-      "title": "Hafta boshi",
-      "description": "Hafta qaysi kundan boshlanishini tanlang",
-      "continue": "Davom etish",
-      "weekStart": "Hafta boshi"
-    },
-    "step4": {
-      "finish": "Tugatish"
-    }
-  },
   "weekdays": {
     "monday": "Dushanba",
     "sunday": "Yakshanba"
@@ -1044,9 +1026,9 @@
       "feb": "Fev",
       "mar": "Mar",
       "apr": "Apr",
-      "may": "May",
-  "jun": "Iyn",
-  "jul": "Iyl",
+    "may": "May",
+    "jun": "Iyn",
+    "jul": "Iyl",
       "aug": "Avg",
       "sep": "Sen",
       "oct": "Okt",
