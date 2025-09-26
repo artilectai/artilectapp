@@ -195,6 +195,10 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   const [showEditAccountDialog, setShowEditAccountDialog] = useState(false);
     const [showBudgetDialog, setShowBudgetDialog] = useState(false);
     const [showGoalDialog, setShowGoalDialog] = useState(false);
+  // Budget edit dialog state (must be before any conditional return paths)
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [editBudgetStart, setEditBudgetStart] = useState<Date | null>(null);
+  const [showEditBudgetDialog, setShowEditBudgetDialog] = useState(false);
   // (Former reset finance data dialog removed)
     // Mobile detection for chart sizing
     const [isMobile, setIsMobile] = useState(false);
@@ -1887,10 +1891,6 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       );
   };
 
-  // Editing existing budget date range (placed before any conditional returns to satisfy rules-of-hooks)
-  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
-  const [editBudgetStart, setEditBudgetStart] = useState<Date | null>(null);
-  const [showEditBudgetDialog, setShowEditBudgetDialog] = useState(false);
 
   const openEditBudget = (b: Budget) => {
     setEditingBudget(b);
