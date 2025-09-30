@@ -3124,7 +3124,22 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         />
       </div>
 
-  {/* Currency selection removed — use global currency for now */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium">{t('finance.section.accounts.form.currencyLabel', { defaultValue: 'Currency' })}</Label>
+        <Select
+          value={newAccount.currency}
+          onValueChange={(v) => setNewAccount(p => ({ ...p, currency: v }))}
+        >
+          <SelectTrigger className="h-11 w-full bg-surface-1 border-border rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {['UZS','USD','EUR','RUB'].map(c => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <Button
         type="button"
@@ -3262,7 +3277,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       </div>
 
       <div className="space-y-1.5">
-  <Label className="text-sm font-medium">{t('finance.section.accounts.form.currentBalance')}</Label>
+        <Label className="text-sm font-medium">{t('finance.section.accounts.form.currentBalance')}</Label>
         <Input
           type="number"
           placeholder="0"
@@ -3272,7 +3287,22 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         />
       </div>
 
-  {/* Currency selection removed — use global currency for now */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium">{t('finance.section.accounts.form.currencyLabel', { defaultValue: 'Currency' })}</Label>
+        <Select
+          value={editAccount.currency}
+          onValueChange={(v) => setEditAccount(p => ({ ...p, currency: v }))}
+        >
+          <SelectTrigger className="h-11 w-full bg-surface-1 border-border rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {['UZS','USD','EUR','RUB'].map(c => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <Button
         type="button"
