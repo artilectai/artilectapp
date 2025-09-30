@@ -3121,10 +3121,15 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         <Label className="text-sm font-medium">{t('finance.section.accounts.form.initialBalance')}</Label>
         <Input
           type="number"
+          inputMode="decimal"
           placeholder="0"
           value={newAccount.balance}
           onChange={(e) => setNewAccount(p => ({ ...p, balance: e.target.value }))}
           className="h-11 w-full bg-surface-1 border-border rounded-xl"
+          onFocus={(e)=>{
+            const el = document.getElementById('add-account-scroll');
+            setTimeout(()=>{ e.currentTarget.scrollIntoView({ block:'center', behavior:'smooth'}); el?.scrollBy({ top: -40}); }, 150);
+          }}
         />
       </div>
 
@@ -3146,10 +3151,10 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       </div>
 
       </div>
-      <div className="p-4 sm:p-5 border-t border-border bg-surface-1/60 backdrop-blur supports-[backdrop-filter]:bg-surface-1/40">
+      <div className="p-4 sm:p-5 border-t border-border bg-surface-1/60 backdrop-blur supports-[backdrop-filter]:bg-surface-1/40 relative z-10 pointer-events-auto">
         <Button
           type="submit"
-          className="w-full h-12 rounded-xl bg-money-gradient text-black font-semibold"
+          className="w-full h-12 rounded-xl bg-money-gradient text-black font-semibold pointer-events-auto"
         >
           {t('finance.section.accounts.add')}
         </Button>
