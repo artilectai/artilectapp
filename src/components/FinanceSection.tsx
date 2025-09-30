@@ -61,7 +61,7 @@ import {
 import { FinanceOnboardingWizard } from "@/components/FinancialOnboardingWizard";
 import { FinanceDataManager as FinanceStore } from "@/lib/finance-data-manager";
 import { supabase } from "@/lib/supabase/client";
-import { createAccount as createAccountAction } from "@/app/actions/finance/accounts";
+import { createAccount as createAccountAction, updateAccount as updateAccountAction } from "@/app/actions/finance/accounts";
 import { useSession } from "@/lib/supabase/useSession";
 
 // Types
@@ -1450,17 +1450,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         if (!userId) throw new Error('Not signed in');
 
         if (isUUID(editAccount.id)) {
-          const { error } = await supabase
-            .from('finance_accounts')
-            .update({
-              name: editAccount.name,
-              type: editAccount.type as any,
-              balance: nextBalance,
-              currency: editAccount.currency || 'UZS'
-            })
-            .eq('id', editAccount.id)
-            .eq('user_id', userId);
-          if (error) throw error;
+          await updateAccountAction({
+            id: editAccount.id,
+            name: editAccount.name,
+            type: editAccount.type as any,
+            balance: nextBalance,
+            currency: editAccount.currency || 'UZS'
+          });
         } else {
           // No remote id yet — create one with the edited values
           const { data, error } = await supabase

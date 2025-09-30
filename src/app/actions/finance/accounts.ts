@@ -59,3 +59,30 @@ export async function createAccount(input: {
     throw new Error(`createAccount failed: ${e.code || ''} ${e.message}`.trim());
   }
 }
+
+export async function updateAccount(input: {
+  id: string;
+  name?: string;
+  type?: AccountType | string;
+  balance?: number;
+  currency?: string;
+}) {
+  const supabase = await supabaseServer();
+  const { data: { user }, error: uErr } = await supabase.auth.getUser();
+  if (uErr || !user) throw new Error('Not signed in');
+  if (!input.id) throw new Error('Account id required');
+
+  const patch: any = {};
+  if (input.name !== undefined) patch.name = input.name;
+  if (input.type !== undefined) patch.type = input.type;
+  if (input.balance !== undefined && !Number.isNaN(input.balance)) patch.balance = input.balance;
+  if (input.currency !== undefined) patch.currency = input.currency;
+  if (Object.keys(patch).length === 0) return;
+
+  const { error } = await supabase
+    .from('finance_accounts')
+    .update(patch)
+    .eq('id', input.id)
+    .eq('user_id', user.id);
+  if (error) throw new Error(`updateAccount failed: ${error.code || ''} ${error.message}`.trim());
+}
