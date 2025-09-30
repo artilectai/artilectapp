@@ -1348,27 +1348,41 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     };
 
   const handleSaveAccount = async () => {
+      // Prevent duplicate rapid submissions
+      if ((handleSaveAccount as any)._pending) return;
+      (handleSaveAccount as any)._pending = true;
+      console.debug('[AddAccount] submit start', newAccount);
       if (isAccountLimitReached) {
         const planMsg = subscriptionPlan === 'free' ? t('toasts.finance.accountLimit.free') : t('toasts.finance.accountLimit.lite');
         toast.error(planMsg);
         onUpgrade?.();
+        (handleSaveAccount as any)._pending = false;
         return;
       }
 
       if (!newAccount.name) {
         toast.error(t('toasts.finance.accountNameRequired'));
+        console.debug('[AddAccount] missing name');
+        (handleSaveAccount as any)._pending = false;
         return;
       }
-
-      await createAccountAction({
-        name: newAccount.name,
-        type: newAccount.type as any,
-        color: '#10B981',
-        is_default: accounts.length === 0,
-        balance: Number(newAccount.balance || '0'),
-        currency: newAccount.currency || 'UZS'
-      });
-      await loadRemote();
+      try {
+        await createAccountAction({
+          name: newAccount.name,
+          type: newAccount.type as any,
+          color: '#10B981',
+          is_default: accounts.length === 0,
+          balance: Number(newAccount.balance || '0'),
+          currency: newAccount.currency || 'UZS'
+        });
+        console.debug('[AddAccount] server action success');
+        await loadRemote();
+      } catch (err:any) {
+        console.error('[AddAccount] failed', err);
+        toast.error(t('toasts.finance.accountCreateFailed', { defaultValue: 'Could not create account' }));
+        (handleSaveAccount as any)._pending = false;
+        return;
+      }
       setNewAccount({
         name: '',
         type: 'cash',
@@ -1378,6 +1392,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       
       setShowAccountDialog(false);
       toast.success("Account added successfully");
+      (handleSaveAccount as any)._pending = false;
     };
 
     const openEditAccountDialog = () => {
