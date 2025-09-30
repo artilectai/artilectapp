@@ -3037,8 +3037,12 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   onClose={() => setShowAccountDialog(false)}
   title={t('finance.section.accounts.add')}
 >
-  <div className="p-4 sm:p-5">
-    <form className="space-y-4">
+  <div className="flex flex-col h-full max-h-[80vh]">
+    <form
+      className="flex flex-col flex-1 overflow-hidden"
+      onSubmit={(e)=>{e.preventDefault(); handleSaveAccount();}}
+    >
+      <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4 scroll-smooth" id="add-account-scroll">
       <div className="space-y-1.5">
         <Label className="text-sm font-medium">{t('finance.section.accounts.form.nameLabel')}</Label>
         <Input
@@ -3141,13 +3145,15 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         </Select>
       </div>
 
-      <Button
-        type="button"
-        onClick={handleSaveAccount}
-        className="w-full h-12 rounded-xl bg-money-gradient text-black font-semibold mt-2"
-      >
-        {t('finance.section.accounts.add')}
-      </Button>
+      </div>
+      <div className="p-4 sm:p-5 border-t border-border bg-surface-1/60 backdrop-blur supports-[backdrop-filter]:bg-surface-1/40">
+        <Button
+          type="submit"
+          className="w-full h-12 rounded-xl bg-money-gradient text-black font-semibold"
+        >
+          {t('finance.section.accounts.add')}
+        </Button>
+      </div>
     </form>
   </div>
 </SlideUpModal>
@@ -3200,118 +3206,131 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
   onClose={() => setShowEditAccountDialog(false)}
   title={t('finance.section.accounts.edit')}
 >
-  <div className="p-4 sm:p-5">
-    <form className="space-y-4">
-      <div className="space-y-1.5">
-        <Label className="text-sm font-medium">{t('finance.section.accounts.form.nameLabel')}</Label>
-        <Input
-          placeholder={t('finance.section.accounts.form.namePlaceholder') as string}
-          value={editAccount.name}
-          onChange={(e) => setEditAccount(p => ({ ...p, name: e.target.value }))}
-          className="h-11 w-full bg-surface-1 border-border rounded-xl"
-        />
-      </div>
-
-      <div className="space-y-2">
-  <Label className="text-sm font-medium">{t('finance.section.accounts.form.typeLabel')}</Label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {['cash', 'card', 'bank', 'crypto', ...customAccountTypes].map((type) => (
-            <Button
-              key={type}
-              type="button"
-              variant={editAccount.type === type ? 'default' : 'outline'}
-              onClick={() => { setEditAccount(p => ({ ...p, type: type as any })); setShowEditCustomAccountType(false); }}
-              className="h-11 rounded-xl justify-center gap-2 min-w-0"
-            >
-              <span className="shrink-0">{getAccountTypeIcon(type)}</span>
-              <span className="truncate">{type.charAt(0).toUpperCase() + type.slice(1)}</span>
-            </Button>
-          ))}
-
-          <Button
-            type="button"
-            variant={
-              (typeof editAccount.type === 'string' &&
-                !['cash','card','bank','crypto'].includes(editAccount.type)) || showEditCustomAccountType
-                ? 'default' : 'outline'
-            }
-            onClick={() => { setShowEditCustomAccountType(true); }}
-            className="h-11 rounded-xl justify-center gap-2 min-w-0"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="truncate">{t('finance.section.accounts.form.custom')}</span>
-          </Button>
+  <div className="flex flex-col h-full max-h-[80vh]">
+    <form
+      className="flex flex-col flex-1 overflow-hidden"
+      onSubmit={(e)=>{ e.preventDefault(); handleUpdateAccount(); }}
+    >
+      <div
+        id="edit-account-scroll"
+        className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4 scroll-smooth"
+      >
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">{t('finance.section.accounts.form.nameLabel')}</Label>
+          <Input
+            placeholder={t('finance.section.accounts.form.namePlaceholder') as string}
+            value={editAccount.name}
+            onChange={(e) => setEditAccount(p => ({ ...p, name: e.target.value }))}
+            className="h-11 w-full bg-surface-1 border-border rounded-xl"
+          />
         </div>
 
-        {showEditCustomAccountType && (
-          <div className="mt-2 p-3 rounded-xl border border-border bg-surface-1 space-y-2">
-            <Label className="text-xs text-muted-foreground">{t('finance.section.accounts.form.customTypeNameLabel')}</Label>
-            <div className="flex gap-2">
-              <Input
-                value={editCustomAccountTypeName}
-                onChange={(e) => setEditCustomAccountTypeName(e.target.value)}
-                placeholder={t('finance.section.accounts.form.customTypeNamePlaceholder') as string}
-                className="h-10 flex-1"
-                onKeyDown={(e)=>{ if(e.key==='Enter') handleAddCustomAccountTypeForEdit(); }}
-              />
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">{t('finance.section.accounts.form.typeLabel')}</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {['cash', 'card', 'bank', 'crypto', ...customAccountTypes].map((type) => (
               <Button
+                key={type}
                 type="button"
-                onClick={handleAddCustomAccountTypeForEdit}
-                disabled={!editCustomAccountTypeName.trim()}
-                className="h-10 bg-money-gradient text-black font-semibold"
+                variant={editAccount.type === type ? 'default' : 'outline'}
+                onClick={() => { setEditAccount(p => ({ ...p, type: type as any })); setShowEditCustomAccountType(false); }}
+                className="h-11 rounded-xl justify-center gap-2 min-w-0"
               >
-                {t('common.add')}
+                <span className="shrink-0">{getAccountTypeIcon(type)}</span>
+                <span className="truncate">{type.charAt(0).toUpperCase() + type.slice(1)}</span>
               </Button>
-            </div>
+            ))}
+
             <Button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="w-full"
-              onClick={() => setShowEditCustomAccountType(false)}
+              variant={
+                (typeof editAccount.type === 'string' &&
+                  !['cash','card','bank','crypto'].includes(editAccount.type)) || showEditCustomAccountType
+                  ? 'default' : 'outline'
+              }
+              onClick={() => { setShowEditCustomAccountType(true); }}
+              className="h-11 rounded-xl justify-center gap-2 min-w-0"
             >
-              {t('common.cancel')}
+              <Plus className="h-4 w-4" />
+              <span className="truncate">{t('finance.section.accounts.form.custom')}</span>
             </Button>
           </div>
-        )}
-      </div>
 
-      <div className="space-y-1.5">
-        <Label className="text-sm font-medium">{t('finance.section.accounts.form.currentBalance')}</Label>
-        <Input
-          type="number"
-          placeholder="0"
-          value={editAccount.balance}
-          onChange={(e) => setEditAccount(p => ({ ...p, balance: e.target.value }))}
-          className="h-11 w-full bg-surface-1 border-border rounded-xl"
-        />
-      </div>
+          {showEditCustomAccountType && (
+            <div className="mt-2 p-3 rounded-xl border border-border bg-surface-1 space-y-2">
+              <Label className="text-xs text-muted-foreground">{t('finance.section.accounts.form.customTypeNameLabel')}</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={editCustomAccountTypeName}
+                  onChange={(e) => setEditCustomAccountTypeName(e.target.value)}
+                  placeholder={t('finance.section.accounts.form.customTypeNamePlaceholder') as string}
+                  className="h-10 flex-1"
+                  onKeyDown={(e)=>{ if(e.key==='Enter') handleAddCustomAccountTypeForEdit(); }}
+                />
+                <Button
+                  type="button"
+                  onClick={handleAddCustomAccountTypeForEdit}
+                  disabled={!editCustomAccountTypeName.trim()}
+                  className="h-10 bg-money-gradient text-black font-semibold"
+                >
+                  {t('common.add')}
+                </Button>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowEditCustomAccountType(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+            </div>
+          )}
+        </div>
 
-      <div className="space-y-1.5">
-        <Label className="text-sm font-medium">{t('finance.section.accounts.form.currencyLabel', { defaultValue: 'Currency' })}</Label>
-        <Select
-          value={editAccount.currency}
-          onValueChange={(v) => setEditAccount(p => ({ ...p, currency: v }))}
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">{t('finance.section.accounts.form.currentBalance')}</Label>
+          <Input
+            type="number"
+            inputMode="decimal"
+            placeholder="0"
+            value={editAccount.balance}
+            onFocus={(e)=>{
+              const el = document.getElementById('edit-account-scroll');
+              setTimeout(()=>{ e.currentTarget.scrollIntoView({ block:'center', behavior:'smooth'}); el?.scrollBy({ top: -40}); }, 150);
+            }}
+            onChange={(e) => setEditAccount(p => ({ ...p, balance: e.target.value }))}
+            className="h-11 w-full bg-surface-1 border-border rounded-xl"
+          />
+        </div>
+
+        <div className="space-y-1.5 pb-8">
+          <Label className="text-sm font-medium">{t('finance.section.accounts.form.currencyLabel', { defaultValue: 'Currency' })}</Label>
+          <Select
+            value={editAccount.currency}
+            onValueChange={(v) => setEditAccount(p => ({ ...p, currency: v }))}
+          >
+            <SelectTrigger className="h-11 w-full bg-surface-1 border-border rounded-xl">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {['UZS','USD','EUR','RUB'].map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="p-4 sm:p-5 border-t border-border bg-surface-1/60 backdrop-blur supports-[backdrop-filter]:bg-surface-1/40">
+        <Button
+          type="submit"
+          className="w-full h-12 rounded-xl bg-money-gradient text-black font-semibold"
+          disabled={!editAccount.id}
         >
-          <SelectTrigger className="h-11 w-full bg-surface-1 border-border rounded-xl">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {['UZS','USD','EUR','RUB'].map(c => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {t('buttons.saveChanges')}
+        </Button>
       </div>
-
-      <Button
-        type="button"
-        onClick={handleUpdateAccount}
-        className="w-full h-12 rounded-xl bg-money-gradient text-black font-semibold mt-2"
-        disabled={!editAccount.id}
-      >
-        {t('buttons.saveChanges')}
-      </Button>
     </form>
   </div>
 </SlideUpModal>
