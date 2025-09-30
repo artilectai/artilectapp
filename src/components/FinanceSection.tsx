@@ -1048,12 +1048,24 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     }), [isTransactionLimitReached, limits.maxTransactionsPerMonth, onUpgrade]);
 
     const formatCurrency = useCallback((amount: number, curr: string = currency) => {
-      if (!curr) return new Intl.NumberFormat('en-US').format(amount);
-      if (curr === 'UZS') return 'UZS ' + new Intl.NumberFormat('uz-UZ').format(amount);
-      const symbol = curr === 'USD' ? '$' : curr === 'EUR' ? '€' : curr === 'RUB' ? '₽' : '';
-      const formatted = new Intl.NumberFormat('en-US').format(amount);
-      return symbol ? symbol + formatted : `${curr} ${formatted}`;
+      try {
+        // Decide fraction digits: 0 for UZS, else 2
+        const zeroDecimal = ['UZS'].includes(curr);
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: curr,
+          minimumFractionDigits: zeroDecimal ? 0 : 2,
+          maximumFractionDigits: zeroDecimal ? 0 : 2
+        }).format(amount);
+      } catch {
+        const zeroDecimal = ['UZS'].includes(curr);
+        return (zeroDecimal ? Math.round(amount).toString() : amount.toFixed(2)) + ' ' + curr;
+      }
     }, [currency]);
+
+    // Active currency: selected account's own currency if not 'all'
+    const selectedAccountObj = selectedAccount === 'all' ? null : accounts.find(a => a.id === selectedAccount);
+    const activeCurrency = selectedAccountObj ? (selectedAccountObj as any).currency || currency : currency;
 
     const getAccountTypeIcon = (type: 'cash' | 'card' | 'bank' | 'crypto' | 'all' | string) => {
       const icons: Record<'cash' | 'card' | 'bank' | 'crypto' | 'all', string> = {
@@ -2024,7 +2036,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                         <div className="flex-1">
                           <div className="font-medium">{account.name}</div>
                           <div className="text-xs text-muted-foreground">
-                            {formatCurrency(account.balance, currency)}
+                            {formatCurrency(account.balance, (account as any).currency || currency)}
                           </div>
                         </div>
                         <button
@@ -2065,7 +2077,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                   </span>
                 </div>
                 <p className="text-lg font-bold text-foreground">
-                  {balanceVisible ? formatCurrency(totals.balance) : "••••••"}
+                  {balanceVisible ? formatCurrency(totals.balance, activeCurrency) : "••••••"}
                 </p>
               </CardContent>
             </Card>
@@ -2081,7 +2093,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                   <span className="text-sm text-muted-foreground font-medium">{t('finance.section.cards.savings')}</span>
                 </div>
                 <p className={`text-lg font-bold ${totals.savings >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-                  {balanceVisible ? formatCurrency(totals.savings) : "••••••"}
+                  {balanceVisible ? formatCurrency(totals.savings, activeCurrency) : "••••••"}
                 </p>
               </CardContent>
             </Card>
@@ -2095,7 +2107,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                   <span className="text-sm text-muted-foreground font-medium">{t('finance.section.cards.income')}</span>
                 </div>
                 <p className="text-lg font-bold text-green-400">
-                  {balanceVisible ? formatCurrency(totals.income) : "••••••"}
+                  {balanceVisible ? formatCurrency(totals.income, activeCurrency) : "••••••"}
                 </p>
               </CardContent>
             </Card>
@@ -2109,7 +2121,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                   <span className="text-sm text-muted-foreground font-medium">{t('finance.section.cards.expenses')}</span>
                 </div>
                 <p className="text-lg font-bold text-red-400">
-                  {balanceVisible ? formatCurrency(totals.expense) : "••••••"}
+                  {balanceVisible ? formatCurrency(totals.expense, activeCurrency) : "••••••"}
                 </p>
               </CardContent>
             </Card>
