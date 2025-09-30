@@ -10,6 +10,7 @@ export async function createAccount(input: {
   color?: string;
   is_default?: boolean;
   balance?: number;
+  currency: string; // NEW per-account currency
 }) {
   const supabase = await supabaseServer();
   const { data: { user }, error: uErr } = await supabase.auth.getUser();
@@ -17,7 +18,12 @@ export async function createAccount(input: {
 
   const { error } = await supabase.from('finance_accounts').insert({
     user_id: user.id,
-    ...input,
+    name: input.name,
+    type: input.type,
+    color: input.color,
+    is_default: input.is_default,
+    balance: input.balance ?? 0,
+    currency: input.currency || 'UZS'
   });
   if (error) throw error;
 }

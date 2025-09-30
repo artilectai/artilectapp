@@ -242,7 +242,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       name: '',
       // allow arbitrary custom type strings
       type: 'cash' as 'cash' | 'card' | 'bank' | 'crypto' | string,
-      balance: '0'
+      balance: '0',
+      currency: 'UZS'
     });
 
     // Edit Account form
@@ -250,7 +251,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       id: '',
       name: '',
       type: 'cash' as 'cash' | 'card' | 'bank' | 'crypto' | string,
-      balance: '0'
+      balance: '0',
+      currency: 'UZS'
     });
 
     // Custom account type creation (similar to TransactionForm's "Custom" category)
@@ -1363,13 +1365,15 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         type: newAccount.type as any,
         color: '#10B981',
         is_default: accounts.length === 0,
-  balance: Number(newAccount.balance || '0'),
+        balance: Number(newAccount.balance || '0'),
+        currency: newAccount.currency || 'UZS'
       });
       await loadRemote();
       setNewAccount({
         name: '',
         type: 'cash',
-        balance: '0'
+        balance: '0',
+        currency: 'UZS'
       });
       
       setShowAccountDialog(false);
@@ -1384,7 +1388,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         id: acc.id,
         name: acc.name,
         type: acc.type,
-        balance: String(acc.balance ?? 0)
+        balance: String(acc.balance ?? 0),
+        currency: (acc as any).currency || 'UZS'
       });
       setShowEditCustomAccountType(false);
       setEditCustomAccountTypeName('');
@@ -1399,7 +1404,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         id: acc.id,
         name: acc.name,
         type: acc.type,
-        balance: String(acc.balance ?? 0)
+        balance: String(acc.balance ?? 0),
+        currency: (acc as any).currency || 'UZS'
       });
       setShowEditCustomAccountType(false);
       setEditCustomAccountTypeName('');
@@ -1416,7 +1422,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
       // Optimistic local update
       setAccounts(prev => prev.map(acc => acc.id === editAccount.id
-        ? { ...acc, name: editAccount.name, type: editAccount.type, balance: nextBalance }
+        ? { ...acc, name: editAccount.name, type: editAccount.type, balance: nextBalance, currency: editAccount.currency || (acc as any).currency || 'UZS' }
         : acc
       ));
       setShowEditAccountDialog(false);
@@ -1435,6 +1441,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               name: editAccount.name,
               type: editAccount.type as any,
               balance: nextBalance,
+              currency: editAccount.currency || 'UZS'
             })
             .eq('id', editAccount.id)
             .eq('user_id', userId);
@@ -1448,6 +1455,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
               name: editAccount.name,
               type: editAccount.type as any,
               balance: nextBalance,
+              currency: editAccount.currency || 'UZS',
               color: '#10B981',
               is_default: accounts.length === 0,
             })
