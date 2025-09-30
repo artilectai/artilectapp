@@ -48,7 +48,8 @@ export default function AccountsPage() {
   const handleCreate = async () => {
     try {
       setLoading(true);
-      await createAccount({ name: 'Wallet', type: 'cash', color: '#10b981' });
+  // Currency now optional (server defaults to profile or 'UZS'), can pass explicitly if desired
+  await createAccount({ name: 'Wallet', type: 'cash', color: '#10b981' });
       await load();
     } catch (e: any) {
       setError(e?.message || 'Failed to create account');
