@@ -1379,7 +1379,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         await loadRemote();
       } catch (err:any) {
         console.error('[AddAccount] failed', err);
-        toast.error(t('toasts.finance.accountCreateFailed', { defaultValue: 'Could not create account' }));
+        toast.error(`${t('toasts.finance.accountCreateFailed', { defaultValue: 'Could not create account' })}\n${err?.message || err}`);
         (handleSaveAccount as any)._pending = false;
         return;
       }
