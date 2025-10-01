@@ -2,16 +2,15 @@
 
 import { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { 
-  Plus, 
-  DollarSign, 
-  TrendingUp, 
+import {
   TrendingDown,
+  TrendingUp,
   Eye,
   EyeOff,
   Wallet,
   ArrowUpRight,
   ArrowDownRight,
+  Plus,
   Brain,
   Target,
   Calendar,
@@ -46,7 +45,6 @@ import { toast } from "sonner";
 import {
   ResponsiveContainer,
   LineChart as RechartsLineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -56,6 +54,7 @@ import {
   Cell,
   BarChart as RechartsBarChart,
   Bar,
+  Line,
   Legend
 } from 'recharts';
 // import { CustomCalendar } from "@/components/ui/calendar-custom"; // Replaced by DateStepper for finance flows
@@ -768,13 +767,16 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         try {
           if (!accounts.length) { setConvertedTotal(0); return; }
           const target = currency || 'EUR';
-          const total = await sumConverted(accounts.map(a => ({ amount: a.balance || 0, currency: a.currency || target })), target);
+          const scopeAccounts = (selectedAccount === 'multi' && selectedAccountIds)
+            ? accounts.filter(a => selectedAccountIds.has(a.id))
+            : (selectedAccount === 'all' ? accounts : accounts.filter(a => a.id === selectedAccount));
+          const total = await sumConverted(scopeAccounts.map(a => ({ amount: a.balance || 0, currency: a.currency || target })), target);
           setConvertedTotal(total);
         } catch {
           setConvertedTotal(null);
         }
       })();
-    }, [accounts, currency]);
+    }, [accounts, currency, selectedAccount, selectedAccountIds]);
 
     const filteredData = useMemo(() => {
       const { start, end } = getDateRange(timePeriod);
@@ -2051,9 +2053,19 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                   </div>
                   <Separator className="my-1" />
                   {accounts.map(acc => {
-                    const active = selectedAccountIds ? selectedAccountIds.has(acc.id) : (selectedAccount === acc.id);
+                    const inMulti = !!selectedAccountIds && selectedAccountIds.has(acc.id);
+                    const isSingle = !selectedAccountIds && selectedAccount === acc.id;
+                    const active = inMulti || isSingle;
                     return (
-                      <div key={acc.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-1 group">
+                      <div
+                        key={acc.id}
+                        className={`flex items-center gap-3 p-2 rounded-lg hover:bg-surface-1 group cursor-pointer ${isSingle ? 'bg-surface-1/80' : ''}`}
+                        onClick={() => {
+                          // Row click = focus on just this account (single view)
+                          setSelectedAccount(acc.id);
+                          setSelectedAccountIds(null);
+                        }}
+                      >
                         <span className="text-lg">{getAccountTypeIcon(acc.type)}</span>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate flex items-center gap-1">
@@ -2067,22 +2079,22 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                             type="button"
                             className="p-1 rounded hover:bg-surface-2 text-muted-foreground"
                             title={active ? t('common.remove') : t('common.select')}
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedAccountIds(prev => {
                                 let next: Set<string> | null;
                                 if (!prev) {
-                                  // starting a multi selection
+                                  // start multi-selection with this account
                                   next = new Set([acc.id]);
                                 } else {
                                   next = new Set(prev);
                                   if (next.has(acc.id)) next.delete(acc.id); else next.add(acc.id);
-                                  if (next.size === 0) next = null; // fallback to single all
+                                  if (next.size === 0) next = null;
                                 }
                                 if (next && next.size === 1) {
-                                  // collapse back to single account mode
                                   const only = Array.from(next)[0];
                                   setSelectedAccount(only);
-                                  return null; // we store null because single mode handled by selectedAccount
+                                  return null;
                                 }
                                 setSelectedAccount(next ? 'multi' : (selectedAccount === acc.id ? 'all' : selectedAccount));
                                 return next;
@@ -2094,7 +2106,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                           <button
                             type="button"
                             className="p-1 rounded hover:bg-surface-2 text-muted-foreground"
-                            onClick={() => openEditAccountDialogById(acc.id)}
+                            onClick={(e) => { e.stopPropagation(); openEditAccountDialogById(acc.id); }}
                             title={t('finance.section.accounts.edit')}
                           >
                             <Pencil className="h-4 w-4" />
