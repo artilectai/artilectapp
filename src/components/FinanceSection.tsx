@@ -2097,9 +2097,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                   </span>
                 </div>
                 <p className="text-lg font-bold text-foreground">
-                  {balanceVisible ? formatCurrency(totals.balance, activeCurrency) : "••••••"}
-                  {selectedAccount === 'all' && convertedTotal != null && balanceVisible && (
-                    <span className="ml-2 text-xs text-muted-foreground">≈ {formatCurrency(convertedTotal, activeCurrency)}</span>
+                  {balanceVisible ? (
+                    selectedAccount === 'all'
+                      ? formatCurrency(convertedTotal ?? 0, activeCurrency)
+                      : formatCurrency(totals.balance, activeCurrency)
+                  ) : '••••••'}
+                  {selectedAccount === 'all' && balanceVisible && (
+                    <span className="ml-2 text-xs text-muted-foreground">(converted)</span>
                   )}
                 </p>
               </CardContent>
