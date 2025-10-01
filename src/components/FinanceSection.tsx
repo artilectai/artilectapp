@@ -23,7 +23,8 @@ import {
   X,
   History,
   Lock,
-  Crown
+  Crown,
+  Check
 } from "lucide-react";
 import { Trash2 } from "lucide-react";
 import { Pencil } from "lucide-react";
@@ -184,7 +185,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
-    const [selectedAccount, setSelectedAccount] = useState<string>("all");
+  const [selectedAccount, setSelectedAccount] = useState<string>("all"); // 'all' | accountId | 'multi'
+  const [selectedAccountIds, setSelectedAccountIds] = useState<Set<string> | null>(null); // null => all
     const [balanceVisible, setBalanceVisible] = useState(true);
     const [activeTab, setActiveTab] = useState("dashboard");
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("weekly");
@@ -776,13 +778,19 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
     const filteredData = useMemo(() => {
       const { start, end } = getDateRange(timePeriod);
-      const filteredAccounts = selectedAccount === "all" 
-        ? accounts 
-        : accounts.filter(account => account.id === selectedAccount);
+      const filteredAccounts = (selectedAccount === "all" && !selectedAccountIds)
+        ? accounts
+        : (selectedAccount === 'multi' && selectedAccountIds)
+          ? accounts.filter(a => selectedAccountIds.has(a.id))
+          : accounts.filter(a => a.id === selectedAccount);
       
       let filteredTransactions = transactions.filter(t => {
         const inDateRange = t.date >= start && t.date <= end;
-        const inAccount = selectedAccount === "all" || t.accountId === selectedAccount;
+        const inAccount = (selectedAccount === "all" && !selectedAccountIds)
+          ? true
+          : (selectedAccount === 'multi' && selectedAccountIds)
+            ? selectedAccountIds.has(t.accountId)
+            : t.accountId === selectedAccount;
         return inDateRange && inAccount;
       });
 
@@ -943,7 +951,11 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       // Get all transactions in the extended range
       const extendedTransactions = transactions.filter(t => {
         const inDateRange = t.date >= extendedStart && t.date <= extendedEnd;
-        const inAccount = selectedAccount === "all" || t.accountId === selectedAccount;
+        const inAccount = (selectedAccount === 'all' && !selectedAccountIds)
+          ? true
+          : (selectedAccount === 'multi' && selectedAccountIds)
+            ? selectedAccountIds.has(t.accountId)
+            : t.accountId === selectedAccount;
         return inDateRange && inAccount;
       });
       
@@ -1084,8 +1096,10 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
     }, [currency]);
 
     // Active currency: selected account's own currency if not 'all'
-    const selectedAccountObj = selectedAccount === 'all' ? null : accounts.find(a => a.id === selectedAccount);
-    const activeCurrency = selectedAccountObj ? (selectedAccountObj as any).currency || currency : currency;
+    const selectedAccountObj = (selectedAccount === 'all' || selectedAccount === 'multi') ? null : accounts.find(a => a.id === selectedAccount);
+    const activeCurrency = (selectedAccount === 'multi' || selectedAccount === 'all')
+      ? currency
+      : (selectedAccountObj ? (selectedAccountObj as any).currency || currency : currency);
 
     const getAccountTypeIcon = (type: 'cash' | 'card' | 'bank' | 'crypto' | 'all' | string) => {
       const icons: Record<'cash' | 'card' | 'bank' | 'crypto' | 'all', string> = {
@@ -2013,73 +2027,101 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                 </SelectContent>
               </Select>
 
-              {/* Account Selector */}
-              <Select value={selectedAccount} onValueChange={(value) => {
-                if (value === "add_account") {
-                  if (isAccountLimitReached) {
-                    const planMsg = subscriptionPlan === 'free'
-                      ? t('toasts.finance.accountLimit.free')
-                      : t('toasts.finance.accountLimit.lite');
-                    toast.error(planMsg);
-                    onUpgrade?.();
-                    return;
-                  }
-                  setShowAccountDialog(true);
-                } else {
-                  setSelectedAccount(value);
-                }
-              }}>
-        <SelectTrigger className="h-10 w-auto min-w-0 sm:min-w-[140px] max-w-[52vw] sm:max-w-[320px] bg-surface-1/50 border-border/20 rounded-full overflow-hidden whitespace-nowrap">
-                  <div className="flex items-center gap-2">
+              {/* Account Selector (multi-select capable) */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-10 w-auto min-w-0 sm:min-w-[140px] max-w-[52vw] sm:max-w-[320px] rounded-full bg-surface-1/50 border-border/20 flex items-center gap-2 overflow-hidden">
                     <span className="text-base">
-                      {selectedAccount === "all" ? '📊' : getAccountTypeIcon(accounts.find(a => a.id === selectedAccount)?.type || '')}
+                      {selectedAccount === 'all' && !selectedAccountIds ? '📊' : (selectedAccount === 'multi' ? '📊' : getAccountTypeIcon(accounts.find(a=>a.id===selectedAccount)?.type||''))}
                     </span>
-          <span className="text-sm font-medium truncate max-w-[38vw] sm:max-w-[200px]">
-                      {selectedAccount === "all" ? t('finance.section.accounts.all') : accounts.find(a => a.id === selectedAccount)?.name || t('finance.section.accounts.all')}
+                    <span className="text-sm font-medium truncate max-w-[38vw] sm:max-w-[200px]">
+                      {selectedAccount === 'all' && !selectedAccountIds && t('finance.section.accounts.all')}
+                      {selectedAccount === 'multi' && selectedAccountIds && `${selectedAccountIds.size} ${t('finance.section.accounts.selected', { defaultValue: 'selected' })}`}
+                      {selectedAccount !== 'all' && selectedAccount !== 'multi' && (accounts.find(a=>a.id===selectedAccount)?.name || t('finance.section.accounts.all'))}
                     </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2 space-y-1" align="end" onOpenAutoFocus={(e)=>e.preventDefault()}>
+                  <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-surface-1 cursor-pointer" onClick={() => { setSelectedAccount('all'); setSelectedAccountIds(null); }}>
+                    <span className="text-lg">📊</span>
+                    <div className="flex-1">
+                      <div className="font-medium flex items-center gap-1">{t('finance.section.accounts.allAccounts')}{selectedAccount === 'all' && !selectedAccountIds && <Check className="h-4 w-4 text-green-500" />}</div>
+                      <div className="text-xs text-muted-foreground">{t('finance.section.accounts.viewAllBalances')}</div>
+                    </div>
                   </div>
-                </SelectTrigger>
-                <SelectContent className="w-56">
-                  <SelectItem value="all">
-                    <div className="flex items-center gap-3 py-1">
-                      <span className="text-lg">📊</span>
-                      <div>
-                        <div className="font-medium">{t('finance.section.accounts.allAccounts')}</div>
-                        <div className="text-xs text-muted-foreground">{t('finance.section.accounts.viewAllBalances')}</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  {accounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      <div className="flex items-center gap-3 py-1">
-                        <span className="text-lg">{getAccountTypeIcon(account.type)}</span>
-                        <div className="flex-1">
-                          <div className="font-medium">{account.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatCurrency(account.balance, (account as any).currency || currency)}
+                  <Separator className="my-1" />
+                  {accounts.map(acc => {
+                    const active = selectedAccountIds ? selectedAccountIds.has(acc.id) : (selectedAccount === acc.id);
+                    return (
+                      <div key={acc.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-1 group">
+                        <span className="text-lg">{getAccountTypeIcon(acc.type)}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate flex items-center gap-1">
+                            {acc.name}
+                            {active && <Check className="h-4 w-4 text-green-500" />}
                           </div>
+                          <div className="text-xs text-muted-foreground truncate">{formatCurrency(acc.balance, (acc as any).currency || currency)}</div>
                         </div>
-                        <button
-                          type="button"
-                          className="ml-2 p-1 rounded hover:bg-surface-1 text-muted-foreground"
-                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); openEditAccountDialogById(account.id); }}
-                          title={t('finance.section.accounts.edit')}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
+                        <div className="flex gap-1 items-center">
+                          <button
+                            type="button"
+                            className="p-1 rounded hover:bg-surface-2 text-muted-foreground"
+                            title={active ? t('common.remove') : t('common.select')}
+                            onClick={() => {
+                              setSelectedAccountIds(prev => {
+                                let next: Set<string> | null;
+                                if (!prev) {
+                                  // starting a multi selection
+                                  next = new Set([acc.id]);
+                                } else {
+                                  next = new Set(prev);
+                                  if (next.has(acc.id)) next.delete(acc.id); else next.add(acc.id);
+                                  if (next.size === 0) next = null; // fallback to single all
+                                }
+                                if (next && next.size === 1) {
+                                  // collapse back to single account mode
+                                  const only = Array.from(next)[0];
+                                  setSelectedAccount(only);
+                                  return null; // we store null because single mode handled by selectedAccount
+                                }
+                                setSelectedAccount(next ? 'multi' : (selectedAccount === acc.id ? 'all' : selectedAccount));
+                                return next;
+                              });
+                            }}
+                          >
+                            {active ? <Check className="h-4 w-4 text-green-500" /> : <span className="text-xs text-muted-foreground">✓</span>}
+                          </button>
+                          <button
+                            type="button"
+                            className="p-1 rounded hover:bg-surface-2 text-muted-foreground"
+                            onClick={() => openEditAccountDialogById(acc.id)}
+                            title={t('finance.section.accounts.edit')}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
-                    </SelectItem>
-                  ))}
-                  <Separator className="my-2" />
-                  <SelectItem value="add_account">
-                    <div className="flex items-center gap-3 py-1 text-money-green">
-                      <Plus className="h-5 w-5" />
-                      <span className="font-medium">{t('finance.section.accounts.add')}</span>
-                      {isAccountLimitReached && <Lock className="h-4 w-4 ml-auto" />}
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                    );
+                  })}
+                  <Separator className="my-1" />
+                  <div
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-1 cursor-pointer text-money-green"
+                    onClick={() => {
+                      if (isAccountLimitReached) {
+                        const planMsg = subscriptionPlan === 'free'
+                          ? t('toasts.finance.accountLimit.free')
+                          : t('toasts.finance.accountLimit.lite');
+                        toast.error(planMsg); onUpgrade?.(); return;
+                      }
+                      setShowAccountDialog(true);
+                    }}
+                  >
+                    <Plus className="h-5 w-5" />
+                    <span className="font-medium">{t('finance.section.accounts.add')}</span>
+                    {isAccountLimitReached && <Lock className="h-4 w-4 ml-auto" />}
+                  </div>
+                </PopoverContent>
+              </Popover>
               {/* per-account edit is now inside the dropdown items */}
             </div>
           </div>
@@ -2093,16 +2135,16 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     <Wallet className="h-4 w-4 text-green-400" />
                   </div>
                   <span className="text-sm text-muted-foreground font-medium">
-                    {selectedAccount === "all" ? t('finance.section.cards.totalBalance') : t('finance.section.cards.balance')}
+                    {(selectedAccount === 'all' || selectedAccount === 'multi') ? t('finance.section.cards.totalBalance') : t('finance.section.cards.balance')}
                   </span>
                 </div>
                 <p className="text-lg font-bold text-foreground">
                   {balanceVisible ? (
-                    selectedAccount === 'all'
+                    (selectedAccount === 'all' || selectedAccount === 'multi')
                       ? formatCurrency(convertedTotal ?? 0, activeCurrency)
                       : formatCurrency(totals.balance, activeCurrency)
                   ) : '••••••'}
-                  {selectedAccount === 'all' && balanceVisible && (
+                  {(selectedAccount === 'all' || selectedAccount === 'multi') && balanceVisible && (
                     <span className="ml-2 text-xs text-muted-foreground">(converted)</span>
                   )}
                 </p>
