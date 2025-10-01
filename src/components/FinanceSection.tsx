@@ -759,15 +759,13 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       }
     }, [transactions, isInitialized, budgets.length, getDateRange]);
 
-    const filteredData = useMemo(() => {
-      const { start, end } = getDateRange(timePeriod);
-    // Aggregate total balance converted into the user's selected currency preference
+    // Aggregate total balance converted into the user's selected (profile) currency
     const [convertedTotal, setConvertedTotal] = useState<number | null>(null);
     useEffect(() => {
       (async () => {
         try {
           if (!accounts.length) { setConvertedTotal(0); return; }
-          const target = currency || 'EUR'; // default display currency if none selected
+          const target = currency || 'EUR';
           const total = await sumConverted(accounts.map(a => ({ amount: a.balance || 0, currency: a.currency || target })), target);
           setConvertedTotal(total);
         } catch {
@@ -775,7 +773,9 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         }
       })();
     }, [accounts, currency]);
-      
+
+    const filteredData = useMemo(() => {
+      const { start, end } = getDateRange(timePeriod);
       const filteredAccounts = selectedAccount === "all" 
         ? accounts 
         : accounts.filter(account => account.id === selectedAccount);

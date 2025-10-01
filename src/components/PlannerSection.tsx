@@ -2497,7 +2497,6 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
         } as any;
       });
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [goal.id, goal.checklist]);
 
   // Debounce saver
