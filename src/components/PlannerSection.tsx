@@ -2471,32 +2471,61 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
+  // Track original goal id; only reinitialize rows when goal object identity changes (not every keystroke save)
+  const goalIdRef = useRef(goal.id);
   useEffect(() => {
-    setRows(toExtended());
-  }, [goal.id, goal.checklist, goal.milestones]);
+    if (goalIdRef.current !== goal.id) {
+      goalIdRef.current = goal.id;
+      setRows(toExtended());
+      return;
+    }
+    // If checklist array reference changes length (e.g., external addition/removal), sync.
+    setRows(prev => {
+      if (!Array.isArray(goal.checklist)) return prev;
+      // Keep existing in-progress edits by merging text/completed status where ids match.
+      const map = new Map(prev.map(r => [r.id, r]));
+      return goal.checklist.map(ci => {
+        const existing = map.get(ci.id as any);
+        return {
+          id: ci.id,
+          completed: ci.completed,
+          text: (ci as any).text || (ci as any).title || existing?.text || existing?.title || '',
+          title: (ci as any).text || (ci as any).title || existing?.title || existing?.text || '',
+          status: existing?.status || 'todo',
+          notes: existing?.notes,
+          dueDate: existing?.dueDate || null
+        } as any;
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goal.id, goal.checklist]);
+
+  // Debounce saver
+  const saveTimer = useRef<any>(null);
+  const scheduleSave = (next: ExtendedChecklistRow[]) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
+      const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
+      onChange({ ...goal, checklist: persisted, milestones: [], progress });
+    }, 350);
+  };
 
   const updateRow = (id: string, patch: Partial<ExtendedChecklistRow>) => {
-    const next = rows.map(r => r.id === id ? { ...r, ...patch } : r);
+    const next = rows.map(r => r.id === id ? { ...r, ...patch, ...(patch.title && !patch.text ? { text: patch.title } : {}), ...(patch.text && !patch.title ? { title: patch.text } : {}) } : r);
     setRows(next);
-    const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
-    // Persist only id/text/completed
-    const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
-    onChange({ ...goal, checklist: persisted, milestones: [], progress });
+    scheduleSave(next);
   };
   const addRow = () => {
     const r: ExtendedChecklistRow = { id: String(Date.now()), text: '', title: '', completed: false, status: 'todo' };
     const next = [...rows, r];
     setRows(next);
-    const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
-    const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
-    onChange({ ...goal, checklist: persisted, milestones: [], progress });
+    scheduleSave(next);
   };
   const removeRow = (id: string) => {
     const next = rows.filter(r => r.id !== id);
     setRows(next);
-    const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
-    const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
-    onChange({ ...goal, checklist: persisted, milestones: [], progress });
+    scheduleSave(next);
   };
 
   // --- Drag & Drop reordering ---
@@ -2711,10 +2740,10 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
                     <Checkbox checked={r.completed} onCheckedChange={(c) => updateRow(r.id, { completed: !!c })} />
                   </div>
                   <Textarea
-                    value={r.title}
+                    value={r.title || ''}
                     onChange={(e)=>{
-                      updateRow(r.id, { title: e.target.value });
-                      // auto-resize to fit content
+                      const val = e.target.value;
+                      updateRow(r.id, { title: val, text: val });
                       const el = e.currentTarget; requestAnimationFrame(()=>{ el.style.height = '0px'; el.style.height = el.scrollHeight + 'px'; });
                     }}
                     onInput={(e:any)=>{ const el = e.currentTarget as HTMLTextAreaElement; el.style.height='0px'; el.style.height=el.scrollHeight+'px'; }}

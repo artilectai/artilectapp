@@ -63,6 +63,7 @@ import { FinanceDataManager as FinanceStore } from "@/lib/finance-data-manager";
 import { supabase } from "@/lib/supabase/client";
 import { createAccount as createAccountAction, updateAccount as updateAccountAction } from "@/app/actions/finance/accounts";
 import { useSession } from "@/lib/supabase/useSession";
+import { sumConverted } from '@/lib/currency';
 
 // Types
 interface Account {
@@ -71,6 +72,8 @@ interface Account {
   // Allow custom account types in addition to the defaults
   type: "cash" | "card" | "bank" | "crypto" | string;
   balance: number;
+  // Per-account currency (falls back to user profile currency on creation)
+  currency?: string;
   color: string;
   isDefault: boolean;
   createdAt: Date;
@@ -538,6 +541,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             name: a.name,
             type: a.type,
             balance: Number(a.balance ?? 0),
+            currency: a.currency || (typeof currency === 'string' && currency) || 'UZS',
             color: a.color || '#10B981',
             isDefault: !!a.is_default,
             createdAt: a.created_at ? new Date(a.created_at) : new Date(),
@@ -681,6 +685,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         name: accountData.name,
         type: accountData.type,
         balance: accountData.balance,
+          currency: accountData.currency,
         color: '#10B981',
         isDefault: true,
         createdAt: new Date()
@@ -718,6 +723,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           name: 'Main Account',
           type: 'cash',
           balance: 0,
+          currency: currency || 'UZS',
           color: '#10B981',
           isDefault: true,
           createdAt: new Date()
@@ -755,6 +761,20 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
     const filteredData = useMemo(() => {
       const { start, end } = getDateRange(timePeriod);
+    // Aggregate total balance converted into the user's selected currency preference
+    const [convertedTotal, setConvertedTotal] = useState<number | null>(null);
+    useEffect(() => {
+      (async () => {
+        try {
+          if (!accounts.length) { setConvertedTotal(0); return; }
+          const target = currency || 'EUR'; // default display currency if none selected
+          const total = await sumConverted(accounts.map(a => ({ amount: a.balance || 0, currency: a.currency || target })), target);
+          setConvertedTotal(total);
+        } catch {
+          setConvertedTotal(null);
+        }
+      })();
+    }, [accounts, currency]);
       
       const filteredAccounts = selectedAccount === "all" 
         ? accounts 
@@ -2078,6 +2098,9 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                 </div>
                 <p className="text-lg font-bold text-foreground">
                   {balanceVisible ? formatCurrency(totals.balance, activeCurrency) : "••••••"}
+                  {selectedAccount === 'all' && convertedTotal != null && balanceVisible && (
+                    <span className="ml-2 text-xs text-muted-foreground">≈ {formatCurrency(convertedTotal, activeCurrency)}</span>
+                  )}
                 </p>
               </CardContent>
             </Card>
