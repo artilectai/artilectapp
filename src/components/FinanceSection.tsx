@@ -2038,7 +2038,11 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     </span>
                     <span className="text-sm font-medium truncate max-w-[38vw] sm:max-w-[200px]">
                       {selectedAccount === 'all' && !selectedAccountIds && t('finance.section.accounts.all')}
-                      {selectedAccount === 'multi' && selectedAccountIds && `${selectedAccountIds.size} ${t('finance.section.accounts.selected', { defaultValue: 'selected' })}`}
+                      {selectedAccount === 'multi' && selectedAccountIds && (
+                        selectedAccountIds.size === 1
+                          ? accounts.find(a => selectedAccountIds.has(a.id))?.name || t('finance.section.accounts.selectedOne', { defaultValue: 'Selected' })
+                          : `${selectedAccountIds.size} ${t('finance.section.accounts.selected', { defaultValue: 'selected' })}`
+                      )}
                       {selectedAccount !== 'all' && selectedAccount !== 'multi' && (accounts.find(a=>a.id===selectedAccount)?.name || t('finance.section.accounts.all'))}
                     </span>
                   </Button>
@@ -2078,30 +2082,33 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                           <button
                             type="button"
                             className="p-1 rounded hover:bg-surface-2 text-muted-foreground"
-                            title={active ? t('common.remove') : t('common.select')}
+                            title={inMulti ? t('common.remove') : t('common.select')}
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedAccountIds(prev => {
                                 let next: Set<string> | null;
                                 if (!prev) {
-                                  // start multi-selection with this account
+                                  // Begin a new multi-selection starting with this account
                                   next = new Set([acc.id]);
                                 } else {
                                   next = new Set(prev);
                                   if (next.has(acc.id)) next.delete(acc.id); else next.add(acc.id);
                                   if (next.size === 0) next = null;
                                 }
-                                if (next && next.size === 1) {
-                                  const only = Array.from(next)[0];
-                                  setSelectedAccount(only);
-                                  return null;
+                                if (next) {
+                                  // Always treat as multi mode while a Set exists (even size 1) so user can keep adding
+                                  setSelectedAccount('multi');
+                                } else {
+                                  // If user removed the last one, fallback: if they removed from single-focused row keep single else 'all'
+                                  setSelectedAccount('all');
                                 }
-                                setSelectedAccount(next ? 'multi' : (selectedAccount === acc.id ? 'all' : selectedAccount));
                                 return next;
                               });
                             }}
                           >
-                            {active ? <Check className="h-4 w-4 text-green-500" /> : <span className="text-xs text-muted-foreground">✓</span>}
+                            {inMulti ? <Check className="h-4 w-4 text-green-500" /> : (
+                              isSingle ? <span className="text-xs text-muted-foreground">✓</span> : <span className="text-xs text-muted-foreground">✓</span>
+                            )}
                           </button>
                           <button
                             type="button"
@@ -2237,25 +2244,38 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
           <div className="p-4">
             <Tabs value={activeTab} onValueChange={handleRestrictedTabAccess} className="w-full">
               {/* Centered segmented control: wrapper uses flex to center; inner grid has fixed max width */}
-              <div className="w-full flex justify-center mb-6">
-                {/* Remove fixed max-width so longer localized labels (RU/UZ) don't wrap and shift perceived center */}
-                <TabsList className="grid grid-cols-4 w-full sm:w-auto bg-surface-1 h-12 rounded-full overflow-hidden px-1">
-                <TabsTrigger value="dashboard" className="text-sm font-medium rounded-full">{t('finance.section.tabs.dashboard')}</TabsTrigger>
-                <TabsTrigger value="transactions" className="text-sm font-medium rounded-full">{t('finance.section.tabs.transactions')}</TabsTrigger>
-                <TabsTrigger 
-                  value="budgets" 
-                  className={`text-sm font-medium rounded-full flex items-center gap-1 ${!limits.budgetsAllowed ? 'opacity-50' : ''}`}
+              <div className="w-full flex justify-center md:justify-start mb-6 px-0 md:px-2">
+                {/* Responsive Tabs: pill segmented control on mobile, inline buttons on desktop */}
+                <TabsList
+                  className="grid grid-cols-4 w-full sm:w-auto bg-surface-1 h-12 rounded-full overflow-hidden px-1
+                  md:inline-flex md:h-auto md:bg-transparent md:rounded-none md:overflow-visible md:px-0 md:gap-2"
                 >
-                  {t('finance.section.tabs.budgets')}
-                  {!limits.budgetsAllowed && <Lock className="h-3 w-3" />}
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="goals" 
-                  className={`text-sm font-medium rounded-full flex items-center gap-1 ${!limits.goalsAllowed ? 'opacity-50' : ''}`}
-                >
-                  {t('finance.section.tabs.goals')}
-                  {!limits.goalsAllowed && <Lock className="h-3 w-3" />}
-                </TabsTrigger>
+                  <TabsTrigger
+                    value="dashboard"
+                    className="text-sm font-medium rounded-full md:rounded-lg md:px-4 md:py-2 md:data-[state=active]:bg-surface-1 md:data-[state=active]:shadow"
+                  >
+                    {t('finance.section.tabs.dashboard')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="transactions"
+                    className="text-sm font-medium rounded-full md:rounded-lg md:px-4 md:py-2 md:data-[state=active]:bg-surface-1 md:data-[state=active]:shadow"
+                  >
+                    {t('finance.section.tabs.transactions')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="budgets"
+                    className={`text-sm font-medium rounded-full flex items-center gap-1 md:rounded-lg md:px-4 md:py-2 md:data-[state=active]:bg-surface-1 md:data-[state=active]:shadow ${!limits.budgetsAllowed ? 'opacity-50' : ''}`}
+                  >
+                    {t('finance.section.tabs.budgets')}
+                    {!limits.budgetsAllowed && <Lock className="h-3 w-3" />}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="goals"
+                    className={`text-sm font-medium rounded-full flex items-center gap-1 md:rounded-lg md:px-4 md:py-2 md:data-[state=active]:bg-surface-1 md:data-[state=active]:shadow ${!limits.goalsAllowed ? 'opacity-50' : ''}`}
+                  >
+                    {t('finance.section.tabs.goals')}
+                    {!limits.goalsAllowed && <Lock className="h-3 w-3" />}
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
