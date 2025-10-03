@@ -156,8 +156,8 @@ padding-inline: 2rem;
   /* Prefer dynamic viewport height to avoid 100vh bugs on iOS */
   .min-h-dvh { min-height: 100dvh; }
   /* Root height based on Telegram viewport */
-  html, body, #__next, #root {
-    /* Prefer Telegram-provided stable viewport height to avoid keyboard and header jumps */
+  /* Only force app to occupy Telegram provided viewport when actually inside Telegram (html.tg-env is added runtime) */
+  html.tg-env, html.tg-env body, html.tg-env #__next, html.tg-env #root {
     height: var(--tg-viewport-stable-height, var(--tgvh, 100svh));
     min-height: var(--tg-viewport-stable-height, var(--tgvh, 100svh));
   }
@@ -202,14 +202,17 @@ height: var(--tg-viewport-stable-height, var(--tgvh, 100svh));
 overscroll-behavior: none;
 }
 body {
-background: linear-gradient(180deg, var(--color-premium-black) 0%, var(--color-background) 100%);
-color: var(--color-foreground);
-/* Reduce iOS rubber-banding and accidental close gestures inside Telegram */
-overscroll-behavior-y: contain; /* prevent root scroll chaining */
-overscroll-behavior-x: none;
-touch-action: pan-y;
-height: var(--tg-viewport-stable-height, var(--tgvh, 100svh));
-overflow: hidden; /* prevent outer scroll that triggers pull-to-dismiss */
+  background: linear-gradient(180deg, var(--color-premium-black) 0%, var(--color-background) 100%);
+  color: var(--color-foreground);
+}
+/* Telegram specific body constraints */
+html.tg-env body {
+  /* Reduce iOS rubber-banding and accidental close gestures inside Telegram */
+  overscroll-behavior-y: contain;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+  height: var(--tg-viewport-stable-height, var(--tgvh, 100svh));
+  overflow: hidden; /* prevent outer scroll that triggers pull-to-dismiss in Telegram */
 }
 h1, h2, h3, h4 {
 font-family: var(--font-heading);

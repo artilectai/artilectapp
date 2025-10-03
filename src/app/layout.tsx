@@ -33,54 +33,42 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-  <body className="antialiased app-frame">
+  {/* Add a runtime class to <body> only in Telegram environment to scope full-height styles */}
+  <body className="antialiased app-frame" data-env="web">
           {/* Early Telegram bootstrap to force full-screen and disable collapse before hydration */}
           <Script id="tg-early-expand" strategy="beforeInteractive">
             {`
               (function(){
+                // Detect Telegram environment; do nothing on normal web so browser UI (tabs, window chrome) stays visible.
+                var isTg = !!(window.Telegram && window.Telegram.WebApp);
+                if(!isTg){
+                  try { document.body?.setAttribute('data-env','web'); } catch(e){}
+                  return; // exit early: no forced fullscreen
+                }
+                try { document.body?.setAttribute('data-env','telegram'); document.documentElement.classList.add('tg-env'); } catch(e){}
                 var tries = 0;
                 function apply(){
                   try {
-                    var tg = window.Telegram && window.Telegram.WebApp;
-                    if(!tg) return false;
+                    var tg = window.Telegram && window.Telegram.WebApp; if(!tg) return false;
                     try{ tg.ready && tg.ready(); }catch(e){}
                     try{ tg.expand && tg.expand(); }catch(e){}
-                    // Bot API 8.0+: full-screen API
-                    try{
-                      if (typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('8.0') && typeof tg.requestFullscreen === 'function') {
-                        tg.requestFullscreen();
-                      }
-                    }catch(e){}
+                    // Only request explicit fullscreen inside Telegram host; never in normal browser context
+                    try{ if (typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('8.0') && typeof tg.requestFullscreen === 'function' && !tg.isFullscreen) { tg.requestFullscreen(); } }catch(e){}
                     try{ tg.disableVerticalSwipes && tg.disableVerticalSwipes(); }catch(e){}
                     try{ tg.enableClosingConfirmation && tg.enableClosingConfirmation(); }catch(e){}
                     try{ tg.setHeaderColor && tg.setHeaderColor('secondary_bg_color'); }catch(e){}
                     return true;
                   } catch(e) { return false; }
                 }
-                // First attempt immediately
                 apply();
-                // Re-apply a few times to catch late SDK init or chat-mode open
-                var iv = setInterval(function(){
-                  tries++;
-                  if (apply() || tries > 20) { clearInterval(iv); }
-                }, 150);
-                // Also on focus / visibility and viewport changes
+                var iv = setInterval(function(){ tries++; if (apply() || tries > 20) { clearInterval(iv); } }, 150);
                 function re(){ apply(); }
                 window.addEventListener('focus', re, { passive: true });
                 document.addEventListener('visibilitychange', re, { passive: true });
-                try {
-                  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.onEvent) {
-                    window.Telegram.WebApp.onEvent('viewportChanged', re);
-                    window.Telegram.WebApp.onEvent('fullscreenChanged', function(){
-                      try {
-                        var tg = window.Telegram && window.Telegram.WebApp;
-                        if (tg && !tg.isFullscreen && typeof tg.requestFullscreen === 'function') {
-                          tg.requestFullscreen();
-                        }
-                      } catch(e){}
-                    });
-                  }
-                } catch(e){}
+                try { if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.onEvent) {
+                  window.Telegram.WebApp.onEvent('viewportChanged', re);
+                  window.Telegram.WebApp.onEvent('fullscreenChanged', function(){ try { var tg = window.Telegram && window.Telegram.WebApp; if (tg && !tg.isFullscreen && typeof tg.requestFullscreen === 'function') { tg.requestFullscreen(); } } catch(e){} });
+                }} catch(e){}
               })();
             `}
           </Script>
