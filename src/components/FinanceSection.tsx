@@ -2145,8 +2145,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             </div>
           </div>
 
-          {/* Balance Cards - responsive: 2 cols mobile, 4 cols md+ */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 xl:gap-5">
+          {/* Balance Cards */}
+          <div className="grid grid-cols-2 gap-3">
             <Card className="glass-card">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -2281,7 +2281,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
               <TabsContent value="dashboard" className="space-y-6">
                 {/* Quick Actions */}
-                <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3 md:gap-4">
+                <div className="grid grid-cols-4 gap-3">
                   <ScaleButton onClick={() => {
                     if (isTransactionLimitReached) {
                       toast.error(t('toasts.finance.transactionLimit', { limit: limits.maxTransactionsPerMonth }));
@@ -2290,7 +2290,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     }
                     setShowTransactionDialog(true);
                   }}>
-                    <Card className="glass-card hover:bg-surface-1/50 transition-colors md:col-span-2 lg:col-span-3">
+                    <Card className="glass-card hover:bg-surface-1/50 transition-colors">
                       <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
                         <div className="w-8 h-8 bg-money-green/10 rounded-full flex items-center justify-center mx-auto mb-1">
                           <Plus className="h-3.5 w-3.5 text-money-green" />
@@ -2314,7 +2314,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     }
                     setShowAccountDialog(true);
                   }}>
-                    <Card className="glass-card hover:bg-surface-1/50 transition-colors md:col-span-2 lg:col-span-3">
+                    <Card className="glass-card hover:bg-surface-1/50 transition-colors">
                       <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
                         <div className="w-8 h-8 bg-blue-400/10 rounded-full flex items-center justify-center mx-auto mb-1">
                           <Wallet className="h-3.5 w-3.5 text-blue-400" />
@@ -2335,7 +2335,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     }
                     setShowBudgetDialog(true);
                   }}>
-                    <Card className="glass-card hover:bg-surface-1/50 transition-colors md:col-span-2 lg:col-span-3">
+                    <Card className="glass-card hover:bg-surface-1/50 transition-colors">
                       <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
                         <div className="w-8 h-8 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-1">
                           <Target className="h-3.5 w-3.5 text-yellow-400" />
@@ -2356,7 +2356,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
                     }
                     setShowGoalDialog(true);
                   }}>
-                    <Card className="glass-card hover:bg-surface-1/50 transition-colors md:col-span-2 lg:col-span-3">
+                    <Card className="glass-card hover:bg-surface-1/50 transition-colors">
                       <CardContent className="p-2.5 text-center flex flex-col items-center justify-center h-20">
                         <div className="w-8 h-8 bg-purple-400/10 rounded-full flex items-center justify-center mx-auto mb-1">
                           <TrendingUp className="h-3.5 w-3.5 text-purple-400" />
