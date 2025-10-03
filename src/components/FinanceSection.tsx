@@ -2145,8 +2145,8 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
             </div>
           </div>
 
-          {/* Balance Cards */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Balance Cards - responsive full-width layout */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 w-full">
             <Card className="glass-card">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -2281,7 +2281,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
 
               <TabsContent value="dashboard" className="space-y-6">
                 {/* Quick Actions */}
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-8 gap-3 md:gap-4 w-full">
                   <ScaleButton onClick={() => {
                     if (isTransactionLimitReached) {
                       toast.error(t('toasts.finance.transactionLimit', { limit: limits.maxTransactionsPerMonth }));
