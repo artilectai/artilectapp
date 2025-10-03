@@ -2299,10 +2299,29 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
             selectedGoal ? (
               projectMode && (viewMode==='monthly' || viewMode==='yearly') ? (
                 <ProjectPlanTable goal={selectedGoal} onChange={async (updated) => {
+                  // Optimistically update selected goal and corresponding list collection
                   setSelectedGoal(updated);
-                  const ms = updated.milestones || [];
-                  const prog = ms.length ? Math.round((ms.filter((m: Milestone)=>m.completed).length / ms.length) * 100) : 0;
-                  try { await supabase.from('planner_items').update({ milestones: ms, progress: prog, updated_at: new Date().toISOString() }).eq('id', updated.id); } catch {}
+                  const checklist = Array.isArray(updated.checklist) ? updated.checklist : [];
+                  const prog = checklist.length ? Math.round((checklist.filter(c=>c.completed).length / checklist.length) * 100) : 0;
+                  // Reflect in in-memory goals array for immediate persistence in UI
+                  setMonthlyGoals(prev => prev.map(g => g.id === updated.id ? { ...g, checklist, progress: prog, updatedAt: new Date() } : g));
+                  setYearlyGoals(prev => prev.map(g => g.id === updated.id ? { ...g, checklist, progress: prog, updatedAt: new Date() } : g));
+                  try {
+                    await supabase
+                      .from('planner_items')
+                      .update({
+                        checklist,
+                        // milestones intentionally cleared / deprecated for project mode
+                        milestones: [],
+                        progress: prog,
+                        updated_at: new Date().toISOString()
+                      })
+                      .eq('id', updated.id);
+                  } catch (e) {
+                    console.warn('Failed to persist project checklist, will reload goals', e);
+                    // Fallback reload to avoid data loss if update failed
+                    try { await loadGoals(); } catch {}
+                  }
                 }} />
               ) : (
                 // Reuse TaskDetailPanel UI for goals to match daily task details
