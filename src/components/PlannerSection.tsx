@@ -2501,18 +2501,24 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     // If checklist array reference changes length (e.g., external addition/removal), sync.
     setRows(prev => {
       if (!Array.isArray(goal.checklist)) return prev;
-      // Keep existing in-progress edits by merging text/completed status where ids match.
+      // Keep existing in-progress edits, but prefer persisted values from checklist when present.
       const map = new Map(prev.map(r => [r.id, r]));
       return goal.checklist.map(ci => {
-        const existing = map.get(ci.id as any);
+        const existing = map.get((ci as any).id);
+        const text = (ci as any).text || (ci as any).title || existing?.text || existing?.title || '';
+        const title = (ci as any).title || (ci as any).text || existing?.title || existing?.text || '';
+        const status = (ci as any).status || existing?.status || 'todo';
+        const notes = (ci as any).notes ?? existing?.notes;
+        const dueRaw = (ci as any).dueDate ?? existing?.dueDate ?? null;
+        const dueDate = dueRaw ? (typeof dueRaw === 'string' ? new Date(dueRaw) : dueRaw) : null;
         return {
-          id: ci.id,
-          completed: ci.completed,
-          text: (ci as any).text || (ci as any).title || existing?.text || existing?.title || '',
-          title: (ci as any).text || (ci as any).title || existing?.title || existing?.text || '',
-          status: existing?.status || 'todo',
-          notes: existing?.notes,
-          dueDate: existing?.dueDate || null
+          id: (ci as any).id,
+          completed: !!(ci as any).completed,
+          text,
+          title,
+          status,
+          notes,
+          dueDate
         } as any;
       });
     });
@@ -2524,8 +2530,19 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
-      const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
-      onChange({ ...goal, checklist: persisted, milestones: [], progress });
+      // Persist rich checklist rows including optional fields like notes/status/dueDate.
+      // We store dueDate as ISO string for portability; consumers may keep Date objects in-memory.
+      const persisted = next.map(r => ({
+        id: r.id,
+        text: (r.text || r.title || ''),
+        completed: r.completed,
+        // Optional rich fields (safe to ignore by older UIs)
+        ...(r.status ? { status: r.status } : {}),
+        ...(typeof r.notes === 'string' && r.notes.length > 0 ? { notes: r.notes } : {}),
+        ...(r.dueDate ? { dueDate: (r.dueDate instanceof Date ? r.dueDate.toISOString() : r.dueDate) } : {})
+      }));
+      // Cast as any to allow enriched checklist entries while Goal.checklist is typed as ChecklistItem[]
+      onChange({ ...goal, checklist: persisted as any, milestones: [], progress });
     }, 350);
   };
 
@@ -2571,8 +2588,15 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
     next.splice(dstIdx, 0, moved);
     setRows(next);
     const progress = next.length ? Math.round((next.filter(r=>r.completed).length / next.length) * 100) : 0;
-    const persisted = next.map(r => ({ id: r.id, text: (r.text || r.title || ''), completed: r.completed }));
-    onChange({ ...goal, checklist: persisted, milestones: [], progress });
+    const persisted = next.map(r => ({
+      id: r.id,
+      text: (r.text || r.title || ''),
+      completed: r.completed,
+      ...(r.status ? { status: r.status } : {}),
+      ...(typeof r.notes === 'string' && r.notes.length > 0 ? { notes: r.notes } : {}),
+      ...(r.dueDate ? { dueDate: (r.dueDate instanceof Date ? r.dueDate.toISOString() : r.dueDate) } : {})
+    }));
+    onChange({ ...goal, checklist: persisted as any, milestones: [], progress });
   };
   const onDragEnd = () => { setDragId(null); setOverId(null); };
 
@@ -2600,7 +2624,14 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
       // Export unified as checklist only; keep milestones empty
       milestones: [],
       checklist: Array.isArray(g.checklist)
-        ? g.checklist.map(ci => ({ id: ci.id, text: (ci as any).text || (ci as any).title || '', completed: !!ci.completed }))
+        ? g.checklist.map(ci => ({
+            id: (ci as any).id,
+            text: (ci as any).text || (ci as any).title || '',
+            completed: !!(ci as any).completed,
+            ...(typeof (ci as any).status === 'string' ? { status: (ci as any).status } : {}),
+            ...(typeof (ci as any).notes === 'string' && (ci as any).notes.length > 0 ? { notes: (ci as any).notes } : {}),
+            ...(ci as any).dueDate ? { dueDate: (ci as any).dueDate instanceof Date ? (ci as any).dueDate.toISOString() : (ci as any).dueDate } : {}
+          }))
         : []
     };
   };
