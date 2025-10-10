@@ -56,6 +56,19 @@ export async function createAccount(input: {
 
   if (error) {
     const e: any = error;
+    // 23514 = check_violation (likely from finance_accounts_type_check)
+    if (e.code === '23514') {
+      try {
+        const retryRow = { ...baseRow, type: 'custom' };
+        const { error: err2 } = await supabase.from('finance_accounts').insert(retryRow);
+        if (err2) {
+          throw new Error(`createAccount failed after type fallback: ${(err2 as any).code || ''} ${(err2 as any).message}`.trim());
+        }
+        return;
+      } catch (err3: any) {
+        throw new Error(err3?.message || 'createAccount failed with type check violation');
+      }
+    }
     throw new Error(`createAccount failed: ${e.code || ''} ${e.message}`.trim());
   }
 }
