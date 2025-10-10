@@ -1400,12 +1400,54 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
       if ((handleSaveAccount as any)._pending) return;
       (handleSaveAccount as any)._pending = true;
       console.debug('[AddAccount] submit start', newAccount);
-      if (isAccountLimitReached) {
-        const planMsg = subscriptionPlan === 'free' ? t('toasts.finance.accountLimit.free') : t('toasts.finance.accountLimit.lite');
-        toast.error(planMsg);
-        onUpgrade?.();
-        (handleSaveAccount as any)._pending = false;
-        return;
+      // If UI thinks we've hit the limit but user may actually be Pro,
+      // re-check plan from Supabase and allow as a soft-bypass when Pro is active.
+      if (isAccountLimitReached && subscriptionPlan !== 'pro') {
+        try {
+          const { data: userRes } = await supabase.auth.getUser();
+          const uid = userRes?.user?.id as string | undefined;
+          let proActive = false;
+          if (uid) {
+            const now = new Date();
+            // Prefer new subscriptions table
+            const { data: sub } = await supabase
+              .from('subscriptions')
+              .select('plan, status, expires_at')
+              .eq('user_id', uid)
+              .maybeSingle();
+            if (sub) {
+              const exp = sub.expires_at ? new Date(sub.expires_at as string) : null;
+              const activeStatus = ['active', 'trialing'].includes((sub.status || '').toLowerCase());
+              proActive = activeStatus && (!exp || exp > now) && (sub.plan === 'pro');
+            }
+            // Legacy fallback if no row
+            if (!sub && !proActive) {
+              try {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('is_pro, pro_expires_at')
+                  .eq('id', uid)
+                  .maybeSingle();
+                if (profile) {
+                  const exp = profile.pro_expires_at ? new Date(profile.pro_expires_at as string) : null;
+                  proActive = !!profile.is_pro && (!exp || exp > now);
+                }
+              } catch {}
+            }
+          }
+          if (!proActive) {
+            const planMsg = subscriptionPlan === 'free' ? t('toasts.finance.accountLimit.free') : t('toasts.finance.accountLimit.lite');
+            toast.error(planMsg);
+            onUpgrade?.();
+            (handleSaveAccount as any)._pending = false;
+            return;
+          } else {
+            // Persist locally so the UI stops blocking next time
+            try { localStorage.setItem('subscription_plan', 'pro'); } catch {}
+          }
+        } catch {
+          // Network hiccup; keep the graceful path and continue to try creation
+        }
       }
 
       if (!newAccount.name) {
@@ -1415,6 +1457,7 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         return;
       }
       try {
+        // Primary path: Server Action
         await createAccountAction({
           name: newAccount.name,
           type: newAccount.type as any,
@@ -1427,9 +1470,30 @@ const FinanceSection = forwardRef<FinanceSectionRef, FinanceSectionProps>(
         await loadRemote();
       } catch (err:any) {
         console.error('[AddAccount] failed', err);
-        toast.error(`${t('toasts.finance.accountCreateFailed', { defaultValue: 'Could not create account' })}\n${err?.message || err}`);
-        (handleSaveAccount as any)._pending = false;
-        return;
+        // Fallback: try client-side Supabase insert (works even if Server Action session/cookies misbehave)
+        try {
+          const { data: auth } = await supabase.auth.getUser();
+          const uid = auth?.user?.id as string | undefined;
+          if (!uid) throw err;
+          const { error: insErr } = await supabase
+            .from('finance_accounts')
+            .insert({
+              user_id: uid,
+              name: newAccount.name,
+              type: newAccount.type,
+              color: '#10B981',
+              is_default: accounts.length === 0,
+              balance: Number(newAccount.balance || '0'),
+              currency: newAccount.currency || 'UZS'
+            });
+          if (insErr) throw insErr;
+          console.debug('[AddAccount] client fallback insert success');
+          await loadRemote();
+        } catch (fallbackErr:any) {
+          toast.error(`${t('toasts.finance.accountCreateFailed', { defaultValue: 'Could not create account' })}\n${fallbackErr?.message || err?.message || fallbackErr}`);
+          (handleSaveAccount as any)._pending = false;
+          return;
+        }
       }
       setNewAccount({
         name: '',
