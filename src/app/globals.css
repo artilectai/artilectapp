@@ -157,9 +157,10 @@ padding-inline: 2rem;
   .min-h-dvh { min-height: 100dvh; }
   /* Root height based on Telegram viewport */
   /* Only force app to occupy Telegram provided viewport when actually inside Telegram (html.tg-env is added runtime) */
+  /* Prefer explicit --tg-viewport if provided by Telegram bootstrap */
   html.tg-env, html.tg-env body, html.tg-env #__next, html.tg-env #root {
-    height: var(--tg-viewport-stable-height, var(--tgvh, 100svh));
-    min-height: var(--tg-viewport-stable-height, var(--tgvh, 100svh));
+    height: var(--tg-viewport, var(--tg-viewport-stable-height, var(--tgvh, 100svh)));
+    min-height: var(--tg-viewport, var(--tg-viewport-stable-height, var(--tgvh, 100svh)));
   }
 
   /* Safe paddings with sensible defaults for phone “borders” */
@@ -198,7 +199,7 @@ html {
 -moz-osx-font-smoothing: grayscale;
 text-rendering: optimizeLegibility;
 color-scheme: dark;
-height: var(--tg-viewport-stable-height, var(--tgvh, 100svh));
+height: var(--tg-viewport, var(--tg-viewport-stable-height, var(--tgvh, 100svh)));
 overscroll-behavior: none;
 }
 body {
@@ -211,7 +212,7 @@ html.tg-env body {
   overscroll-behavior-y: contain;
   overscroll-behavior-x: none;
   touch-action: pan-y;
-  height: var(--tg-viewport-stable-height, var(--tgvh, 100svh));
+  height: var(--tg-viewport, var(--tg-viewport-stable-height, var(--tgvh, 100svh)));
   overflow: hidden; /* prevent outer scroll that triggers pull-to-dismiss in Telegram */
 }
 h1, h2, h3, h4 {
