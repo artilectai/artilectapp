@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
  
 export async function middleware(request: NextRequest) {
+	// If someone hits the site root directly (e.g., from the bot "Open" button),
+	// send them to the Telegram deep link that launches the Mini App full screen
+	try {
+		const url = new URL(request.url);
+		// Optional bypass with ?web=1 to allow web debugging
+		const bypass = url.searchParams.get('web');
+		if (url.pathname === '/' && bypass !== '1') {
+			return NextResponse.redirect('https://t.me/ArtiLectAIbot/?startapp&addToHomeScreen');
+		}
+	} catch {}
 	// Prepare a response we can mutate cookies on
 	const response = NextResponse.next();
 
