@@ -52,8 +52,8 @@ export default function RootLayout({
                     var tg = window.Telegram && window.Telegram.WebApp; if(!tg) return false;
                     try{ tg.ready && tg.ready(); }catch(e){}
                     try{ tg.expand && tg.expand(); }catch(e){}
-                    // Only request explicit fullscreen inside Telegram host; never in normal browser context
-                    try{ if (typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('8.0') && typeof tg.requestFullscreen === 'function' && !tg.isFullscreen) { tg.requestFullscreen(); } }catch(e){}
+                    // Request fullscreen whenever possible (Telegram specific)
+                    try{ if (typeof tg.requestFullscreen === 'function' && !tg.isFullscreen) { tg.requestFullscreen(); } }catch(e){}
                     try{ tg.disableVerticalSwipes && tg.disableVerticalSwipes(); }catch(e){}
                     try{ tg.enableClosingConfirmation && tg.enableClosingConfirmation(); }catch(e){}
                     try{ tg.setHeaderColor && tg.setHeaderColor('secondary_bg_color'); }catch(e){}
@@ -61,12 +61,12 @@ export default function RootLayout({
                   } catch(e) { return false; }
                 }
                 apply();
-                var iv = setInterval(function(){ tries++; if (apply() || tries > 20) { clearInterval(iv); } }, 150);
+                var iv = setInterval(function(){ tries++; if (apply() || tries > 30) { clearInterval(iv); } }, 120);
                 function re(){ apply(); }
                 window.addEventListener('focus', re, { passive: true });
                 document.addEventListener('visibilitychange', re, { passive: true });
                 try { if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.onEvent) {
-                  window.Telegram.WebApp.onEvent('viewportChanged', re);
+                  window.Telegram.WebApp.onEvent('viewportChanged', function(){ re(); try { var tg = window.Telegram && window.Telegram.WebApp; if (tg && typeof tg.requestFullscreen === 'function' && !tg.isFullscreen) { tg.requestFullscreen(); } } catch(e){} });
                   window.Telegram.WebApp.onEvent('fullscreenChanged', function(){ try { var tg = window.Telegram && window.Telegram.WebApp; if (tg && !tg.isFullscreen && typeof tg.requestFullscreen === 'function') { tg.requestFullscreen(); } } catch(e){} });
                 }} catch(e){}
               })();

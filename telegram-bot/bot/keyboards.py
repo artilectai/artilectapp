@@ -15,7 +15,8 @@ def open_app_kb() -> InlineKeyboardMarkup:
             2) direct deep link which opens full-screen by default: t.me/<bot>?startapp=...
         """
         deep_link = f"https://t.me/{BOT_USERNAME}?startapp=start"
-        return InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="Open Artilect", web_app=WebAppInfo(url=WEBAPP_URL))],
-                [InlineKeyboardButton(text="Open Full Screen", url=deep_link)],
-        ])
+    # Prefer the full-screen deep link first; keep mini-app sheet as secondary option
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Open Artilect", url=deep_link)],
+        [InlineKeyboardButton(text="Open inside chat", web_app=WebAppInfo(url=WEBAPP_URL))],
+    ])

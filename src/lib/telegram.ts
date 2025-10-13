@@ -6,7 +6,8 @@ export function initTelegramUI() {
   const apply = () => {
     try { webApp.ready?.(); } catch {}
     try { webApp.expand?.(); } catch {}
-  try { if (typeof webApp.isVersionAtLeast === 'function' && webApp.isVersionAtLeast('8.0') && typeof webApp.requestFullscreen === 'function') { webApp.requestFullscreen(); } } catch {}
+    // Be permissive: if requestFullscreen exists, call it; version checks vary by client
+    try { if (typeof webApp.requestFullscreen === 'function') { webApp.requestFullscreen(); } } catch {}
     try { webApp.disableVerticalSwipes?.(); } catch {}
     try { webApp.enableClosingConfirmation?.(); } catch {}
     try { webApp.setHeaderColor?.('secondary_bg_color'); } catch {}
@@ -19,6 +20,7 @@ export function initTelegramUI() {
   try {
     webApp.onEvent?.('viewportChanged', () => {
       try { webApp.expand?.(); } catch {}
+      try { if (typeof webApp.requestFullscreen === 'function' && !webApp.isFullscreen) { webApp.requestFullscreen(); } } catch {}
       apply();
     });
   } catch {}
