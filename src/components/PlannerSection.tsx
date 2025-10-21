@@ -213,6 +213,8 @@ export interface PlannerSectionRef {
   handleNewTask: () => void;
 }
 
+import { useDynamicKeyboardHeight } from "../hooks/useDynamicKeyboardHeight";
+
 export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>(({ 
   subscriptionPlan,
   onUpgrade,
@@ -1762,8 +1764,12 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     if (typeof el.showPicker === 'function') el.showPicker(); else el.click();
   }, []);
 
+  // Container ref for optional keyboard-aware height adjustments (fallback for simple inputs outside modals)
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  useDynamicKeyboardHeight(containerRef, { fallbackPx: 300 });
+
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div ref={containerRef} className="flex flex-col h-full bg-background">
         <div ref={swipeZoneRef} className="w-full touch-pan-y select-none">
   {/* Header with View Mode Switch and Calendar */}
   <motion.div className="select-none touch-pan-y">
