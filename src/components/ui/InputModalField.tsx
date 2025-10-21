@@ -110,19 +110,27 @@ export default function InputModalField({
             />
           )}
 
-          <div className="grid grid-cols-2 gap-3 sticky bottom-0 pt-2">
-            <Button variant="outline" onClick={() => setOpen(false)} className="h-11">
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                onChange(temp);
-                setOpen(false);
-              }}
-              className="h-11 bg-money-green text-black"
-            >
-              Save
-            </Button>
+          {/* Spacer so fixed footer doesn't overlap content */}
+          <div className="h-28" />
+        </div>
+
+        {/* Fixed footer above keyboard and safe-area */}
+        <div className="fixed-container px-5 py-3">
+          <div className="mx-auto max-w-md">
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="outline" onClick={() => setOpen(false)} className="h-11">
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  onChange(temp);
+                  setOpen(false);
+                }}
+                className="h-11 bg-money-green text-black"
+              >
+                Save
+              </Button>
+            </div>
           </div>
         </div>
       </SlideUpModal>

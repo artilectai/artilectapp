@@ -98,6 +98,21 @@ border-color: var(--color-border);
   .scrollable-container.viewport-max {
     max-height: calc(100dvh - var(--scroll-offset, 50px));
   }
+  
+  /* Fixed container anchored above safe-area and keyboard offset */
+  .fixed-container {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--kb-offset, 0px));
+    z-index: 1000;
+  }
+  
+  /* Lift an element above the keyboard by kb-offset (fallback 20px) */
+  .input-wrapper-above-kb {
+    position: relative;
+    transform: translateY(calc(-1 * var(--kb-offset, 20px)));
+  }
 body {
 font-family: var(--font-sans);
 }
