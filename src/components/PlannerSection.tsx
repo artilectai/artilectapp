@@ -2149,7 +2149,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                   </ScaleButton>
                 </motion.div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {filteredItems.map((item) => (
                     <motion.div
                       key={item.id}
@@ -2203,8 +2203,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                           }
                         }}
                       >
-                        <CardContent className="relative p-4">
-                          <div className="flex items-start gap-3">
+                        <CardContent className="relative p-3">
+                          <div className="flex items-start gap-2.5">
                             <Checkbox 
                               checked={item.status === "done" || item.status === "completed"}
                               onCheckedChange={() => handleToggleComplete(item.id)}
@@ -2212,7 +2212,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                             />
                             
                             <div className="flex-1 min-w-0 pr-16">
-                              <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2 mb-0.5 min-w-0">
                                 <h3 className={`font-medium clamp-2 break-anywhere ${
                                   item.status === "done" || item.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"
                                 }`}>
@@ -2225,7 +2225,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                               </Badge>
                               
                               {item.description && (
-                                <p className="text-sm text-muted-foreground clamp-2 break-anywhere mb-2">
+                                <p className="text-sm text-muted-foreground clamp-2 break-anywhere mb-1">
                                   {item.description}
                                 </p>
                               )}
@@ -2237,7 +2237,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                                 const hasGoalChecklist = !isTask && 'checklist' in (item as any) && Array.isArray((item as any).checklist) && (item as any).checklist.length > 0;
                                 const showProgress = hasTaskChecklist || hasGoalMilestones || hasGoalChecklist;
                                 return showProgress ? (
-                                  <Progress value={item.progress} className="h-1.5 mb-2" />
+                                  <Progress value={item.progress} className="h-1 mb-1" />
                                 ) : null;
                               })()}
                               
