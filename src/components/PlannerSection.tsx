@@ -2454,6 +2454,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           height="large"
           className="backdrop-blur-xl"
           bodyClassName="pb-24 pb-safe-bottom"
+          keyboardAware
         >
           {editingTask && (
             <NewTaskEditor
