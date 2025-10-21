@@ -72,6 +72,13 @@ border-color: var(--color-border);
 }
 }
 @layer utilities {
+  /* Viewport-scoped scroll container: use this when you want a single scroll area */
+  .viewport-container {
+    height: 100svh;
+    overflow: auto;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    -webkit-overflow-scrolling: touch;
+  }
   /* Normalize Tabs look to avoid icon jumps when lock toggles */
   .tabs-stable .radix-tabs-list { height: 40px; }
   .tabs-stable [role="tab"] {
@@ -206,6 +213,9 @@ body {
   background: linear-gradient(180deg, var(--color-premium-black) 0%, var(--color-background) 100%);
   color: var(--color-foreground);
 }
+/* Base page structure: prevent outer page scroll and size the app to full height */
+html, body, #__next, #root { height: 100%; }
+body { overflow: hidden; }
 /* Telegram specific body constraints */
 html.tg-env body {
   /* Reduce iOS rubber-banding and accidental close gestures inside Telegram */
