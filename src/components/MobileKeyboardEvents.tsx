@@ -19,7 +19,9 @@ export default function MobileKeyboardEvents() {
     };
 
     const onShow = (e: Event) => {
-      const h = getHeight(e);
+      // Use provided keyboard height when available; fallback to 250px for generic hosts
+      const raw = getHeight(e);
+      const h = raw > 0 ? raw : 250;
       try { root.style.setProperty('--kb-offset', `${h}px`); } catch {}
       // Only add body padding on generic web containers; Telegram body is pinned already.
       if (!isTelegram) {
