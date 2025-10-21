@@ -2178,7 +2178,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   {/* Main Content Area */}
   <motion.div className="flex-1 flex">
         {/* Task List */}
-  <div className={`flex-1 md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[30%]' : 'md:w-1/2'} overflow-y-auto overflow-x-hidden min-h-0`}>
+  <div className={`flex-1 md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[30%]' : 'md:w-1/2'} scrollable-container overflow-x-hidden min-h-0`}>
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">
@@ -2329,7 +2329,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         </div>
 
   {/* Detail Panel - Desktop */}
-  <div className={`hidden md:block md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[70%]' : 'md:w-1/2'} border-l border-border bg-surface-1/50`}>
+  <div className={`hidden md:block md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[70%]' : 'md:w-1/2'} scrollable-container overflow-x-hidden border-l border-border bg-surface-1/50`}>
           {viewMode === 'daily' ? (
             selectedTask ? (
               <TaskDetailPanel 

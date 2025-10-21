@@ -89,6 +89,15 @@ border-color: var(--color-border);
     justify-content: center;
     gap: 0.25rem;
   }
+  /* Custom scrollable area utility to prevent the entire page from moving */
+  .scrollable-container {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Optional cap to viewport with adjustable offset */
+  .scrollable-container.viewport-max {
+    max-height: calc(100dvh - var(--scroll-offset, 50px));
+  }
 body {
 font-family: var(--font-sans);
 }
