@@ -214,7 +214,12 @@ html.tg-env body {
   touch-action: pan-y;
   height: var(--tg-viewport, var(--tg-viewport-stable-height, var(--tgvh, 100svh)));
   overflow: hidden; /* prevent outer scroll that triggers pull-to-dismiss in Telegram */
+  /* Pin the app so it does not move when the keyboard appears */
+  position: fixed;
+  inset: 0;
+  width: 100%;
 }
+html.tg-env #__next, html.tg-env #root { height: 100%; width: 100%; overflow: hidden; }
 h1, h2, h3, h4 {
 font-family: var(--font-heading);
 color: var(--color-foreground);
