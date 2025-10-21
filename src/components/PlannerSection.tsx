@@ -1122,20 +1122,65 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     const taskToDelete = tasks.find(t => t.id === taskId);
     if (!taskToDelete) return;
 
-    // Optimistic update
+    // Optimistic update in UI
     setTasks(prev => prev.filter(t => t.id !== taskId));
     setSelectedTask(null);
-    
-    // Show undo option
-  toast.success(t('toasts.planner.taskDeleted'), {
-      action: {
-    label: t('common.undo', { defaultValue: 'Undo' }),
-        onClick: () => {
-          setTasks(prev => [...prev, taskToDelete]);
-        }
+
+    // Persist deletion to Supabase and provide Undo that re-inserts the row
+    (async () => {
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth?.user?.id;
+        if (!userId) throw new Error('Not signed in');
+        const { error } = await supabase
+          .from('planner_items')
+          .delete()
+          .eq('id', taskId)
+          .eq('user_id', userId);
+        if (error) throw error as any;
+      } catch (e) {
+        // Re-sync from server on failure and show error
+        toast.error(t('toasts.planner.taskSaveFailed'));
+        await loadTasks();
+        return;
       }
-    });
-  }, [tasks]);
+
+      // Show undo (recreate the deleted row)
+      toast.success(t('toasts.planner.taskDeleted'), {
+        action: {
+          label: t('common.undo', { defaultValue: 'Undo' }),
+          onClick: async () => {
+            try {
+              const { data: auth } = await supabase.auth.getUser();
+              const userId = auth?.user?.id;
+              if (!userId || !taskToDelete) return;
+              await supabase.from('planner_items').insert({
+                user_id: userId,
+                title: taskToDelete.title,
+                description: taskToDelete.description || null,
+                status: taskToDelete.status,
+                priority: taskToDelete.priority,
+                type: 'daily',
+                start_date: taskToDelete.startDate ? taskToDelete.startDate.toISOString() : null,
+                due_date: taskToDelete.dueDate ? taskToDelete.dueDate.toISOString() : null,
+                estimate_hours: typeof taskToDelete.estimateHours === 'number' ? taskToDelete.estimateHours : null,
+                tags: Array.isArray(taskToDelete.tags) ? taskToDelete.tags : [],
+                checklist: Array.isArray(taskToDelete.checklist) ? taskToDelete.checklist : [],
+                progress: typeof taskToDelete.progress === 'number' ? taskToDelete.progress : 0,
+                created_at: taskToDelete.createdAt ? taskToDelete.createdAt.toISOString() : new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                completed_at: taskToDelete.completedAt ? taskToDelete.completedAt.toISOString() : null,
+              } as any);
+              await loadTasks();
+            } catch (e) {
+              // If undo fails, just refresh to reflect server state
+              await loadTasks();
+            }
+          }
+        }
+      });
+    })();
+  }, [tasks, t, loadTasks]);
 
   const handleToggleComplete = useCallback(async (itemId: string) => {
     if (viewMode === "daily") {
