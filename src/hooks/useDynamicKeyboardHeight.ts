@@ -74,6 +74,15 @@ export function useDynamicKeyboardHeight(
     };
 
     const onVVResize = () => applyHeight();
+    const onWindowResize = () => {
+      // When the window resizes (mobile keyboard toggles or UI bars change),
+      // reapply if focused; otherwise clear inline height and let CSS fill.
+      if (focused) {
+        applyHeight();
+      } else {
+        resetHeight();
+      }
+    };
     const onOrientation = () => {
       // Allow bars to settle, then update baseline and height if needed
       setTimeout(() => {
@@ -84,8 +93,9 @@ export function useDynamicKeyboardHeight(
 
     document.addEventListener('focusin', onFocusIn, true);
     document.addEventListener('focusout', onFocusOut, true);
-    vv?.addEventListener('resize', onVVResize);
+  vv?.addEventListener('resize', onVVResize);
     vv?.addEventListener('scroll', onVVResize);
+  window.addEventListener('resize', onWindowResize);
     window.addEventListener('orientationchange', onOrientation);
 
     return () => {
@@ -93,6 +103,7 @@ export function useDynamicKeyboardHeight(
       document.removeEventListener('focusout', onFocusOut, true);
       vv?.removeEventListener('resize', onVVResize);
       vv?.removeEventListener('scroll', onVVResize);
+      window.removeEventListener('resize', onWindowResize);
       window.removeEventListener('orientationchange', onOrientation);
       resetHeight();
     };
