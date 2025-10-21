@@ -2453,6 +2453,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
           title={editingTask?.id ? (t('planner.editor.task.editTitle') as string) : (t('planner.editor.task.newTitle') as string)}
           height="large"
           className="backdrop-blur-xl"
+          bodyClassName="pb-24 pb-safe-bottom"
         >
           {editingTask && (
             <NewTaskEditor
@@ -3045,7 +3046,7 @@ function NewTaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
       </div>
 
       {/* Footer actions */}
-      <div className="sticky bottom-0 -mx-5 border-t bg-background/80 backdrop-blur px-5 py-3">
+      <div className="sticky bottom-0 -mx-5 border-t bg-background/80 backdrop-blur px-5 py-3 pb-safe-bottom">
         <div className="flex gap-3">
           {task?.id && onDelete && (
             <ScaleButton type="button" className="flex-1 rounded-xl border border-destructive/40 text-destructive" onClick={onDelete}>
