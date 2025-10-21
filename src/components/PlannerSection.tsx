@@ -2913,10 +2913,6 @@ function NewTaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
 }) {
   const { t } = useTranslation('app');
   const [formData, setFormData] = useState<Partial<Task>>(task);
-  const [focusModalOpen, setFocusModalOpen] = useState(false);
-  const [focusField, setFocusField] = useState<'title'|'description'|'tags' | null>(null);
-  const [focusValue, setFocusValue] = useState('');
-  const isMobile = typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : true;
 
   // Quick helpers
   const setQuickEstimate = (hrs: number) => setFormData(prev => ({ ...prev, estimateHours: hrs }));
@@ -2946,33 +2942,15 @@ function NewTaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
     onSave({ ...formData, progress });
   };
 
-  const openFocusModal = (field: 'title'|'description'|'tags', initial: string) => {
-    setFocusField(field);
-    setFocusValue(initial);
-    setFocusModalOpen(true);
-  };
-  const applyFocusValue = () => {
-    if (!focusField) return;
-    if (focusField === 'title') setFormData(prev => ({ ...prev, title: focusValue }));
-    if (focusField === 'description') setFormData(prev => ({ ...prev, description: focusValue }));
-    if (focusField === 'tags') setFormData(prev => ({ ...prev, tags: focusValue.split(',').map(s=>s.trim()).filter(Boolean) }));
-    setFocusModalOpen(false);
-    setFocusField(null);
-  };
-
   return (
-    <>
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Title */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={iosSpring.default}>
         <Input
-          autoFocus={!isMobile}
-          readOnly={isMobile}
+          autoFocus
           placeholder={t('planner.editor.task.titlePlaceholder')}
           value={formData.title || ''}
           onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-          onFocus={(e) => { if (isMobile) { e.currentTarget.blur(); openFocusModal('title', formData.title || ''); } }}
-          onClick={(e) => { if (isMobile) { e.currentTarget.blur(); openFocusModal('title', formData.title || ''); } }}
           className="h-12 text-base sm:text-lg rounded-xl bg-surface-1/60 border-border/60"
         />
       </motion.div>
@@ -3033,16 +3011,7 @@ function NewTaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
       {/* Description */}
       <div className="space-y-1.5">
         <Label className="text-sm">{t('planner.editor.descriptionLabel')}</Label>
-        <Textarea
-          rows={3}
-          className="rounded-xl bg-surface-1/60"
-          value={formData.description||''}
-          readOnly={isMobile}
-          onChange={(e)=>setFormData(prev=>({...prev, description:e.target.value}))}
-          onFocus={(e)=>{ if (isMobile) { e.currentTarget.blur(); openFocusModal('description', formData.description || ''); }}}
-          onClick={(e)=>{ if (isMobile) { e.currentTarget.blur(); openFocusModal('description', formData.description || ''); }}}
-          placeholder={t('planner.editor.descriptionPlaceholder')}
-        />
+        <Textarea rows={3} className="rounded-xl bg-surface-1/60" value={formData.description||''} onChange={(e)=>setFormData(prev=>({...prev, description:e.target.value}))} placeholder={t('planner.editor.descriptionPlaceholder')} />
       </div>
 
       {/* Checklist */}
@@ -3073,15 +3042,7 @@ function NewTaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
         </div>
         <div className="space-y-1.5">
           <Label className="text-sm">{t('planner.editor.tagsLabel')}</Label>
-          <Input
-            className="h-11"
-            value={(formData.tags||[]).join(', ')}
-            readOnly={isMobile}
-            onChange={(e)=> setFormData(prev=>({...prev, tags: e.target.value.split(',').map(s=>s.trim()).filter(Boolean)}))}
-            onFocus={(e)=>{ if (isMobile) { e.currentTarget.blur(); openFocusModal('tags', (formData.tags||[]).join(', ')); }}}
-            onClick={(e)=>{ if (isMobile) { e.currentTarget.blur(); openFocusModal('tags', (formData.tags||[]).join(', ')); }}}
-            placeholder={t('planner.editor.tagsPlaceholder')}
-          />
+          <Input className="h-11" value={(formData.tags||[]).join(', ')} onChange={(e)=> setFormData(prev=>({...prev, tags: e.target.value.split(',').map(s=>s.trim()).filter(Boolean)}))} placeholder={t('planner.editor.tagsPlaceholder')} />
         </div>
       </div>
 
@@ -3102,48 +3063,6 @@ function NewTaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
         </div>
       </div>
     </form>
-    {/* Focused input modal for mobile */}
-    {focusModalOpen && (
-      <SlideUpModal
-        isOpen={focusModalOpen}
-        onClose={() => setFocusModalOpen(false)}
-        title={focusField === 'title' ? (t('planner.editor.task.titleLabel') as string) : focusField === 'description' ? (t('planner.editor.descriptionLabel') as string) : (t('planner.editor.tagsLabel') as string)}
-        height="large"
-        keyboardAware
-      >
-        <div className="space-y-3">
-          {focusField === 'description' ? (
-            <Textarea
-              autoFocus
-              rows={8}
-              className="rounded-xl bg-surface-1/60"
-              value={focusValue}
-              onChange={(e)=> setFocusValue(e.target.value)}
-              placeholder={t('planner.editor.descriptionPlaceholder')}
-            />
-          ) : (
-            <Input
-              autoFocus
-              className="h-12 text-base rounded-xl bg-surface-1/60"
-              value={focusValue}
-              onChange={(e)=> setFocusValue(e.target.value)}
-              placeholder={focusField === 'title' ? (t('planner.editor.task.titlePlaceholder') as string) : (t('planner.editor.tagsPlaceholder') as string)}
-            />
-          )}
-          <div className="sticky bottom-0 -mx-5 border-t bg-background/80 backdrop-blur px-5 py-3 pb-safe-bottom">
-            <div className="flex gap-3">
-              <ScaleButton type="button" className="flex-1 rounded-xl border" onClick={()=> setFocusModalOpen(false)}>
-                {t('common.cancel')}
-              </ScaleButton>
-              <ScaleButton type="button" className="flex-1 rounded-xl bg-primary text-primary-foreground" onClick={applyFocusValue}>
-                {t('common.done', { defaultValue: 'Done' })}
-              </ScaleButton>
-            </div>
-          </div>
-        </div>
-      </SlideUpModal>
-    )}
-    </>
   );
 }
 
