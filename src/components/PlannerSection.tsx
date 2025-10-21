@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import InputModalField from "@/components/ui/InputModalField";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -2100,17 +2101,21 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                     className="flex gap-2 items-center"
                   >
                     <Label className="text-sm text-muted-foreground whitespace-nowrap">{t('planner.filters.labels.from')}</Label>
-                    <Input
+                    <InputModalField
+                      id="custom-date-start"
                       type="date"
                       value={customDateStart?.toISOString().split('T')[0] || ""}
-                      onChange={(e) => setCustomDateStart(e.target.value ? new Date(e.target.value) : null)}
+                      onChange={(v) => setCustomDateStart(v ? new Date(v) : null)}
+                      placeholder={t('planner.filters.labels.from')}
                       className="bg-surface-1"
                     />
                     <Label className="text-sm text-muted-foreground whitespace-nowrap">{t('planner.filters.labels.to')}</Label>
-                    <Input
+                    <InputModalField
+                      id="custom-date-end"
                       type="date"
                       value={customDateEnd?.toISOString().split('T')[0] || ""}
-                      onChange={(e) => setCustomDateEnd(e.target.value ? new Date(e.target.value) : null)}
+                      onChange={(v) => setCustomDateEnd(v ? new Date(v) : null)}
+                      placeholder={t('planner.filters.labels.to')}
                       className="bg-surface-1"
                     />
                   </motion.div>
