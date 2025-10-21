@@ -16,6 +16,8 @@ export function initTelegramUI() {
       root.style.setProperty('--tg-viewport-stable-height', `${stable}px`);
       // For convenience, also set a generic tgvh used by CSS fallbacks
       root.style.setProperty('--tgvh', `${stable}px`);
+      // Bridge for components using --stable-vh (e.g., SlideUpModal) so they inherit Telegram's stable height
+      try { root.style.setProperty('--stable-vh', `${stable}px`); } catch {}
     };
     applyViewportVars();
     // Update on Telegram viewport changes (keyboard, header show/hide, etc.).
