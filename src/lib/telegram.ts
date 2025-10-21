@@ -3,28 +3,6 @@ export const tg = (typeof window !== "undefined" ? (window as any).Telegram?.Web
 export function initTelegramUI() {
   const webApp = (typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : undefined) as any;
   if (!webApp) return;
-
-  // Mark HTML as Telegram environment and wire CSS viewport variables so the app ignores the keyboard.
-  try {
-    const root = document.documentElement;
-    root.classList.add('tg-env');
-    const applyViewportVars = () => {
-      // Telegram provides viewportHeight and viewportStableHeight in px
-      const vh = Number(webApp?.viewportHeight) || window.innerHeight;
-      const stable = Number(webApp?.viewportStableHeight) || vh;
-      root.style.setProperty('--tg-viewport', `${vh}px`);
-      root.style.setProperty('--tg-viewport-stable-height', `${stable}px`);
-      // For convenience, also set a generic tgvh used by CSS fallbacks
-      root.style.setProperty('--tgvh', `${stable}px`);
-      // Bridge for components using --stable-vh (e.g., SlideUpModal) so they inherit Telegram's stable height
-      try { root.style.setProperty('--stable-vh', `${stable}px`); } catch {}
-    };
-    applyViewportVars();
-    // Update on Telegram viewport changes (keyboard, header show/hide, etc.).
-    try { webApp.onEvent?.('viewportChanged', applyViewportVars); } catch {}
-    // Update on orientation changes as a safety net
-    window.addEventListener('orientationchange', () => setTimeout(applyViewportVars, 300));
-  } catch {}
   const apply = () => {
     try { webApp.ready?.(); } catch {}
     try { webApp.expand?.(); } catch {}

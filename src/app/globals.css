@@ -72,13 +72,6 @@ border-color: var(--color-border);
 }
 }
 @layer utilities {
-  /* Viewport-scoped scroll container: use this when you want a single scroll area */
-  .viewport-container {
-    height: 100svh;
-    overflow: auto;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    -webkit-overflow-scrolling: touch;
-  }
   /* Normalize Tabs look to avoid icon jumps when lock toggles */
   .tabs-stable .radix-tabs-list { height: 40px; }
   .tabs-stable [role="tab"] {
@@ -88,30 +81,6 @@ border-color: var(--color-border);
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
-  }
-  /* Custom scrollable area utility to prevent the entire page from moving */
-  .scrollable-container {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  /* Optional cap to viewport with adjustable offset */
-  .scrollable-container.viewport-max {
-    max-height: calc(100dvh - var(--scroll-offset, 50px));
-  }
-  
-  /* Fixed container anchored above safe-area and keyboard offset */
-  .fixed-container {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--kb-offset, 0px));
-    z-index: 1000;
-  }
-  
-  /* Lift an element above the keyboard by kb-offset (fallback 20px) */
-  .input-wrapper-above-kb {
-    position: relative;
-    transform: translateY(calc(-1 * var(--kb-offset, 20px)));
   }
 body {
 font-family: var(--font-sans);
@@ -237,9 +206,6 @@ body {
   background: linear-gradient(180deg, var(--color-premium-black) 0%, var(--color-background) 100%);
   color: var(--color-foreground);
 }
-/* Base page structure: prevent outer page scroll and size the app to full height */
-html, body, #__next, #root { height: 100%; }
-body { overflow: hidden; }
 /* Telegram specific body constraints */
 html.tg-env body {
   /* Reduce iOS rubber-banding and accidental close gestures inside Telegram */
@@ -248,12 +214,7 @@ html.tg-env body {
   touch-action: pan-y;
   height: var(--tg-viewport, var(--tg-viewport-stable-height, var(--tgvh, 100svh)));
   overflow: hidden; /* prevent outer scroll that triggers pull-to-dismiss in Telegram */
-  /* Pin the app so it does not move when the keyboard appears */
-  position: fixed;
-  inset: 0;
-  width: 100%;
 }
-html.tg-env #__next, html.tg-env #root { height: 100%; width: 100%; overflow: hidden; }
 h1, h2, h3, h4 {
 font-family: var(--font-heading);
 color: var(--color-foreground);

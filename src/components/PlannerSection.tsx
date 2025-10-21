@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import InputModalField from "@/components/ui/InputModalField";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -213,8 +212,6 @@ function useWholeAreaSwipe(
 export interface PlannerSectionRef {
   handleNewTask: () => void;
 }
-
-import { useDynamicKeyboardHeight } from "../hooks/useDynamicKeyboardHeight";
 
 export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>(({ 
   subscriptionPlan,
@@ -1765,12 +1762,8 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
     if (typeof el.showPicker === 'function') el.showPicker(); else el.click();
   }, []);
 
-  // Container ref for optional keyboard-aware height adjustments (fallback for simple inputs outside modals)
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  useDynamicKeyboardHeight(containerRef, { fallbackPx: 300 });
-
   return (
-    <div ref={containerRef} className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background">
         <div ref={swipeZoneRef} className="w-full touch-pan-y select-none">
   {/* Header with View Mode Switch and Calendar */}
   <motion.div className="select-none touch-pan-y">
@@ -2101,21 +2094,17 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
                     className="flex gap-2 items-center"
                   >
                     <Label className="text-sm text-muted-foreground whitespace-nowrap">{t('planner.filters.labels.from')}</Label>
-                    <InputModalField
-                      id="custom-date-start"
+                    <Input
                       type="date"
                       value={customDateStart?.toISOString().split('T')[0] || ""}
-                      onChange={(v) => setCustomDateStart(v ? new Date(v) : null)}
-                      placeholder={t('planner.filters.labels.from')}
+                      onChange={(e) => setCustomDateStart(e.target.value ? new Date(e.target.value) : null)}
                       className="bg-surface-1"
                     />
                     <Label className="text-sm text-muted-foreground whitespace-nowrap">{t('planner.filters.labels.to')}</Label>
-                    <InputModalField
-                      id="custom-date-end"
+                    <Input
                       type="date"
                       value={customDateEnd?.toISOString().split('T')[0] || ""}
-                      onChange={(v) => setCustomDateEnd(v ? new Date(v) : null)}
-                      placeholder={t('planner.filters.labels.to')}
+                      onChange={(e) => setCustomDateEnd(e.target.value ? new Date(e.target.value) : null)}
                       className="bg-surface-1"
                     />
                   </motion.div>
@@ -2183,7 +2172,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
   {/* Main Content Area */}
   <motion.div className="flex-1 flex">
         {/* Task List */}
-  <div className={`flex-1 md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[30%]' : 'md:w-1/2'} scrollable-container overflow-x-hidden min-h-0`}>
+  <div className={`flex-1 md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[30%]' : 'md:w-1/2'} overflow-y-auto overflow-x-hidden min-h-0`}>
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">
@@ -2334,7 +2323,7 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         </div>
 
   {/* Detail Panel - Desktop */}
-  <div className={`hidden md:block md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[70%]' : 'md:w-1/2'} scrollable-container overflow-x-hidden border-l border-border bg-surface-1/50`}>
+  <div className={`hidden md:block md:flex-none ${projectMode && (viewMode==='monthly' || viewMode==='yearly') ? 'md:w-[70%]' : 'md:w-1/2'} border-l border-border bg-surface-1/50`}>
           {viewMode === 'daily' ? (
             selectedTask ? (
               <TaskDetailPanel 
@@ -2456,28 +2445,35 @@ export const PlannerSection = forwardRef<PlannerSectionRef, PlannerSectionProps>
         </div>
       </div>
 
-      {/* Task Editor Sheet (iOS-style) */}
-      {isEditorOpen && (
-        <SlideUpModal
-          isOpen={isEditorOpen}
-          onClose={() => { setIsEditorOpen(false); setEditingTask(null); }}
-          title={editingTask?.id ? (t('planner.editor.task.editTitle') as string) : (t('planner.editor.task.newTitle') as string)}
-          height="large"
-          className="backdrop-blur-xl"
-          bodyClassName="pb-24 pb-safe-bottom"
-          keyboardAware
-        >
-          {editingTask && (
-            <NewTaskEditor
+      {/* Task Editor Dialog */}
+      <Dialog
+        open={isEditorOpen}
+        onOpenChange={(open) => {
+          setIsEditorOpen(open);
+          if (!open) setEditingTask(null);
+        }}
+      >
+  <DialogContent className="w-[92vw] sm:max-w-2xl p-4 sm:p-6 overflow-y-auto rounded-2xl" onOpenAutoFocus={(e)=>e.preventDefault()}>
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-lg sm:text-xl">
+              {editingTask?.id ? t('planner.editor.task.editTitle') : t('planner.editor.task.newTitle')}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('planner.editor.descriptionPlaceholder')}
+            </DialogDescription>
+          </DialogHeader>
+
+      {editingTask && (
+            <TaskEditor
               task={editingTask}
-              onSave={async (data) => { await handleSaveTask(data); }}
-              onCancel={() => { setIsEditorOpen(false); setEditingTask(null); }}
+              onSave={handleSaveTask}
+              onCancel={() => setIsEditorOpen(false)}
               onDelete={editingTask?.id ? () => { handleDeleteTask(editingTask.id as string); setIsEditorOpen(false); } : undefined}
               isLoading={isLoading}
             />
           )}
-        </SlideUpModal>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Goal Editor Dialog */}
       <Dialog
@@ -2911,169 +2907,6 @@ function ProjectPlanTable({ goal, onChange }: { goal: Goal; onChange: (g: Goal) 
         </div>
       </div>
     </div>
-  );
-}
-
-// New modern iOS-style Task Editor used inside SlideUpModal
-function NewTaskEditor({ task, onSave, onCancel, onDelete, isLoading }: {
-  task: Partial<Task>;
-  onSave: (task: Partial<Task>) => void | Promise<void>;
-  onCancel: () => void;
-  onDelete?: () => void;
-  isLoading: boolean;
-}) {
-  const { t } = useTranslation('app');
-  const [formData, setFormData] = useState<Partial<Task>>(task);
-
-  // Quick helpers
-  const setQuickEstimate = (hrs: number) => setFormData(prev => ({ ...prev, estimateHours: hrs }));
-  const setQuickDate = (type: 'today' | 'tomorrow' | 'week') => {
-    const now = new Date();
-    if (type === 'today') {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      setFormData(prev => ({ ...prev, startDate: d, dueDate: d }));
-    } else if (type === 'tomorrow') {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      setFormData(prev => ({ ...prev, startDate: d, dueDate: d }));
-    } else {
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
-      setFormData(prev => ({ ...prev, startDate: start, dueDate: end }));
-    }
-  };
-
-  const formatDMY = (date?: Date) => date ? `${String(date.getDate()).padStart(2,'0')}/${String((date.getMonth()+1)).padStart(2,'0')}/${date.getFullYear()}` : '';
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title?.trim()) return;
-    const progress = formData.checklist && formData.checklist.length > 0
-      ? Math.round((formData.checklist.filter(i => i.completed).length / formData.checklist.length) * 100)
-      : (formData.progress || 0);
-    onSave({ ...formData, progress });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Title */}
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={iosSpring.default}>
-        <Input
-          autoFocus
-          placeholder={t('planner.editor.task.titlePlaceholder')}
-          value={formData.title || ''}
-          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-          className="h-12 text-base sm:text-lg rounded-xl bg-surface-1/60 border-border/60"
-        />
-      </motion.div>
-
-      {/* Quick chips */}
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={iosSpring.default} className="flex flex-wrap gap-2">
-        <ScaleButton type="button" className="px-3 py-1.5 rounded-full bg-surface-2 text-foreground" onClick={() => setQuickDate('today')}>{t('planner.quick.today', { defaultValue: 'Today' })}</ScaleButton>
-        <ScaleButton type="button" className="px-3 py-1.5 rounded-full bg-surface-2 text-foreground" onClick={() => setQuickDate('tomorrow')}>{t('planner.quick.tomorrow', { defaultValue: 'Tomorrow' })}</ScaleButton>
-        <ScaleButton type="button" className="px-3 py-1.5 rounded-full bg-surface-2 text-foreground" onClick={() => setQuickDate('week')}>{t('planner.quick.thisWeek', { defaultValue: 'This Week' })}</ScaleButton>
-        <ScaleButton type="button" className="px-3 py-1.5 rounded-full bg-surface-2 text-foreground" onClick={() => setQuickEstimate(0.5)}>15m</ScaleButton>
-        <ScaleButton type="button" className="px-3 py-1.5 rounded-full bg-surface-2 text-foreground" onClick={() => setQuickEstimate(1)}>1h</ScaleButton>
-        <ScaleButton type="button" className="px-3 py-1.5 rounded-full bg-surface-2 text-foreground" onClick={() => setQuickEstimate(2)}>2h</ScaleButton>
-      </motion.div>
-
-      {/* Priority segmented */}
-      <div className="glass-card rounded-2xl p-3">
-        <Label className="text-sm mb-2 inline-block">{t('planner.editor.priorityLabel')}</Label>
-        <div className="grid grid-cols-3 gap-2">
-          {(['low','medium','high'] as const).map(p => (
-            <ScaleButton
-              key={p}
-              type="button"
-              className={`rounded-xl py-2 ${formData.priority===p? 'bg-primary text-primary-foreground':'bg-surface-1'}`}
-              onClick={() => setFormData(prev => ({ ...prev, priority: p }))}
-            >
-              {t(`planner.priority.${p}`)}
-            </ScaleButton>
-          ))}
-        </div>
-      </div>
-
-      {/* Dates row */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label className="text-sm">{t('planner.editor.startDate')}</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="h-11 justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{formData.startDate ? formatDMY(formData.startDate) : t('planner.editor.pickDate')}</Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="p-0 w-auto z-[120]" onOpenAutoFocus={(e)=>e.preventDefault()}>
-              <DateStepper value={formData.startDate} onChange={(d)=>setFormData(prev=>({...prev,startDate:d}))} onDone={()=> (document.activeElement as HTMLElement | null)?.blur?.()} />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-sm">{t('planner.editor.dueDate')}</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="h-11 justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{formData.dueDate ? formatDMY(formData.dueDate) : t('planner.editor.pickDate')}</Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="p-0 w-auto z-[120]" onOpenAutoFocus={(e)=>e.preventDefault()}>
-              <DateStepper value={formData.dueDate} onChange={(d)=>setFormData(prev=>({...prev,dueDate:d}))} onDone={()=> (document.activeElement as HTMLElement | null)?.blur?.()} />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
-
-      {/* Description */}
-      <div className="space-y-1.5">
-        <Label className="text-sm">{t('planner.editor.descriptionLabel')}</Label>
-        <Textarea rows={3} className="rounded-xl bg-surface-1/60" value={formData.description||''} onChange={(e)=>setFormData(prev=>({...prev, description:e.target.value}))} placeholder={t('planner.editor.descriptionPlaceholder')} />
-      </div>
-
-      {/* Checklist */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm">{t('planner.editor.checklistLabel')}</Label>
-          <ScaleButton type="button" className="px-3 py-1.5 rounded-full bg-surface-2" onClick={()=>{
-            const item: ChecklistItem = { id: String(Date.now()), text: '', completed: false };
-            setFormData(prev=>({...prev, checklist:[...(prev.checklist||[]), item]}));
-          }}>{t('planner.editor.addItem')}</ScaleButton>
-        </div>
-        <div className="space-y-2">
-          {(formData.checklist||[]).map(ci => (
-            <motion.div key={ci.id} layout initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} className="flex items-center gap-2">
-              <Checkbox checked={ci.completed} onCheckedChange={(c)=> setFormData(prev=>({ ...prev, checklist:(prev.checklist||[]).map(x=> x.id===ci.id?{...x, completed:!!c}:x)}))} />
-              <Input value={ci.text} onChange={(e)=> setFormData(prev=>({ ...prev, checklist:(prev.checklist||[]).map(x=> x.id===ci.id?{...x, text:e.target.value}:x)}))} placeholder={t('planner.editor.checklistItemPlaceholder')} className="h-10 flex-1" />
-              <ScaleButton type="button" className="px-2 py-1 rounded-lg text-muted-foreground hover:bg-surface-2" onClick={()=> setFormData(prev=>({ ...prev, checklist:(prev.checklist||[]).filter(x=> x.id!==ci.id)}))}>×</ScaleButton>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Estimate & Tags */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label className="text-sm">{t('planner.editor.estimateLabel')}</Label>
-          <Input type="number" min="0" step="0.5" className="h-11" value={formData.estimateHours||''} onChange={(e)=> setFormData(prev=>({...prev, estimateHours: e.target.value? parseFloat(e.target.value): undefined}))} placeholder={t('planner.editor.estimatePlaceholder')} />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-sm">{t('planner.editor.tagsLabel')}</Label>
-          <Input className="h-11" value={(formData.tags||[]).join(', ')} onChange={(e)=> setFormData(prev=>({...prev, tags: e.target.value.split(',').map(s=>s.trim()).filter(Boolean)}))} placeholder={t('planner.editor.tagsPlaceholder')} />
-        </div>
-      </div>
-
-      {/* Footer actions */}
-      <div className="sticky bottom-0 -mx-5 border-t bg-background/80 backdrop-blur px-5 py-3 pb-safe-bottom">
-        <div className="flex gap-3">
-          {task?.id && onDelete && (
-            <ScaleButton type="button" className="flex-1 rounded-xl border border-destructive/40 text-destructive" onClick={onDelete}>
-              {t('buttons.delete')}
-            </ScaleButton>
-          )}
-          <ScaleButton type="button" className="flex-1 rounded-xl border" onClick={onCancel}>
-            {t('common.cancel')}
-          </ScaleButton>
-          <ScaleButton type="submit" className="flex-1 rounded-xl bg-primary text-primary-foreground" disabled={!formData.title?.trim() || isLoading}>
-            {isLoading ? t('planner.editor.saving') : t('planner.editor.task.save')}
-          </ScaleButton>
-        </div>
-      </div>
-    </form>
   );
 }
 

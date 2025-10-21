@@ -163,8 +163,6 @@ export const SlideUpModal = ({
   bodyClassName,
   /** Hide the tiny spacer div at the end of the body */
   hideEndSpacer,
-  /** When true, adapts max height to visualViewport height to stay above the on-screen keyboard */
-  keyboardAware,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -175,30 +173,12 @@ export const SlideUpModal = ({
   height?: 'auto' | 'half' | 'large' | 'full';
   bodyClassName?: string;
   hideEndSpacer?: boolean;
-  keyboardAware?: boolean;
 }) => {
   const { triggerHaptic } = useHaptic();
   useEffect(() => {
     if (isOpen) triggerHaptic("medium");
   }, [isOpen, triggerHaptic]);
   useLockBodyScroll(isOpen);
-
-  // Stable viewport height that ignores the on-screen keyboard on mobile browsers.
-  // We compute it once when the sheet opens and keep it fixed, so the sheet doesn't jump.
-  useEffect(() => {
-    if (!isOpen || typeof window === 'undefined') return;
-    const root = document.documentElement;
-    const setStable = () => {
-      const h = Math.max(window.innerHeight || 0, window.outerHeight || 0);
-      root.style.setProperty('--stable-vh', `${h}px`);
-    };
-    // Set immediately
-    setStable();
-    // Update on orientation changes (not on keyboard open/close)
-    const onOrient = () => setTimeout(setStable, 300);
-    window.addEventListener('orientationchange', onOrient);
-    return () => window.removeEventListener('orientationchange', onOrient);
-  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -219,88 +199,10 @@ export const SlideUpModal = ({
     };
   }, [isOpen, onClose]);
 
-  // Determine target heights for body/container using a stable viewport var that ignores the keyboard.
-  // Fallbacks: 100lvh (large viewport unit) and then 100vh.
-  const vhVar = 'var(--stable-vh, 100lvh)';
-  const calcH = (ratio: number) => `calc(${vhVar} * ${ratio})`;
-  const containerHeight = height === 'half' ? calcH(0.6) : height === 'large' ? calcH(0.8) : height === 'full' ? calcH(0.95) : undefined;
-  // Keyboard-aware visual viewport support
-  const [vvh, setVvh] = React.useState<number | undefined>(undefined);
-  React.useEffect(() => {
-    if (!isOpen || !keyboardAware) return;
-    const vv = (typeof window !== 'undefined' ? (window as any).visualViewport : undefined) as VisualViewport | undefined;
-    if (!vv) return;
-    const apply = () => setVvh(Math.max(320, Math.floor(vv.height)));
-    apply();
-    vv.addEventListener('resize', apply);
-    vv.addEventListener('scroll', apply);
-    return () => {
-      vv.removeEventListener('resize', apply);
-      vv.removeEventListener('scroll', apply);
-    };
-  }, [isOpen, keyboardAware]);
-  const vvMax = keyboardAware && vvh ? `${vvh}px` : undefined;
-  const bodyMaxHeight = vvMax ? `calc(${vvMax} - 56px)` : (containerHeight ? `calc(${containerHeight} - 56px)` : `calc(${vhVar} * 0.95 - 56px)`);
+  // Determine target heights for body/container
+  const containerHeight = height === 'half' ? '60vh' : height === 'large' ? '80vh' : height === 'full' ? '95vh' : undefined;
+  const bodyMaxHeight = containerHeight ? `calc(${containerHeight} - 56px)` : 'calc(95vh - 56px)';
   const dragControls = useDragControls();
-  const bodyRef = useRef<HTMLDivElement | null>(null);
-
-  // Keyboard-aware scroll into view for focused inputs within the sheet body
-  useEffect(() => {
-    if (!isOpen || !keyboardAware) return;
-    const el = bodyRef.current;
-    if (!el) return;
-
-    const vv: VisualViewport | undefined = (typeof window !== 'undefined' ? (window as any).visualViewport : undefined);
-    const applyKbPadding = () => {
-      try {
-        const vh = (typeof window !== 'undefined' ? window.innerHeight : 0) || 0;
-        const vvh = vv?.height || vh;
-        const kb = Math.max(0, Math.floor(vh - vvh));
-        el.style.setProperty('--kb-height', `${kb}px`);
-      } catch {}
-    };
-
-    const ensureVisible = (target: HTMLElement) => {
-      try {
-        const container = el;
-        const cr = container.getBoundingClientRect();
-        const tr = target.getBoundingClientRect();
-        // Current keyboard/padding compensation
-        const kb = parseInt(getComputedStyle(container).getPropertyValue('--kb-height')) || 0;
-        const safe = 24; // extra cushion above keyboard and sticky footer
-        const sticky = 76; // approximate sticky footer height
-        const bottomLimit = cr.top + Math.min(cr.height, (vv?.height ?? cr.height)) - (kb + safe + sticky);
-        // If the focused element bottom is below visible area, scroll down
-        if (tr.bottom > bottomLimit) {
-          const delta = tr.bottom - bottomLimit;
-          container.scrollBy({ top: delta + 8, behavior: 'smooth' });
-          return;
-        }
-        // If the focused element top is above the container top (rare), scroll up
-        if (tr.top < cr.top) {
-          const deltaUp = cr.top - tr.top + 8;
-          container.scrollBy({ top: -deltaUp, behavior: 'smooth' });
-        }
-      } catch {}
-    };
-
-    const onFocusIn = (e: Event) => {
-      const t = e.target as HTMLElement | null;
-      if (!t) return;
-      // Delay to allow keyboard animation
-      setTimeout(() => ensureVisible(t), 50);
-    };
-
-    el.addEventListener('focusin', onFocusIn);
-    applyKbPadding();
-    vv?.addEventListener?.('resize', applyKbPadding);
-    vv?.addEventListener?.('scroll', applyKbPadding);
-    return () => {
-      el.removeEventListener('focusin', onFocusIn);
-      vv?.removeEventListener?.('resize', applyKbPadding);
-      vv?.removeEventListener?.('scroll', applyKbPadding);
-    };
-  }, [isOpen, keyboardAware]);
 
   return (
     <AnimatePresence>
@@ -322,14 +224,7 @@ export const SlideUpModal = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={iosSpring.default}
-            style={{
-              paddingBottom: `calc(${SAFE_BOTTOM} + 20px)`,
-              height: containerHeight,
-              // When using the dynamic stable height, keep a max so it never resizes with the keyboard
-              maxHeight: vvMax ?? (containerHeight ? undefined : `calc(${vhVar} * 0.95)`),
-              // Create its own composition layer to prevent layout shifts on iOS
-              transform: 'translateZ(0)'
-            }}
+            style={{ paddingBottom: `calc(${SAFE_BOTTOM} + 20px)`, height: containerHeight, maxHeight: containerHeight ? undefined : '95vh' }}
             drag="y"
             dragControls={dragControls}
             dragListener={false}
@@ -351,8 +246,7 @@ export const SlideUpModal = ({
               </div>
             )}
             {/* Scroll the body ONLY */}
-            <div ref={bodyRef} className={`px-5 overflow-y-auto overscroll-contain scrollbar-none ${bodyClassName ?? 'pb-20'}`}
-                 style={{ maxHeight: bodyMaxHeight, paddingBottom: `calc(var(--kb-height, 0px) + 20px)` }}>
+            <div className={`px-5 overflow-y-auto overscroll-contain scrollbar-none ${bodyClassName ?? 'pb-20'}`} style={{ maxHeight: bodyMaxHeight }}>
               {children}
               {!hideEndSpacer && <div className="h-2" />}
             </div>
