@@ -10,6 +10,7 @@ import I18nProvider from "@/i18n/I18nProvider";
 import TelegramBridge from "@/components/TelegramBridge";
 import TelegramBootstrap from "@/components/TelegramBootstrap";
 import ViewportHeightFix from "@/components/ViewportHeightFix";
+import MobileKeyboardEvents from "@/components/MobileKeyboardEvents";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
@@ -92,6 +93,7 @@ export default function RootLayout({
           </Suspense>
           <TelegramBootstrap />
           <ViewportHeightFix />
+          <MobileKeyboardEvents />
           <ErrorReporter />
           <Script
             src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"
