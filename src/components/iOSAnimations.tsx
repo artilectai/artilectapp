@@ -180,6 +180,23 @@ export const SlideUpModal = ({
   }, [isOpen, triggerHaptic]);
   useLockBodyScroll(isOpen);
 
+  // Stable viewport height that ignores the on-screen keyboard on mobile browsers.
+  // We compute it once when the sheet opens and keep it fixed, so the sheet doesn't jump.
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') return;
+    const root = document.documentElement;
+    const setStable = () => {
+      const h = Math.max(window.innerHeight || 0, window.outerHeight || 0);
+      root.style.setProperty('--stable-vh', `${h}px`);
+    };
+    // Set immediately
+    setStable();
+    // Update on orientation changes (not on keyboard open/close)
+    const onOrient = () => setTimeout(setStable, 300);
+    window.addEventListener('orientationchange', onOrient);
+    return () => window.removeEventListener('orientationchange', onOrient);
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -199,9 +216,12 @@ export const SlideUpModal = ({
     };
   }, [isOpen, onClose]);
 
-  // Determine target heights for body/container
-  const containerHeight = height === 'half' ? '60vh' : height === 'large' ? '80vh' : height === 'full' ? '95vh' : undefined;
-  const bodyMaxHeight = containerHeight ? `calc(${containerHeight} - 56px)` : 'calc(95vh - 56px)';
+  // Determine target heights for body/container using a stable viewport var that ignores the keyboard.
+  // Fallbacks: 100lvh (large viewport unit) and then 100vh.
+  const vhVar = 'var(--stable-vh, 100lvh)';
+  const calcH = (ratio: number) => `calc(${vhVar} * ${ratio})`;
+  const containerHeight = height === 'half' ? calcH(0.6) : height === 'large' ? calcH(0.8) : height === 'full' ? calcH(0.95) : undefined;
+  const bodyMaxHeight = containerHeight ? `calc(${containerHeight} - 56px)` : `calc(${vhVar} * 0.95 - 56px)`;
   const dragControls = useDragControls();
 
   return (
@@ -224,7 +244,14 @@ export const SlideUpModal = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={iosSpring.default}
-            style={{ paddingBottom: `calc(${SAFE_BOTTOM} + 20px)`, height: containerHeight, maxHeight: containerHeight ? undefined : '95vh' }}
+            style={{
+              paddingBottom: `calc(${SAFE_BOTTOM} + 20px)`,
+              height: containerHeight,
+              // When using the dynamic stable height, keep a max so it never resizes with the keyboard
+              maxHeight: containerHeight ? undefined : `calc(${vhVar} * 0.95)`,
+              // Create its own composition layer to prevent layout shifts on iOS
+              transform: 'translateZ(0)'
+            }}
             drag="y"
             dragControls={dragControls}
             dragListener={false}
